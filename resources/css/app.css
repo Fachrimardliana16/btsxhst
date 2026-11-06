@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+@import './tokens.css';
+@import './hero-race.css';
+@import './navbar.css';
+@import './bottom-nav.css';
+@import './beranda-blok.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../../app/Livewire/**/*.php';
+
+/* Wajib untuk Alpine di Livewire.
+ *
+ * x-cloak menyembunyikan elemen yang dikendalikan Alpine (drawer, dropdown,
+ * overlay) SAMPAI Alpine siap. TANPA aturan ini, atribut x-cloak tidak
+ * melakukan apa pun: overlay layar penuh dirender sejak HTML pertama, lalu
+ * tertutup sendiri ketika Alpine memuat — dan bila Alpine gagal termuat
+ * (CSP, JS gagal diunduh), overlay itu TETAP di layar dan tidak ada tombol
+ * yang berfungsi. Gejalanya: "modal tidak bisa ditutup".
+ *
+ * Tidak cukup [x-cloak]{display:none} saja: elemen ber-display flex/grid
+ * butuh !important untuk mengalahkan utilitas seperti .flex.
+ */
+[x-cloak] {
+    display: none !important;
+}

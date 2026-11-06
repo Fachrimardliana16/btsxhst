@@ -1,0 +1,173 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\StatusPembayaran;
+use App\Enums\StatusPesanan;
+use App\Jobs\KirimNotifikasiAdmin;
+use App\Jobs\KirimNotifikasiPesanan;
+use App\Mail\PesananAdmin;
+use App\Models\Order;
+use App\Models\OrderStatusHistory;
+use App\Models\User;
+use App\Support\SakelarNotifikasi;
+use Illuminate\Support\Facades\DB;
+use RuntimeException;
+
+/**
+ * Perpindahan status pesanan.
+ *
+ * Setiap perubahan status yang menyentuh stok dilakukan di sini, bukan di
+ * komponen Livewire, supaya pemulihan dan pengurangan stok selalu berjalan
+ * bersama perubahan status. Mengubah status langsung lewat model akan membuat
+ * reserved_quantity dan stock_quantity tidak lagi seimbang.
+ */
+class StatusPesananService
+{
+    /**
+     * Pindahkan pesanan ke status baru.
+     *
+     * - Dibayar: tidak menyentuh stok, hanya menandai pembayaran.
+     * - Selesai: stok fisik dikurangi dan reserved dilepas, karena barang
+     *   benar-benar keluar dari gudang.
+     * - Dibatalkan: seluruh reserved dilepas, stok kembali dapat dijual.
+     */
+    public function pindah(
+        Order $order,
+        StatusPesanan $tujuan,
+        ?User $oleh = null,
+        ?string $catatan = null,
+    ): Order {
+        if (! $order->status->bisaKe($tujuan)) {
+            throw new RuntimeException(sprintf(
+                'Status tidak dapat berpindah dari %s ke %s.',
+                $order->status->value,
+                $tujuan->value,
+            ));
+        }
+
+        $hasil = DB::transaction(function () use ($order, $tujuan, $oleh, $catatan): Order {
+            $asal = $order->status;
+
+            // Varian dimuat bersama produknya.
+            //
+            // Sejak hargaAkhir() mewajibkan relasi product terpasang, jalur
+            // apa pun yang menyentuh varian harus memuatnya. Dilakukan sekali
+            // di sini — bukan per baris di dalam perulangan — supaya tetap satu
+            // kueri meski pesanannya berisi banyak barang.
+            $order->load('items.variant.product');
+
+            match ($tujuan) {
+                StatusPesanan::Completed => $this->selesaikanStok($order),
+                StatusPesanan::Cancelled => $this->lepaskanStok($order),
+                default => null,
+            };
+
+            $order->status = $tujuan;
+
+            if ($tujuan === StatusPesanan::Paid) {
+                $order->payment_status = StatusPembayaran::Paid;
+                $order->paid_at = $order->paid_at ?? now();
+            }
+
+            if ($tujuan === StatusPesanan::Shipped) {
+                $order->shipped_at = $order->shipped_at ?? now();
+            }
+
+            if ($tujuan === StatusPesanan::Completed) {
+                $order->completed_at = now();
+            }
+
+            if ($tujuan === StatusPesanan::Cancelled) {
+                $order->cancelled_at = now();
+            }
+
+            $order->save();
+
+            OrderStatusHistory::query()->create([
+                'order_id' => $order->id,
+                'from_status' => $asal->value,
+                'to_status' => $tujuan->value,
+                'note' => $catatan,
+                'changed_by' => $oleh?->id,
+            ]);
+
+            return $order->fresh(['items', 'statusHistory']);
+        }, 3);
+
+        // Notifikasi hanya untuk kejadian yang berarti bagi pembeli. Dikirim
+        // setelah transaksi selesai: pekerjaan antrean di dalam transaksi dapat
+        // berjalan sebelum datanya tersimpan.
+        if ($tujuan === StatusPesanan::Shipped && SakelarNotifikasi::kirimAktif('kirim_saat_dikirim')) {
+            KirimNotifikasiPesanan::dispatch($hasil->id, KirimNotifikasiPesanan::KEJADIAN_DIKIRIM);
+        }
+
+        /* Pesanan SELESAI — dua penerima, dua job.
+         *
+         * Pembeli diberi tahu sebagai penutup transaksi (barang sudah ia
+         * terima, urusannya selesai). Admin diberi tahu sebagai rekap.
+         *
+         * Job-nya sengaja dipisah: lihat catatan di KirimNotifikasiAdmin
+         * tentang kenapa kegagalan salah satunya tidak boleh menjatuhkan yang
+         * lain.
+         *
+         * Kejadian lain TIDAK memicu email di sini:
+         *   - Shipped  -> sudah ditangani blok di atas
+         *   - Processing, Cancelled -> admin sedang menangani pesanan ini di
+         *     panel, atau pembeli melihatnya sendiri di halaman pesanan.
+         */
+        if ($tujuan === StatusPesanan::Completed) {
+            if (SakelarNotifikasi::kirimAktif('kirim_saat_selesai')) {
+                KirimNotifikasiPesanan::dispatch($hasil->id, KirimNotifikasiPesanan::KEJADIAN_SELESAI);
+            }
+
+            if (SakelarNotifikasi::kirimAktif('kirim_admin_saat_selesai')) {
+                KirimNotifikasiAdmin::dispatch($hasil->id, PesananAdmin::SELESAI);
+            }
+        }
+
+        return $hasil;
+    }
+
+    /**
+     * Barang benar-benar keluar. Stok fisik berkurang, dan tahanan dilepas
+     * dengan jumlah yang sama.
+     */
+    private function selesaikanStok(Order $order): void
+    {
+        foreach ($order->items as $item) {
+            $varian = $item->variant;
+
+            if ($varian === null) {
+                continue;
+            }
+
+            $varian->increment('stock_quantity', -$item->quantity);
+            $varian->decrement('reserved_quantity', $item->quantity);
+
+            // Jaga-jaga terhadap pembulatan atau data lama: nilai tidak boleh
+            // menjadi negatif.
+            $varian->refresh();
+            $varian->reserved_quantity = max(0, $varian->reserved_quantity);
+            $varian->stock_quantity = max(0, $varian->stock_quantity);
+            $varian->save();
+        }
+    }
+
+    /** Pesanan batal: tahanan dilepas, stok fisik tidak pernah tersentuh. */
+    private function lepaskanStok(Order $order): void
+    {
+        foreach ($order->items as $item) {
+            $varian = $item->variant;
+
+            if ($varian === null) {
+                continue;
+            }
+
+            $varian->decrement('reserved_quantity', $item->quantity);
+            $varian->refresh();
+            $varian->reserved_quantity = max(0, $varian->reserved_quantity);
+            $varian->save();
+        }
+    }
+}

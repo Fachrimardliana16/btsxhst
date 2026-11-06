@@ -1,0 +1,216 @@
+/* ═══ BOTTOM NAV — KACA MELAYANG (ponsel & tablet) ═══════════════════════
+
+   Sebelumnya latarnya `bg-surface/95` — 95% putih, praktis buram. Dengan
+   tingkat itu blur di belakangnya tidak pernah terlihat, jadi "glass" hanya
+   ada di nama kelasnya, bukan di layar.
+
+   Resep kaca yang benar-benar terbaca butuh TIGA lapis, bukan satu:
+
+     1. LATAR REDUP   cukup tipis (±60%) supaya isi di belakangnya masih
+                      tampak sebagai warna dan bentuk, bukan putih rata.
+     2. BLUR          memisahkan teks label dari latar yang ramai. Saturasi
+                      dinaikkan sedikit supaya warna yang lewat di belakang
+                      tidak menjadi abu-abu mati.
+     3. GARIS TERANG  satu sapuan cahaya di tepi atas + bayangan di bawah.
+                      Tanpa ini kaca terasa "kotor"; dengan ini ia terasa
+                      seperti lembaran yang mengambang di atas halaman.
+
+   Semua warna ditulis eksplisit (bukan utility Tailwind) supaya aturan ini
+   tidak bergantung pada token tema yang bisa berubah. */
+
+.nav-bawah {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0.75rem;
+    z-index: 40;
+    padding: 0 1rem;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+    transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 200ms ease;
+}
+
+/* Bar tersembunyi saat keyboard ponsel dibuka: menutupi kolom input adalah
+   satu-satunya hal yang lebih menjengkelkan daripada bar yang tidak ada. */
+html[data-typing] .nav-bawah {
+    transform: translateY(140%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.nav-bawah__kaca {
+    pointer-events: auto;
+    margin: 0 auto;
+    max-width: 28rem;
+    /* Skala radius bersama (tokens.css): 18px tidak ada di dalamnya, dan
+       kaca yang bentuknya tidak sama dengan kartu lain membuat bar navigasi
+       terasa dari aplikasi lain. --r-card = 16px, sama dengan .plate. */
+    border-radius: var(--r-card);
+    padding: 0.375rem 0.5rem;
+    position: relative;
+    isolation: isolate;
+
+    /* 1. Latar redup */
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.68) 0%,
+        rgba(255, 255, 255, 0.58) 100%
+    );
+
+    /* 2. Blur */
+    -webkit-backdrop-filter: blur(22px) saturate(190%);
+    backdrop-filter: blur(22px) saturate(190%);
+
+    /* 3. Tepi dan bayangan: DISAMAKAN DENGAN KARTU (.plate).
+     *
+     * Versi sebelumnya memakai border putih rgba(255,255,255,.72) dan tiga
+     * lapis bayangan buatan sendiri. Hasilnya bar ini terbaca sebagai elemen
+     * dari sistem lain: kartu di seluruh situs bergaris abu --c-line-soft dan
+     * berbayang --shadow-1, sedangkan bar ini bergaris putih dan berbayang
+     * lebih dalam.
+     *
+     * Latar tetap transparan (itu yang membedakannya sebagai navigasi
+     * melayang), tetapi BAHAN pinggirnya kini sama: garis --c-line-soft dan
+     * bayangan --shadow-1, ditambah satu lapis naik supaya ia tetap terlihat
+     * mengambang di atas isi halaman, bukan menempel.
+     */
+    border: 1px solid var(--c-line-soft);
+    box-shadow: var(--shadow-1), 0 8px 24px -10px rgb(17 24 39 / 0.18);
+}
+
+/* Pantulan cahaya tipis di sudut kiri atas — yang membuat permukaan terasa
+   kaca, bukan plastik putih. */
+.nav-bawah__kaca::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+        120% 80% at 15% 0%,
+        rgba(255, 255, 255, 0.85) 0%,
+        rgba(255, 255, 255, 0) 60%
+    );
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* ═══ SLOT ════════════════════════════════════════════════════════════ */
+.nav-bawah__grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+}
+
+.nav-bawah__slot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.25rem;
+    /* --r-sedang (12px) berbeda dari tombol (.btn = 10px). Slot ini adalah
+       TOMBOL, jadi bentuknya mengikuti kelas tombol, bukan kelas panel. */
+    border-radius: var(--r-btn);
+    color: #6b7280;
+    text-decoration: none;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 160ms ease, transform 160ms cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+.nav-bawah__slot:hover {
+    color: #111827;
+}
+
+.nav-bawah__slot:active {
+    transform: scale(0.94);
+}
+
+.nav-bawah__slot:focus-visible {
+    outline: 2px solid var(--c-accent, #0062ad);
+    outline-offset: 2px;
+}
+
+/* Ikon di dalam kapsul. Kapsul aktif diisi warna aksen dan sedikit dinaikkan,
+   jadi mata menemukan posisi sekarang sebelum membaca labelnya. */
+.nav-bawah__ikon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--r-btn);
+    transition: background-color 200ms ease,
+                transform 200ms cubic-bezier(0.34, 1.3, 0.64, 1),
+                box-shadow 200ms ease;
+}
+
+.nav-bawah__label {
+    font-size: 0.625rem;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    /* Label TIDAK boleh membungkus. Di layar 360px, "Kontak Kami" turun ke
+       baris kedua, kaca ikut meninggi 10px, dan tombol WhatsApp yang
+       posisinya dihitung dari asumsi tinggi tetap jadi tertimpa. Satu baris
+       dengan elipsis menjaga tinggi bar stabil di semua lebar. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Slot aktif */
+.nav-bawah__slot.is-aktif {
+    color: var(--c-accent, #0062ad);
+}
+
+.nav-bawah__slot.is-aktif .nav-bawah__ikon {
+    background: color-mix(in srgb, var(--c-accent, #0062ad) 14%, transparent);
+    transform: translateY(-1px) scale(1.04);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.nav-bawah__slot.is-aktif .nav-bawah__label {
+    font-weight: 700;
+}
+
+/* Titik penanda di bawah slot aktif */
+.nav-bawah__titik {
+    position: absolute;
+    bottom: 1px;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--c-accent, #0062ad);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent, #0062ad) 16%, transparent);
+}
+
+/* Tidak ada kaca yang bisa di-blur di peramban lama atau saat pengunjung
+   meminta kontras/gerak minimal: latar dinaikkan hampir buram supaya label
+   tetap terbaca. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .nav-bawah__kaca {
+        background: rgba(255, 255, 255, 0.97);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .nav-bawah__kaca {
+        background: rgba(255, 255, 255, 0.98);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-bawah,
+    .nav-bawah__slot,
+    .nav-bawah__ikon {
+        transition: none;
+    }
+}

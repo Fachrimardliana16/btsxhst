@@ -1,0 +1,484 @@
+/* ═══ NAVBAR — SATU BILAH, DUA KEADAAN ═══════════════════════════════════
+
+   Struktur: header.race-navbar > .navbar-bilah (logo · menu · utilitas).
+
+   Ada DUA keadaan, dan hanya itu:
+
+     1. DI PUNCAK BERANDA            `.navbar-hero` — latar transparan di atas
+                                    hero gelap, teks putih, tanpa garis.
+     2. SETELAH DIGULIR / halaman    (tanpa .navbar-hero, atau ditambah
+        lain                        `.navbar-melayang` oleh app.js) — kaca
+                                    putih redup, teks gelap, garis tipis.
+
+   app.js hanya menambah/mencabut dua kelas: `navbar-melayang` (melewati
+   ambang gulir) dan `navbar-sembunyi` (gulir ke bawah). Tidak ada kelas lain
+   yang perlu dibaca CSS.
+
+   ATURAN WARNA: semua warna di berkas ini ditulis eksplisit, TIDAK memakai
+   --c-text / --c-accent. Navbar adalah satu-satunya bagian yang berubah warna
+   di atas hero gelap, dan ia harus tetap benar walaupun token tema berubah.
+   Token yang dipakai hanya --c-accent untuk aksen brand. */
+
+.race-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    width: 100%;
+    background: transparent;
+    border-bottom: 1px solid transparent;
+    color: #111827;
+    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+                background-color 250ms ease,
+                backdrop-filter 250ms ease,
+                box-shadow 250ms ease,
+                border-color 250ms ease;
+}
+
+/* Beri ruang setinggi bilah supaya isi halaman tidak tertutup, karena header
+   `fixed` tidak lagi mengambil tempat di alur dokumen. */
+html {
+    scroll-padding-top: var(--h-topbar, 57px);
+}
+
+/* ═══ KEADAAN 1 — DI ATAS HERO (BERANDA, BELUM DIGULIR) ══════════════════
+   Transparan penuh: hero yang menyediakan latar. Teks putih, dan latar putih
+   tipis-halus di belakang logo supaya terbaca meski slide hero berwarna
+   terang. Tanpa garis bawah dan tanpa bayangan — bilah menyatu dengan hero. */
+.race-navbar.navbar-hero {
+    color: #ffffff;
+    border-bottom-color: transparent;
+    box-shadow: none;
+    background: transparent;
+}
+
+.race-navbar.navbar-hero .navbar-logo,
+.race-navbar.navbar-hero .navbar-logo span {
+    color: #ffffff;
+}
+
+.race-navbar.navbar-hero .navbar-tautan {
+    color: rgba(255, 255, 255, 0.86);
+}
+
+.race-navbar.navbar-hero .navbar-tautan:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.race-navbar.navbar-hero .btn-icon {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.race-navbar.navbar-hero .btn-icon:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+/* ═══ KEADAAN 2 — BILAH MELAYANG (KACA PUTIH) ══════════════════════════
+   Seluruh selector di bawah memakai `:not(.navbar-hero)` supaya keadaan
+   transparan di atas hero tidak pernah tertimpa. `.navbar-melayang` dipasang
+   app.js saat melewati ambang gulir, dan itulah satu-satunya cara beranda
+   pindah ke keadaan ini. */
+.race-navbar.navbar-melayang,
+.race-navbar:not(.navbar-hero) {
+    background: rgba(255, 255, 255, 0.82);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-bottom-color: rgba(17, 24, 39, 0.08);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset,
+                0 6px 24px -8px rgba(17, 24, 39, 0.18);
+    color: #111827;
+}
+
+.race-navbar.navbar-melayang .navbar-logo,
+.race-navbar.navbar-melayang .navbar-logo span,
+.race-navbar:not(.navbar-hero) .navbar-logo,
+.race-navbar:not(.navbar-hero) .navbar-logo span {
+    color: #111827;
+}
+
+.race-navbar.navbar-melayang .navbar-tautan,
+.race-navbar:not(.navbar-hero) .navbar-tautan {
+    color: #4b5563;
+}
+
+.race-navbar.navbar-melayang .navbar-tautan:hover,
+.race-navbar:not(.navbar-hero) .navbar-tautan:hover {
+    color: #111827;
+    background: rgba(17, 24, 39, 0.06);
+}
+
+.race-navbar.navbar-melayang .btn-icon,
+.race-navbar:not(.navbar-hero) .btn-icon {
+    color: #4b5563;
+}
+
+.race-navbar.navbar-melayang .btn-icon:hover,
+.race-navbar:not(.navbar-hero) .btn-icon:hover {
+    color: #111827;
+    background: rgba(17, 24, 39, 0.06);
+}
+
+/* Penanda aktif. Satu aturan untuk kedua keadaan: pil biru brand. `.is-aktif`
+   dipakai di samping kelas Blade bawaan supaya CSS tidak bergantung pada
+   utility `bg-accent` yang bisa saja tidak ter-generate. */
+.navbar-tautan.is-aktif {
+    background: var(--c-accent, #0062ad);
+    color: #ffffff !important;
+    font-weight: 700;
+    box-shadow: 0 2px 8px -2px rgba(0, 98, 173, 0.55);
+}
+
+.race-navbar.navbar-hero .navbar-tautan.is-aktif {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+/* ═══ SEMBUNYI SAAT GULIR KE BAWAH ═════════════════════════════════════ */
+.race-navbar.navbar-sembunyi {
+    transform: translateY(-100%);
+    pointer-events: none;
+}
+
+/* ═══ GERAK DIHORMATI ═════════════════════════════════════════════════
+ *
+ * Bilah ini bergerak (turun saat menggulir ke atas, naik saat ke bawah).
+ * Pengunjung yang memilih mengurangi gerak di pengaturan sistemnya — dan itu
+ * bukan preferensi langka: penderita vestibular disorder bisa pusing karena
+ * elemen selebar layar yang meluncur.
+ *
+ * Yang dimatikan hanya PERPINDAHANNYA, bukan fungsinya. Bilah tetap
+ * disembunyikan saat menggulir ke bawah dan muncul lagi saat ke atas; ia
+ * hanya berpindah seketika, tanpa meluncur. Endapkan `opacity` supaya
+ * perubahan tetap terbaca, bukan hilang mendadak. */
+@media (prefers-reduced-motion: reduce) {
+    .race-navbar {
+        transition: none;
+    }
+
+    .race-navbar .navbar-tautan,
+    .race-navbar .btn-icon {
+        transition: none;
+    }
+
+    /* Keadaan tersembunyi TETAP berlaku: yang dihilangkan hanya transisinya.
+       Bilah tidak lagi meluncur, ia langsung pindah. */
+    .race-navbar.navbar-sembunyi {
+        transform: translateY(-100%);
+    }
+}
+
+/* ═══ BRAND: JANGAN PERNAH MELUBER KE TOMBOL UTILITAS ═══════════════════
+ *
+ * Pengaman CSS, bukan pengganti ukuran-brand.js.
+ *
+ * Skrip mengatur ukuran font agar nama toko muat (baca komentar di
+ * resources/js/ukuran-brand.js). Tetapi bila skrip GAGAL — CSP memblokir,
+ * bundel JS belum termuat, atau pengguna mematikan JavaScript — teks brand
+ * harus tetap tidak boleh menimpa tombol pencarian dan keranjang.
+ *
+ * Terukur sebelum aturan ini ada, pada layar 390px: teks brand berakhir di
+ * 299px sementara tombol pencarian mulai di 298px — bertumpuk 1px; pada
+ * 320px bertumpuk 71px. Penyebabnya `min-width: auto` pada item flex, yang
+ * membuat teks menolak menyusut sehingga `truncate` tidak pernah berlaku.
+ *
+ * `min-width: 0` + `overflow: hidden` di sini adalah jaring terakhir:
+ * apa pun yang terjadi pada skrip, teks berakhir dengan elipsis alih-alih
+ * menutupi tombol. */
+.navbar-merek {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.navbar-merek > span:first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Ruang yang disisakan untuk brand di kolom kiri grid. Kolom kiri adalah
+ * minmax(0,1fr), jadi tanpa batas atas teks bisa mendorong kolom melar dan
+ * menyeret menu keluar bilah. */
+.navbar-logo {
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* ═══ TATA LETAK BILAH ════════════════════════════════════════════════
+   Menu duduk di TENGAH sisa ruang antara logo dan utilitas. `flex-1` saja
+   tidak cukup: lebar logo dan utilitas tidak sama, jadi menu akan melenceng
+   dari pusat layar. Gradien kolom 1fr / auto / 1fr menahan sisi kiri dan kanan
+   sama lebar, sehingga menu benar-benar di tengah secara visual. */
+.navbar-bilah {
+    position: relative;
+    display: grid;
+    /* minmax(0,1fr) — bukan 1fr: 1fr = minmax(auto,1fr) yang BISA melar
+       mengikuti konten. Nama toko panjang mendorong kolom kiri melebihi
+       share-nya dan menyeret menu keluar bilah. minmax(0,1fr) memaksa
+       kolom tetap pada share sama; brand menangani dirinya via --brand-fs
+       (ukuran-brand.js) dan truncate sebagai payung terakhir. */
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.5rem;
+}
+
+/* ── Jarak isi halaman di bawah header ──────────────────────────────────
+ *
+ * Header ini `position: fixed`, jadi ia TIDAK memakan ruang di alur dokumen.
+ * Selama header masih `sticky`, ruang itu datang dari header itu sendiri dan
+ * `main` tidak perlu apa-apa. Sekarang tanpa aturan ini, bagian paling atas
+ * setiap halaman (judul, remah, hero) tergeser ke bawah header dan tertutup —
+ * terlihat sebagai "navbar berantakan" di SEMUA halaman selain beranda.
+ *
+ * Dikecualikan: halaman beranda yang hero-nya sudah `100svh` dan sengaja
+ * dibuat menembus di belakang header transparan (`.beranda-home`).
+ */
+main.konten-utama {
+    padding-top: var(--h-topbar);
+}
+
+main.konten-utama:has(> .beranda-home) {
+    padding-top: 0;
+}
+
+/* Beranda juga menempelkan hero-nya ke atas. `:has()` tidak dikenal peramban
+   lama, jadi `scroll-margin` di hero dipakai sebagai cadangan supaya lompatan
+   jangkar tidak jatuh di balik header. */
+.beranda-home {
+    scroll-margin-top: var(--h-topbar);
+}
+
+/* ═══ CENTANG LEBAR DI LAYAR TENGAH ════════════════════════════════════
+ *
+ * Antara 1024px dan ±1150px, logo + 5 menu + 3 tombol utilitas lebih lebar
+ * daripada 1280px container yang terpotong padding. Gejalanya: menu memaksa
+ * logo mengecil atau label terlipat dua baris. Di rentang itu label menu
+ * dirapatkan dulu sebelum menyerah ke menu drawer. */
+@media (min-width: 1024px) and (max-width: 1180px) {
+    .navbar-menu {
+        gap: 0;
+    }
+
+    .navbar-tautan {
+        padding-inline: 0.55rem;
+        font-size: 0.6875rem;
+        letter-spacing: 0.05em;
+    }
+
+    .navbar-bilah > .navbar-kiri {
+        max-width: 34%;
+    }
+    .navbar-logo span {
+        /* Inline style di blade menetapkan font-size via var(--brand-fs);
+           JS akan menurunkannya lagi sesuai ruang. 1rem tetap sebagai
+           langit-langit agar brand tidak lebih besar dari sebelumnya. */
+        font-size: min(1rem, var(--brand-fs, 1rem));
+        letter-spacing: 0.1em;
+    }
+}
+
+/* ═══ TATA LETAK BILAH ════════════════════════════════════════════════
+ *
+ * DESKTOP (≥1024px) — grid tiga kolom `1fr auto 1fr`. `flex-1` saja tidak
+ * cukup: lebar logo dan utilitas tidak sama, jadi menu akan melenceng dari
+ * pusat layar. Kolom 1fr/auto/1fr menahan kedua sisi sama lebar sehingga menu
+ * benar-benar di tengah secara visual.
+ *
+ * PONSEL (<1024px) — SATU BARIS FLEX: [☰ logo] ......... [cari keranjang].
+ *
+ * ── Jebakan yang harus dijaga di sini ──────────────────────────────────
+ * `.navbar-menu` membawa dua kelas Blade: `hidden` dan `lg:flex`.
+ *
+ *   .hidden    { display: none }         → lapisan @layer utilities
+ *   .navbar-menu { display: flex; ... }  → CSS proyek, DI LUAR @layer
+ *
+ * Apa pun yang ditulis di luar @layer SELALU menang atas @layer utilities,
+ * tanpa memandang kekhususan maupun urutan. Jadi `.navbar-menu{display:flex}`
+ * membatalkan `hidden`, dan menu desktop ikut tampil di ponsel: lima tautan
+ * berlebar ±424px menghabiskan bilah 390px, kolom kiri tergencet menjadi 0px
+ * dan tombol utilitas terdorong keluar layar. Itulah "navbar mobile berantakan"
+ * yang sebenarnya — bukan masalah ukuran atau padding.
+ *
+ * Obatnya: `display` untuk menu HANYA ditulis di dalam media query, dan
+ * `display:none` di ponsel dinaikkan ke spesifisitas yang lebih tinggi. */
+.navbar-bilah {
+    position: relative;
+    display: grid;
+    /* minmax(0,1fr) — bukan 1fr: 1fr = minmax(auto,1fr) yang BISA melar
+       mengikuti konten. Nama toko panjang mendorong kolom kiri melebihi
+       share-nya dan menyeret menu keluar bilah. minmax(0,1fr) memaksa
+       kolom tetap pada share sama; brand menangani dirinya via --brand-fs
+       (ukuran-brand.js) dan truncate sebagai payung terakhir. */
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.5rem;
+}
+
+.navbar-bilah > .navbar-kiri {
+    grid-column: 1;
+    justify-self: start;
+    min-width: 0;
+}
+
+.navbar-utilitas {
+    grid-column: 3;
+    justify-self: end;
+}
+
+/* Menu: tersembunyi sebagai BAWAAN, hanya muncul di desktop. `display` tidak
+   lagi ditulis tanpa syarat — lihat catatan di atas. */
+.navbar-menu {
+    grid-column: 2;
+    justify-self: center;
+    display: none;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Tautan menu navbar.
+ *
+ * Tautan ini memakai kelas Blade `btn btn-ghost`, tetapi `.btn` bawaan
+ * beradius 10px (kotak) sedangkan tautan ini tampil sebagai pil di atas hero.
+ * Selama `--r-btn` masih kosong keduanya sama-sama 0px sehingga tidak
+ * terlihat; setelah skala radius dipulihkan, perbedaan itu akan muncul
+ * sebagai dua bentuk tombol yang bertetangga. Di sini bentuknya ditetapkan
+ * sekali, eksplisit, bukan diwarisi dari kebetulan.
+ *
+ * Menu navigasi memang berbentuk pil: ia duduk di atas foto gelap dan
+ * bentuk membulat membantu mata menemukan area yang bisa diketuk. Tombol
+ * aksi di isi halaman tetap kotak. Itu pembeda yang disengaja, bukan
+ * ketidakkonsistenan — yang salah sebelumnya adalah bentuknya berubah-ubah
+ * tanpa aturan.
+ */
+.navbar-tautan {
+    border-radius: var(--r-pil);
+    min-height: 36px;
+
+    /* Pil 36px tapi isi teks hanya 28px (6px padding × 2 + line-height 16px).
+       Sebagai `display:block` sisa 8px jatuh di BAWAH teks — teks menempel ke
+       atas pil dan seluruh baris menu tampak naik ±4px dari logo dan ikon
+       utilitas yang keduanya flex-center. `inline-flex` + center menegakkan
+       teks tepat di tengah pil tanpa mengubah ukuran apa pun. */
+    display: inline-flex;
+    align-items: center;
+}
+
+@media (min-width: 1024px) {
+    .navbar-menu {
+        display: flex;
+    }
+}
+
+@media (max-width: 1023px) {
+    .navbar-bilah {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    /* Semua jejak grid dilepas di ponsel, dan menu dipastikan TETAP
+       tersembunyi walau ada aturan lain yang menyentuh display-nya. */
+    .navbar-bilah > .navbar-kiri,
+    .navbar-utilitas {
+        grid-column: auto;
+        grid-row: auto;
+        justify-self: auto;
+    }
+
+    .navbar-bilah .navbar-menu {
+        display: none !important;
+    }
+
+    /* Sisi kiri mengambil sisa ruang dan boleh menyusut, lalu logo memotong
+       dirinya sendiri (truncate) alih-alih mendorong tombol keluar layar. */
+    .navbar-kiri {
+        flex: 1 1 0%;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .navbar-logo {
+        min-width: 0;
+        flex: 0 1 auto;
+        overflow: hidden;
+    }
+
+    .navbar-utilitas {
+        flex: 0 0 auto;
+        gap: 0.25rem;
+    }
+}
+
+/* Tombol bahasa memakan satu slot penuh di bilah 56px. Di ponsel ia
+   disembunyikan; pilihannya tetap tersedia di drawer menu. */
+@media (max-width: 1023px) {
+    .race-navbar .navbar-bahasa {
+        display: none;
+    }
+}
+
+/* ═══ RAPIKAN DI PONSEL ═══════════════════════════════════════════════
+   Tombol menu, pencarian, dan keranjang cukup satu baris setinggi bilah;
+   `.btn-icon` bawaan 44×44 terlalu besar untuk header 56px dan membuat logo
+   terdorong keluar. */
+/* ═══ UKURAN TOMBOL IKON DI BILAH ════════════════════════════════════
+ *
+ * Dulu di sini ada `width/height: 40px` mentah untuk bilah navbar. Angka itu
+ * berbeda dari `.btn-icon` bawaan (44px) DAN dari `.btn-icon-sm` (36px),
+ * sehingga navbar memakai ukuran ketiga yang tidak ada di skala mana pun.
+ *
+ * Sekarang bilah memakai varian sah: 44px di layar lebar (target sentuh
+ * nyaman), 36px di ponsel yang ruangnya sempit. Tidak ada angka baru. */
+@media (max-width: 1023px) {
+    .race-navbar .btn-icon {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+    }
+}
+
+@media (max-width: 400px) {
+    /* Layar sangat sempit: tombol bahasa dilepas, ia masih ada di drawer. */
+    .race-navbar .navbar-utilitas a[href*="/lang/"] {
+        display: none;
+    }
+}
+
+/* ═══ SINYAL ══════════════════════════════════════════════════════════
+   Elemen dekoratif di kaki bilah (tiga titik). Di atas hero ia selalu tak
+   terlihat supaya tidak menambah ramai; saat melayang ia hanya garis aksen
+   tipis. */
+.race-navbar__signal {
+    display: none;
+}
+
+.race-navbar.navbar-melayang .race-navbar__signal,
+.race-navbar:not(.navbar-hero) .race-navbar__signal {
+    display: flex;
+    gap: 3px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.race-navbar.navbar-melayang .race-navbar__signal span,
+.race-navbar:not(.navbar-hero) .race-navbar__signal span {
+    flex: 1;
+    height: 100%;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0, 98, 173, 0.55),
+        transparent);
+    opacity: 0.9;
+}

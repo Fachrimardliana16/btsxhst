@@ -1,0 +1,156 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Enums\GrupPengaturan;
+use App\Models\Setting;
+use App\Support\Pengaturan;
+use Illuminate\Database\Seeder;
+
+/**
+ * Seluruh kunci pengaturan pada PRD Bagian 7.4.
+ *
+ * Idempoten: memakai updateOrCreate berdasarkan key, jadi dapat dijalankan
+ * berulang tanpa menggandakan baris.
+ */
+class SettingSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $G = fn (GrupPengaturan $g) => $g->value;
+
+        $baris = [
+            // ── Tab 1: Identitas ──────────────────────────────────────
+            ['site_name', 'Bites Exhaust', $G(GrupPengaturan::Identitas), 'text', 'Nama toko', false, true],
+            ['site_tagline', 'Knalpot presisi, diukur sebelum dipotong.', $G(GrupPengaturan::Identitas), 'text', 'Tagline', false, true],
+            ['site_logo_light', null, $G(GrupPengaturan::Identitas), 'image', 'Logo tema terang', false, true],
+            ['site_logo_dark', null, $G(GrupPengaturan::Identitas), 'image', 'Logo tema gelap', false, true],
+            ['site_favicon', null, $G(GrupPengaturan::Identitas), 'image', 'Favicon', false, true],
+            ['site_description', 'Toko knalpot custom dan racing di Yogyakarta. Full system, slip-on, header, dan muffler untuk motor harian maupun kompetisi.', $G(GrupPengaturan::Identitas), 'textarea', 'Meta description', false, true],
+
+            // ── Tab 2: Kontak dan Lokasi ──────────────────────────────
+            ['whatsapp_number', '628123456789', $G(GrupPengaturan::Kontak), 'text', 'Nomor WhatsApp', false, true],
+            ['whatsapp_message_template', 'Halo Bites Exhaust, saya ingin bertanya tentang knalpot.', $G(GrupPengaturan::Kontak), 'textarea', 'Template sapaan WhatsApp', false, true],
+            ['contact_email', 'halo@bitesexhaust.test', $G(GrupPengaturan::Kontak), 'email', 'Email publik', false, true],
+            ['contact_email_cc', null, $G(GrupPengaturan::Kontak), 'email', 'Email salinan notifikasi', false, true],
+            ['phone_number', '(0274) 123456', $G(GrupPengaturan::Kontak), 'text', 'Telepon kantor', false, true],
+            ['operational_hours', 'Senin - Sabtu, 08.00 - 17.00 WIB', $G(GrupPengaturan::Kontak), 'text', 'Jam operasional', false, true],
+            ['address_full', 'Jl. Ringroad Utara No. 128, Condongcatur, Depok, Sleman, DI Yogyakarta 55283', $G(GrupPengaturan::Kontak), 'textarea', 'Alamat lengkap', false, true],
+            ['maps_embed', null, $G(GrupPengaturan::Kontak), 'textarea', 'Sematan Google Maps', false, true],
+            ['maps_lat', '-7.7626', $G(GrupPengaturan::Kontak), 'number', 'Lintang', false, true],
+            ['maps_lng', '110.3942', $G(GrupPengaturan::Kontak), 'number', 'Bujur', false, true],
+
+            // ── Tab 3: Media Sosial ───────────────────────────────────
+            ['social_instagram', 'https://instagram.com/bitesexhaust', $G(GrupPengaturan::Sosial), 'url', 'Instagram', false, true],
+            ['social_instagram_visible', '1', $G(GrupPengaturan::Sosial), 'boolean', 'Tampilkan Instagram', false, true],
+            ['social_facebook', null, $G(GrupPengaturan::Sosial), 'url', 'Facebook', false, true],
+            ['social_facebook_visible', '0', $G(GrupPengaturan::Sosial), 'boolean', 'Tampilkan Facebook', false, true],
+            ['social_tiktok', 'https://tiktok.com/@bitesexhaust', $G(GrupPengaturan::Sosial), 'url', 'TikTok', false, true],
+            ['social_tiktok_visible', '1', $G(GrupPengaturan::Sosial), 'boolean', 'Tampilkan TikTok', false, true],
+            ['social_youtube', null, $G(GrupPengaturan::Sosial), 'url', 'YouTube', false, true],
+            ['social_youtube_visible', '0', $G(GrupPengaturan::Sosial), 'boolean', 'Tampilkan YouTube', false, true],
+            ['social_shopee', 'https://shopee.co.id/bitesexhaust', $G(GrupPengaturan::Sosial), 'url', 'Shopee', false, true],
+            ['social_shopee_visible', '1', $G(GrupPengaturan::Sosial), 'boolean', 'Tampilkan Shopee', false, true],
+            ['social_tokopedia', null, $G(GrupPengaturan::Sosial), 'url', 'Tokopedia', false, true],
+            ['social_tokopedia_visible', '0', $G(GrupPengaturan::Sosial), 'boolean', 'Tampilkan Tokopedia', false, true],
+
+            // ── Tab 4: Pembayaran ─────────────────────────────────────
+            ['payment_mode', 'manual', $G(GrupPengaturan::Pembayaran), 'select', 'Mode pembayaran', false, false, ['paypal', 'manual', 'both']],
+            ['paypal_client_id', 'SANDBOX-CLIENT-ID-CONTOH', $G(GrupPengaturan::Pembayaran), 'text', 'PayPal Client ID', true, false],
+            ['paypal_client_secret', 'SANDBOX-SECRET-CONTOH', $G(GrupPengaturan::Pembayaran), 'text', 'PayPal Client Secret', true, false],
+            ['paypal_mode', 'sandbox', $G(GrupPengaturan::Pembayaran), 'select', 'Mode PayPal', false, false, ['sandbox', 'live']],
+            ['paypal_currency', 'IDR', $G(GrupPengaturan::Pembayaran), 'select', 'Mata uang', false, false, ['IDR', 'USD']],
+            ['manual_bank_accounts', json_encode([
+                ['bank' => 'BCA', 'number' => '1234567890', 'holder' => 'Bites Exhaust'],
+                ['bank' => 'Mandiri', 'number' => '0987654321', 'holder' => 'Bites Exhaust'],
+            ]), $G(GrupPengaturan::Pembayaran), 'json', 'Rekening transfer manual', true, false],
+            ['tax_percent', '0', $G(GrupPengaturan::Pembayaran), 'number', 'Pajak (%)', false, false],
+            ['shipping_flat_rate', '0', $G(GrupPengaturan::Pembayaran), 'number', 'Ongkir datar', false, false],
+            ['shipping_couriers', json_encode(['JNE', 'J&T Express', 'SiCepat', 'Pos Indonesia']), $G(GrupPengaturan::Pembayaran), 'json', 'Daftar kurir', false, true],
+            ['shipping_courier_default', 'JNE', $G(GrupPengaturan::Pembayaran), 'text', 'Kurir bawaan', false, true],
+            // ── Tab: Email (SMTP) ─────────────────────────────────────
+            //
+            // Konfigurasi pengiriman email diisi DARI PANEL, bukan dari .env.
+            // Alasannya praktis: pemilik toko yang memegang akun emailnya
+            // sendiri, dan meminta ia menyunting berkas .env di server lalu
+            // menjalankan `config:clear` bukan hal yang wajar.
+            //
+            // Nilai di sini MENIMPA .env ketika terisi. Bila dibiarkan kosong,
+            // konfigurasi .env yang dipakai — sehingga pemasangan lama tetap
+            // berjalan tanpa perubahan.
+            ['mail_mailer', 'smtp', $G(GrupPengaturan::Email), 'select', 'Metode pengiriman', false, false, ['smtp', 'log']],
+            ['mail_host', '', $G(GrupPengaturan::Email), 'text', 'SMTP Host', false, false],
+            ['mail_port', '587', $G(GrupPengaturan::Email), 'number', 'SMTP Port', false, false],
+            ['mail_username', '', $G(GrupPengaturan::Email), 'text', 'SMTP Username', false, false],
+            ['mail_password', '', $G(GrupPengaturan::Email), 'text', 'SMTP Password', true, false],
+            ['mail_encryption', 'tls', $G(GrupPengaturan::Email), 'select', 'Enkripsi', false, false, ['tls', 'ssl', 'none']],
+            ['mail_from_address', '', $G(GrupPengaturan::Email), 'text', 'Email pengirim', false, false],
+            ['mail_from_name', '', $G(GrupPengaturan::Email), 'text', 'Nama pengirim', false, false],
+            ['admin_email', '', $G(GrupPengaturan::Email), 'text', 'Email admin (penerima pesanan)', false, false],
+
+
+
+            // ── Tab 5: Notifikasi ─────────────────────────────────────
+            // Sakelar butir lonceng panel. Bawaan 1 = perilaku sebelum tab ini
+            // ada, supaya toko yang sudah berjalan tidak kehilangan notifikasi
+            // hanya karena barisnya baru dibuat.
+            ['notif_item_stok_habis', '1', $G(GrupPengaturan::Notifikasi), 'boolean', 'Stok habis', false, false],
+            ['notif_item_stok_menipis', '1', $G(GrupPengaturan::Notifikasi), 'boolean', 'Stok menipis', false, false],
+            ['notif_item_pesanan_siap_kirim', '1', $G(GrupPengaturan::Notifikasi), 'boolean', 'Pesanan siap dikirim', false, false],
+            ['notif_item_hampir_batal', '1', $G(GrupPengaturan::Notifikasi), 'boolean', 'Pesanan hampir batal otomatis', false, false],
+            ['notif_item_masuk_keranjang', '1', $G(GrupPengaturan::Notifikasi), 'boolean', 'Produk masuk keranjang', false, false],
+
+            // Sakelar pengiriman. Nilainya mengikuti config lama (env) supaya
+            // deployment yang sudah memakai IKK_NOTIF_* tidak berubah.
+            ['notif_kirim_dibuat', '1', $G(GrupPengaturan::Notifikasi), 'boolean', 'Surel/WA saat pesanan dibuat', false, false],
+            ['notif_kirim_dibayar', '1', $G(GrupPengaturan::Notifikasi), 'boolean', 'Surel/WA saat pesanan dibayar', false, false],
+            ['notif_kirim_dikirim', '1', $G(GrupPengaturan::Notifikasi), 'boolean', 'Surel/WA saat pesanan dikirim', false, false],
+            ['notif_push_perangkat', '1', $G(GrupPengaturan::Notifikasi), 'boolean', 'Push ke perangkat admin', false, false],
+            ['notif_push_surel_cadangan', '1', $G(GrupPengaturan::Notifikasi), 'boolean', 'Surel cadangan bila push gagal', false, false],
+
+            // ── Tab 6: Lanjutan ───────────────────────────────────────
+            ['maintenance_mode', '0', $G(GrupPengaturan::Lanjutan), 'boolean', 'Mode pemeliharaan', false, true],
+            ['maintenance_message', 'Situs sedang dalam pemeliharaan singkat.', $G(GrupPengaturan::Lanjutan), 'textarea', 'Pesan pemeliharaan', false, true],
+            ['analytics_id', null, $G(GrupPengaturan::Lanjutan), 'text', 'ID Analytics', false, true],
+            ['meta_pixel_id', null, $G(GrupPengaturan::Lanjutan), 'text', 'ID Meta Pixel', false, true],
+            ['order_prefix', 'IK', $G(GrupPengaturan::Lanjutan), 'text', 'Prefiks nomor pesanan', false, true],
+            ['low_stock_threshold', '3', $G(GrupPengaturan::Lanjutan), 'number', 'Ambang stok menipis', false, true],
+            ['enable_pwa', '0', $G(GrupPengaturan::Lanjutan), 'boolean', 'Aktifkan PWA', false, true],
+            ['currency_symbol', 'Rp', $G(GrupPengaturan::Lanjutan), 'text', 'Simbol mata uang', false, true],
+            ['date_format', 'd M Y', $G(GrupPengaturan::Lanjutan), 'text', 'Format tanggal', false, true],
+        ];
+
+        foreach ($baris as $b) {
+            [$key, $value, $group, $type, $label, $encrypted, $public] = $b;
+            $options = $b[7] ?? null;
+
+            // is_encrypted HARUS diisi sebelum value.
+            //
+            // Cast NilaiPengaturan memutuskan enkripsi dengan membaca
+            // $attributes['is_encrypted']. Laravel mengisi atribut sesuai urutan
+            // larik, jadi bila `value` lebih dulu, cast belum melihat tanda
+            // enkripsi dan nilainya tersimpan sebagai teks biasa — sementara
+            // `is_encrypted` tetap tercatat true. Akibatnya baris itu tidak
+            // dapat dibaca lagi: cast mencoba mendekripsi teks biasa, gagal,
+            // lalu mengembalikan null. Rekening transfer tampak kosong padahal
+            // isinya ada di basis data.
+            $setting = Setting::query()->firstOrNew(['key' => $key]);
+
+            $setting->fill([
+                'group_name' => $group,
+                'type' => $type,
+                'label' => $label,
+                'options_json' => $options,
+                'is_encrypted' => $encrypted,
+                'is_public' => $public,
+            ]);
+
+            $setting->value = $value;
+            $setting->save();
+        }
+
+        Pengaturan::lupakan();
+
+        $this->command?->info('SettingSeeder: '.count($baris).' kunci pengaturan.');
+    }
+}

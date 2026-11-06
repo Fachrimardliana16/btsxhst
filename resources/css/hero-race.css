@@ -1,0 +1,548 @@
+/* ═══ HERO BERANDA ══════════════════════════════════════════════════════
+
+   Hero ini sengaja TIPIS CSS-nya. Tata letak (flex-col, items-center,
+   justify-center, padding responsif, breakpoint md:/lg:) dikerjakan utility
+   Tailwind langsung di Blade. Yang tersisa di sini hanya tiga hal yang tidak
+   bisa dinyatakan utility tanpa jadi panjang dan sulit dibaca:
+
+     1. tinggi hero satu layar;
+     2. lapisan gelap di atas gambar (gradasi bertingkat);
+     3. animasi judul per baris.
+
+   Catatan lama yang tidak lagi berlaku: nama toko raksasa bergaris tepi
+   (`.hero-race__outline`), widget statistik melingkar, dan menu samping
+   buatan hero — ketiganya sudah dihapus dari Blade DAN dari berkas ini,
+   supaya tidak ada CSS yatim yang membingungkan saat dibaca nanti. */
+
+.hero-race {
+    /* Warna hero mengikuti token tema (lihat --c-hero-* di tokens.css),
+       supaya palet biru blueprint benar-benar terlihat di beranda dan hero
+       tidak lagi memaku warna gelapnya sendiri. */
+    --hero-tinta: var(--c-hero-tinta, #fff);
+    --hero-redup: var(--c-hero-redup, rgb(255 255 255 / .78));
+    --hero-garis: rgb(255 255 255 / .18);
+    --hero-aksen: var(--c-accent, #0062ad);
+    background: var(--c-hero-bg, #0a2540);
+    color: var(--hero-tinta);
+
+    /* SATU LAYAR PENUH, dikurangi bilah yang benar-benar mengambil ruang.
+       dvh lebih dulu (iOS/Android: bilah alamat menyusut saat digulir), svh
+       sebagai padanan untuk peramban yang baru mengenalnya. `min-height`
+       kecil menjaga hero tetap berguna di layar sangat pendek (mode lanskap
+       ponsel) — di sana isinya akan digulir, bukan dipaksa muat. */
+    height: calc(100dvh - var(--h-topbar) - var(--h-navbawah));
+    height: calc(100svh - var(--h-topbar) - var(--h-navbawah));
+    min-height: 20rem;
+}
+
+/* ── Lapisan gelap di atas gambar ────────────────────────────────────────
+   Tiga gradasi bekerja bersama:
+
+     atas    gelap, karena di situ ada baris "HOME / ID / cari"
+     tengah  paling terang, supaya produk di tengah gambar tetap terlihat
+     bawah   gelap lagi, karena di situ ada deskripsi dan kendali slide
+
+   Ditambah vignette radial di tepi supaya mata jatuh ke tengah. */
+.hero-race__selubung {
+    background:
+        linear-gradient(to bottom,
+            rgb(5 20 35 / .82) 0%,
+            rgb(5 20 35 / .46) 22%,
+            rgb(5 20 35 / .24) 46%,
+            rgb(5 20 35 / .70) 78%,
+            rgb(5 20 35 / .95) 100%),
+        radial-gradient(75% 60% at 50% 45%, transparent 38%, rgb(5 20 35 / .55) 100%);
+}
+
+/* ── Slide ───────────────────────────────────────────────────────────────
+   Ditukar lewat opacity, bukan dengan mengganti sumber gambar: gambar yang
+   belum tampil sudah termuat (lazy), jadi transisinya tidak berkedip. */
+.hero-race__slide {
+    opacity: 0;
+    transition: opacity 700ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.hero-race__slide[data-aktif='true'] {
+    opacity: 1;
+}
+
+/* Siluet pengganti saat toko belum punya slide. */
+.hero-race__kosong {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    width: min(80%, 640px);
+    color: rgb(255 255 255 / .2);
+}
+
+/* ── Judul ───────────────────────────────────────────────────────────────
+   Ukuran memakai clamp supaya satu baris tetap muat selebar layar tanpa
+   harus dihitung ulang per breakpoint. */
+.hero-race__judul {
+    margin: 0;
+    max-width: 22ch;
+    /* Di desktop judul dan deskripsi menempel ke KANAN bidang hero. Rata
+       kanan dipilih karena gambar produk di hero biasanya berat di kiri
+       (siluet knalpot), dan teks rata kanan mengisi sisi yang kosong tanpa
+       menutupi produk. Di mobile tetap rata tengah — lihat media query di
+       bawah — karena kolomnya terlalu sempit untuk rata kanan. */
+    text-align: right;
+    justify-items: end;
+    display: grid;
+    gap: .06em;
+    justify-items: end;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2rem, 6.5vw, 5.5rem);
+    line-height: .95;
+    letter-spacing: -.02em;
+    text-transform: uppercase;
+    text-wrap: balance;
+    color: var(--hero-tinta);
+    /* Huruf tipis di atas foto terang akan tenggelam tanpa bayangan ini. */
+    text-shadow: 0 2px 28px rgb(0 0 0 / .6);
+}
+
+.hero-race__baris {
+    display: block;
+    overflow: hidden;
+}
+
+.hero-race__baris > span {
+    display: block;
+}
+
+.hero-race__bawah-judul {
+    margin: 0;
+    font: 500 .625rem/1 var(--font-sans);
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / .5);
+}
+
+/* ── Animasi tulis, sekali jalan ─────────────────────────────────────────
+   Durasi 1,4 detik per baris dengan jeda 0,15 detik. `backwards` (BUKAN
+   `both`): setelah animasi selesai elemen kembali ke gaya dasarnya, yaitu
+   `opacity: 1`. Dengan `both`, keadaan terakhir dikunci permanen dan bila
+   animasi sempat gagal (durasi 0 karena reduced-motion, elemen belum
+   ter-render) teks bisa tertinggal samar — persis keluhan "tidak sampai
+   1 detik lalu samar".
+
+   Tanpa `prefers-reduced-motion: no-preference`, blok ini tidak berjalan
+   dan judul langsung tampil penuh. */
+@keyframes hero-tulis {
+    from {
+        opacity: 0;
+        transform: translateY(105%);
+        filter: blur(6px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+        filter: blur(0);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .hero-race__judul .hero-race__baris > span {
+        animation: hero-tulis 1400ms cubic-bezier(.16, 1, .3, 1) backwards;
+        animation-delay: calc(var(--tulis-ke, 0) * 150ms + 180ms);
+    }
+}
+
+/* ── Teks kecil di atas gambar ───────────────────────────────────────────
+   Warna lokal, bukan token tema: hero ini selalu gelap, terlepas dari tema
+   situs, karena gambar di atas latar terang terbaca jauh lebih buruk. */
+.hero-race__pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    min-height: 2.25rem;
+    padding: 0 .7rem;
+    border: 1px solid var(--hero-garis);
+    background: rgb(255 255 255 / .03);
+    color: var(--hero-tinta);
+    font: 500 .6875rem/1 var(--font-sans);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.hero-race__pill:hover {
+    background: rgb(255 255 255 / .1);
+    border-color: rgb(255 255 255 / .4);
+}
+
+/* ── Deskripsi ───────────────────────────────────────────────────────────
+   `max-w-xl` dan `text-center` dipasang di Blade; di sini hanya gaya huruf. */
+.hero-race__deskripsi {
+    font: 500 clamp(.625rem, .8vw, .75rem)/1.7 var(--font-sans);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--hero-redup);
+    text-wrap: pretty;
+}
+
+/* ── Kendali slide ───────────────────────────────────────────────────────
+   Angka slide dan penanda batang, di kaki hero. Angka memakai huruf display
+   agar terbaca sebagai "posisi", bukan sebagai teks kecil biasa. */
+.hero-race__hitung {
+    font: 500 .625rem/1 var(--font-sans);
+    letter-spacing: .12em;
+    color: rgb(255 255 255 / .45);
+}
+
+.hero-race__hitung b {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    color: var(--hero-tinta);
+}
+
+/* Sasaran sentuh 44px: tombol batangnya kecil, tetapi area pencetnya
+   selebar dan setinggi jari. */
+.hero-race__geser button {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.hero-race__geser button span {
+    display: block;
+    width: .5rem;
+    height: 2px;
+    background: rgb(255 255 255 / .35);
+    transition: width 220ms ease, background-color 220ms ease;
+}
+
+.hero-race__geser button[aria-current='true'] span {
+    width: 1.6rem;
+    background: var(--hero-aksen);
+}
+
+/* ── Ponsel: judul diturunkan ukurannya dan gambar diberi ruang ──────────
+   Di layar sempit, judul besar + deskripsi + kaki bisa menutupi seluruh
+   gambar. Yang dikecilkan judulnya, bukan gambarnya: judul sudah terwakili
+   oleh ukuran clamp, dan deskripsi dipendekkan lewat max-width di Blade. */
+@media (max-width: 767px) {
+    .hero-race__judul {
+        font-size: clamp(1.75rem, 9vw, 2.75rem);
+        max-width: 16ch;
+        /* Di ponsel rata tengah: judul rata kanan dengan kolom sempit
+           membuat baris terakhir menggantung aneh di kiri. */
+        text-align: center;
+        justify-items: center;
+    }
+
+    .hero-race__deskripsi {
+        line-height: 1.6;
+    }
+}
+
+/* ── Animasi dekoratif ───────────────────────────────────────────────────
+   Hanya cahaya latar; tidak ada yang bergerak di dekat teks. */
+@keyframes hero-cahaya {
+    0%, 100% { opacity: .85; transform: scale(1); }
+    50%      { opacity: 1;  transform: scale(1.04); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .hero-race__selubung::after {
+        content: '';
+        position: absolute;
+        inset: auto 0 -20% 0;
+        height: 70%;
+        background: radial-gradient(closest-side, rgb(255 255 255 / .09), transparent 72%);
+        animation: hero-cahaya 9s ease-in-out infinite;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-race *,
+    .hero-race *::before,
+    .hero-race *::after {
+        animation: none !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+/* Catatan: aturan jarak-samping-sidebar dihapus bersama sidebar itu sendiri.
+   Isi hero sekarang memakai padding simetris dari utility Tailwind di Blade,
+   jadi tidak ada lagi kolom kiri yang harus dikompensasi. */
+
+/* ═══ RITME SECTION BERANDA ═════════════════════════════════════════════
+
+   Sebelum ini semua section berbagi latar yang sama (transparan di atas
+   --c-bg), sehingga halaman terbaca sebagai satu pita panjang tanpa jeda —
+   keluhan "masih sama saja, hanya beda warna" berasal dari sini.
+
+   Sekarang setiap blok punya permukaan sendiri, dan urutannya berselang:
+
+     hero        biru gelap (token --c-hero-bg)
+     garage      kartu melayang di atas latar halaman
+     kategori    --c-surface-sunken   (lebih gelap dari latar)
+     produk      --c-surface          (putih/terang)
+     galeri      gelap (biru tua)     → penutup visual sebelum CTA
+     cta         karbon gelap
+     faq         latar halaman
+
+   Jadi mata punya penanda: setiap kali warna berganti, itu bagian baru. */
+
+.kategori-blok {
+    background: var(--c-surface-sunken);
+    border-block: 1px solid var(--c-line-soft);
+}
+
+.produk-blok {
+    background: var(--c-surface);
+}
+
+.produk-blok + .galeri-blok {
+    border-top: 1px solid var(--c-line-soft);
+}
+
+.galeri-blok {
+    background: var(--c-hero-bg, #0a2540);
+    color: #f4f7fa;
+}
+
+.galeri-blok .section-heading,
+.galeri-blok h2 {
+    color: #fff;
+}
+
+.galeri-blok .part-no,
+.galeri-blok p {
+    color: rgb(255 255 255 / .72);
+}
+
+/* Kartu galeri: rasio tetap supaya grid asimetris tidak menyimpang, dan
+   perbesaran hanya pada gambar di dalamnya. */
+.galeri-blok .aspect-\[4\/3\] img {
+    height: 100%;
+}
+
+
+/* ═══ PERBAIKAN MOBILE & TABLET ═════════════════════════════════════════
+
+   Hasil audit geometri pada 390px dan 768px menemukan tiga hal:
+
+   1. LUAPAN GAMBAR 1600px di tablet.
+      <picture class="block h-full w-full"> masih selebar intrinsik gambar
+      karena induknya (.hero-race__slide) `position:absolute; inset:0` tanpa
+      `width` eksplisit. Di desktop tertutup oleh lebar viewport, di tablet
+      (768px) terbaca 1608px. Perbaikannya: paksa `max-width:100%` dan
+      `min-width:0` pada rantai induk→anak.
+
+   2. TARGET SENTUH < 44px.
+      Tombol utilitas hero 40×36, tombol tanda/slide 24×44, tombol drawer
+      31×44. Di ponsel itu terlalu kecil untuk jempol. Semua dinaikkan ke
+      minimum 44×44 tanpa mengubah tampilannya (padding, bukan ukuran ikon).
+
+   3. TICKER TERPOTONG.
+      Kalimat promo dipotong `truncate` di 390px. Diganti dua baris penuh:
+      teks promo harus terbaca utuh, bukan berakhir dengan elipsis. */
+
+/* 1 ── Luapan gambar */
+.hero-race__slide,
+.hero-race__slide picture,
+.hero-race__slide img {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* 2 ── Target sentuh */
+@media (max-width: 1023px) {
+    .hero-race__pill {
+        min-width: 2.75rem;   /* 44px */
+        min-height: 2.75rem;
+    }
+
+    .hero-race__geser button {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+
+    .hero-race__tombol-garis,
+    .hero-race__cta > a {
+        min-height: 3rem;     /* 48px untuk CTA utama */
+    }
+
+    /* Tombol menu drawer: ikon 20px di dalam kotak 44px. */
+    .btn-icon {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+    }
+}
+
+/* 3 ── Ticker promo: dua baris, tanpa elipsis */
+.promo-ticker__teks {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.35;
+    display: block;
+}
+
+@media (max-width: 479px) {
+    .promo-ticker__teks {
+        font-size: 0.625rem;
+        letter-spacing: 0.06em;
+    }
+}
+
+/* ═══ TABLET (768–1023px): komposisi khusus ═════════════════════════════
+   Di lebar ini grid 2 kolom membuat kartu terlalu lebar dan hero terlalu
+   tinggi relatif layar. Dua penyesuaian:
+
+   - hero: teks maksimal 34rem supaya headline tidak melebar ke tepi;
+   - kategori & produk: 3 kolom, bukan 2 (2 kolom di 768px membuat kartu
+     katalog selebar 350px — hanya terlihat dua kartu per baris dan
+     halaman memanjang). */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .hero-race__judul,
+    .hero-race__sub {
+        max-width: 34rem;
+    }
+
+    .kategori-blok .container-page > .grid,
+    .produk-blok .container-page > .grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+
+/* Tombol suka/ikon di kartu produk (partial suka-produk) dinaikkan dari 36px
+   ke 44px lewat utility di Blade (`h-11 w-11`), bukan di sini: ukurannya
+   melekat pada komponen itu, dan mengubahnya di CSS global akan ikut
+   mengubah ikon lain yang sengaja lebih kecil. */
+
+/* ═══ TAUTAN FOOTER ═════════════════════════════════════════════════════
+
+   Di ponsel, tautan footer tingginya hanya 18–20px — terlalu rapat untuk
+   jempol (audit target sentuh menandai 7 tautan). Di sini tingginya dinaikkan
+   ke 44px lewat padding vertikal, sementara jarak antar-item dikurangi supaya
+   total tinggi kolom footer TIDAK bertambah.
+
+   Hanya berlaku di bawah 640px; di layar lebih besar jarak biasa dipakai
+   karena kursor tetikus tidak memerlukan sasaran sebesar jempol. */
+@media (max-width: 639px) {
+    .footer-tautan {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding-block: .25rem;
+    }
+}
+
+/* Tombol CTA di halaman selain hero (mis. empty state katalog) memakai
+   `.btn` bawaan dengan min-height 44px — di sini 36px karena `btn-sm` atau
+   override lokal. Untuk ponsel, jangan sampai turun di bawah target jempol. */
+@media (max-width: 639px) {
+    .btn:not(.btn-sm) {
+        min-height: 44px;
+    }
+}
+
+/* ═══ KATEGORI BERDERET ═════════════════════════════════════════════════
+   Grid kotak seragam dibuang: setiap kategori satu baris penuh dengan nomor
+   besar, nama besar, dan panah. Hover menggeser barisnya dan menyalakan
+   garis aksen di kiri — bahasa visual yang sama dengan menu navigasi, jadi
+   tidak terasa seperti papan tombol. */
+.kategori-baris {
+    position: relative;
+    border-bottom: 1px solid var(--c-line-soft);
+    transition: background-color 200ms ease;
+}
+
+.kategori-baris::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--c-accent);
+    transform: scaleY(0);
+    transform-origin: center;
+    transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.kategori-baris:hover {
+    background: color-mix(in srgb, var(--c-accent) 4%, transparent);
+}
+
+.kategori-baris:hover::before {
+    transform: scaleY(1);
+}
+
+/* ═══ GALERI (dulu "editorial", sekarang grid seragam) ══════════════════
+   Aturan .galeri-editorial DIHAPUS. Markup-nya sudah diganti grid Tailwind
+   biasa (grid-cols-2 / lg:grid-cols-3, rasio persegi) di
+   partials/front/community-showcase.blade.php.
+
+   Alasan dihapus, bukan sekadar ditinggalkan: pola lama membuat satu foto
+   besar 2 baris + empat kecil berbeda ukuran. Pada lima foto hasilnya selalu
+   ada sel kosong, dan grid terlihat "hampir rapi" — lebih mengganggu daripada
+   grid seragam yang jelas. Dihapus supaya tidak ada CSS mati yang dipakai
+   ulang tanpa sengaja. */
+
+/* ═══ CTA "BELUM YAKIN UKURAN?" ═════════════════════════════════════════
+   Dulu: pita karbon gelap dengan judul kiri + dua tombol kanan. Terlalu
+   mirip banner promosi. Sekarang: panel terang berbingkai dengan nomor
+   besar sebagai latar, satu pertanyaan, dan dua aksi yang hierarkinya jelas
+   (utama di kiri, sekunder sebagai tautan bergaris bawah, bukan tombol
+   kedua yang setara). */
+.cta-ukur {
+    position: relative;
+    overflow: hidden;
+    background: var(--c-surface);
+    border: 1px solid var(--c-line-soft);
+    color: var(--c-text);
+}
+
+.cta-ukur__nomor {
+    position: absolute;
+    right: -.5rem;
+    bottom: -2.5rem;
+    font-family: var(--font-display);
+    font-size: clamp(7rem, 18vw, 13rem);
+    font-weight: 700;
+    line-height: .8;
+    letter-spacing: -.04em;
+    color: color-mix(in srgb, var(--c-accent) 8%, transparent);
+    pointer-events: none;
+    user-select: none;
+}
+
+.cta-ukur__tautan {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .875rem;
+    font-weight: 600;
+    color: var(--c-text);
+    border-bottom: 1px solid var(--c-line);
+    padding-bottom: 2px;
+    transition: border-color 160ms ease, color 160ms ease;
+}
+
+.cta-ukur__tautan:hover {
+    color: var(--c-accent);
+    border-color: var(--c-accent);
+}
+
+
+/* ═══ HERO FULL: CHEVRON CONTROLS ═══ */
+.hero-full button:focus-visible {
+    outline: 2px solid var(--c-promo);
+    outline-offset: 2px;
+}

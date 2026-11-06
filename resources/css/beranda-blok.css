@@ -1,0 +1,487 @@
+/* ═══ HERO SPLIT (struktur acuan wireframe) ═════════════════════════════
+   Kiri teks, kanan kartu gambar. Di ponsel urutannya dibalik lewat
+   `order` di Blade: gambar dulu, teks di bawahnya. */
+.hero-split {
+    background: var(--c-bg);
+    border-bottom: 1px solid var(--c-line-soft);
+}
+
+.hero-split__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    font: 600 .6875rem/1 var(--font-sans);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--c-accent);
+}
+
+.hero-split__eyebrow::before {
+    content: '';
+    width: 1.75rem;
+    height: 2px;
+    background: var(--c-accent);
+}
+
+.hero-split__judul {
+    margin: 1rem 0 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 4rem);
+    line-height: 1.02;
+    letter-spacing: -.03em;
+    color: var(--c-text);
+    text-wrap: balance;
+}
+
+.hero-split__sub {
+    margin-top: 1rem;
+    max-width: 34rem;
+    font-size: clamp(.9375rem, 1.3vw, 1.0625rem);
+    line-height: 1.65;
+    color: var(--c-text-muted);
+    text-wrap: pretty;
+}
+
+/* Tombol pil — sesuai spesifikasi acuan (sudut penuh). */
+.hero-split__tombol {
+    border-radius: 999px;
+    min-height: 48px;
+    padding-inline: 1.5rem;
+}
+
+/* Deret badge fitur: tiga pil, menumpuk di ponsel. */
+.hero-split__fitur {
+    display: grid;
+    gap: .6rem;
+    margin: 2.25rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (min-width: 640px) {
+    .hero-split__fitur {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .75rem;
+    }
+}
+
+.hero-split__fitur li {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    padding: .7rem .85rem;
+    border: 1px solid var(--c-line-soft);
+    border-radius: 999px;
+    background: var(--c-surface);
+}
+
+.hero-split__fitur-ikon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--c-accent) 12%, transparent);
+    color: var(--c-accent);
+}
+
+.hero-split__fitur b {
+    display: block;
+    font-size: .75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--c-text);
+}
+
+.hero-split__fitur small {
+    display: block;
+    margin-top: .15rem;
+    font-size: .625rem;
+    line-height: 1.3;
+    color: var(--c-text-muted);
+}
+
+/* Kartu gambar: sudut membulat besar + bayangan lembut. */
+.hero-split__bingkai {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--c-surface-sunken);
+    box-shadow: 0 4px 20px rgb(0 0 0 / .05);
+    aspect-ratio: 4 / 3;
+}
+
+@media (min-width: 1024px) {
+    .hero-split__bingkai {
+        aspect-ratio: 5 / 4;
+    }
+}
+
+.hero-split__gambar {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 700ms cubic-bezier(.4, 0, .2, 1);
+}
+
+.hero-split__gambar[data-aktif='true'] {
+    opacity: 1;
+}
+
+.hero-split__gambar img,
+.hero-split__gambar picture {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+}
+
+.hero-split__kosong {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    color: var(--c-text-dim);
+}
+
+.hero-split__kosong svg {
+    width: min(70%, 420px);
+}
+
+/* Kartu kendali slide melayang di bawah kartu gambar. */
+.hero-split__kendali {
+    position: absolute;
+    left: 50%;
+    bottom: .75rem;
+    translate: -50% 0;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .4rem .6rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 12px rgb(0 0 0 / .12);
+}
+
+.hero-split__hitung {
+    font: 500 .625rem/1 var(--font-sans);
+    color: var(--c-text-muted);
+}
+
+.hero-split__hitung b {
+    font-family: var(--font-display);
+    font-size: .9375rem;
+    color: var(--c-text);
+}
+
+.hero-split__geser button {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.hero-split__geser button span {
+    display: block;
+    width: .4rem;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--c-line);
+    transition: width 200ms ease, background-color 200ms ease;
+}
+
+.hero-split__geser button[aria-current='true'] span {
+    width: 1.1rem;
+    background: var(--c-accent);
+}
+
+.hero-split__jeda {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--c-surface-sunken);
+    color: var(--c-text);
+    cursor: pointer;
+}
+
+/* ═══ LISTING BERTAB ════════════════════════════════════════════════════ */
+.listing-blok {
+    background: var(--c-surface);
+}
+
+.listing-blok__semua {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .875rem;
+    font-weight: 600;
+    color: var(--c-accent);
+    border-bottom: 1px solid transparent;
+    transition: border-color 160ms ease;
+}
+
+.listing-blok__semua:hover {
+    border-color: var(--c-accent);
+}
+
+.listing-tab {
+    display: flex;
+    gap: .5rem;
+    margin-top: 1.75rem;
+    padding-bottom: .25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.listing-tab::-webkit-scrollbar {
+    display: none;
+}
+
+.listing-tab__item {
+    flex: none;
+    padding: .55rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--c-line-soft);
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--c-text-muted);
+    white-space: nowrap;
+    transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.listing-tab__item:hover {
+    border-color: var(--c-line);
+    color: var(--c-text);
+}
+
+.listing-tab__item.is-aktif {
+    background: var(--c-accent);
+    border-color: var(--c-accent);
+    color: var(--c-accent-fg);
+}
+
+/* ═══ LANGKAH PEMESANAN ═════════════════════════════════════════════════ */
+.langkah-blok {
+    background: var(--c-surface-sunken);
+}
+
+.langkah-daftar {
+    position: relative;
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.langkah-item {
+    position: relative;
+    display: flex;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    border-radius: 16px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-line-soft);
+}
+
+/* Garis penghubung antar langkah. */
+.langkah-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 2.05rem;
+    top: 100%;
+    height: 1rem;
+    width: 1px;
+    background: var(--c-line);
+}
+
+.langkah-item__nomor {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 999px;
+    background: var(--c-accent);
+    color: var(--c-accent-fg);
+    font: 700 .8125rem/1 var(--font-display);
+}
+
+.langkah-item__judul {
+    font-size: .6875rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--c-text-dim);
+}
+
+.langkah-item__isi {
+    margin-top: .25rem;
+    font-size: .9375rem;
+    line-height: 1.55;
+    color: var(--c-text);
+}
+
+/* ═══ STATISTIK + SOROTAN LOKASI ════════════════════════════════════════ */
+.stats-daftar {
+    display: grid;
+    gap: .75rem;
+    margin: 0;
+}
+
+.stats-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: .85rem;
+    border-bottom: 1px solid var(--c-line-soft);
+}
+
+.stats-item__label {
+    font-size: .8125rem;
+    color: var(--c-text-muted);
+}
+
+.stats-item__nilai {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: var(--c-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.stats-kartu {
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--c-line-soft);
+    background: var(--c-surface);
+    box-shadow: 0 4px 20px rgb(0 0 0 / .05);
+}
+
+.stats-kartu__peta {
+    margin-top: 1rem;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    background: var(--c-surface-sunken);
+}
+
+.stats-kartu__peta iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.stats-kartu__peta--kosong {
+    display: grid;
+    place-items: center;
+    gap: .5rem;
+    color: var(--c-text-dim);
+    font-size: .75rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+/* ═══ LAYANAN BENGKEL ═══════════════════════════════════════════════════ */
+.layanan-blok {
+    background: var(--c-surface);
+}
+
+.layanan-kartu {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--c-line-soft);
+    background: var(--c-surface);
+    box-shadow: 0 4px 20px rgb(0 0 0 / .05);
+    transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.layanan-kartu:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgb(0 0 0 / .08);
+}
+
+/* Kartu pertama gelap — penanda layanan utama, mengikuti acuan. */
+.layanan-kartu--utama {
+    background: var(--c-hero-bg, #0a2540);
+    border-color: transparent;
+    color: #f2f7fb;
+}
+
+.layanan-kartu--utama .layanan-kartu__judul {
+    color: #fff;
+}
+
+.layanan-kartu--utama .layanan-kartu__isi {
+    color: rgb(255 255 255 / .74);
+}
+
+.layanan-kartu--utama .layanan-kartu__tautan {
+    color: var(--c-promo, #fff100);
+}
+
+.layanan-kartu__nomor {
+    font-family: var(--font-display);
+    font-size: .8125rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: var(--c-accent);
+}
+
+.layanan-kartu--utama .layanan-kartu__nomor {
+    color: var(--c-promo, #fff100);
+}
+
+.layanan-kartu__judul {
+    margin-top: .5rem;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: var(--c-text);
+}
+
+.layanan-kartu__isi {
+    margin-top: .5rem;
+    flex: 1 1 auto;
+    font-size: .875rem;
+    line-height: 1.6;
+    color: var(--c-text-muted);
+}
+
+.layanan-kartu__tautan {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    margin-top: 1.25rem;
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--c-accent);
+}
+
+/* ═══ PONSEL: semua grid jadi satu kolom ════════════════════════════════
+   Spesifikasi acuan bagian 3. Grid yang sudah memakai utility Tailwind
+   (grid-cols-1 sm:grid-cols-2 lg:grid-cols-3) tidak perlu diubah; aturan di
+   sini hanya menjaga komponen berbasis CSS di file ini. */
+@media (max-width: 767px) {
+    .hero-split__fitur {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-item__nilai {
+        font-size: 1.75rem;
+    }
+}

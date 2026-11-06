@@ -1,0 +1,211 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\TipeKupon;
+use App\Models\Concerns\PunyaUlid;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Coupon extends Model
+{
+    use HasFactory, PunyaUlid;
+
+    protected $fillable = [
+        'code',
+        'type',
+        'value',
+        'min_spend',
+        'max_discount',
+        'quota',
+        'used_count',
+        'starts_at',
+        'ends_at',
+        'is_active',
+        'kol_nama',
+        'kol_slug',
+        'kol_kontak',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'type' => TipeKupon::class,
+            'value' => 'decimal:2',
+            'min_spend' => 'decimal:2',
+            'max_discount' => \App\Casts\BatasAtauTangga::class,
+            'quota' => 'integer',
+            'used_count' => 'integer',
+            'starts_at' => 'datetime',
+            'ends_at' => 'datetime',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    /** @return HasMany<Order, $this> */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /** Kode selalu dibandingkan dalam huruf besar tanpa spasi tepi. */
+    public function setCodeAttribute(?string $value): void
+    {
+        $this->attributes['code'] = $value === null
+            ? null
+            : mb_strtoupper(trim($value));
+    }
+
+    /**
+     * Slug KOL: huruf kecil, tanpa spasi, aman dipakai di tautan.
+     *
+     * Dibentuk dari nama KOL bila slug dikosongkan. Tanpa ini, setiap KOL harus
+     * mengingat format slug sendiri, dan "Budi Santoso" bisa jadi budi-santoso,
+     * budi_santoso, atau BUDI — lalu tautan berbagi tidak cocok dengan yang
+     * tercatat di laporan.
+     */
+    public function setKolSlugAttribute(?string $value): void
+    {
+        $slug = $value !== null ? trim($value) : '';
+
+        if ($slug === '' && $this->kol_nama !== null) {
+            $slug = \Illuminate\Support\Str::slug($this->kol_nama);
+        }
+
+        $this->attributes['kol_slug'] = $slug === '' ? null : $slug;
+    }
+
+    /**
+     * Nama KOL ikut menjaga slug.
+     *
+     * Menyimpan hanya `kol_nama` (mis. lewat updateOrCreate, seeder, atau
+     * tinker) tidak memanggil mutator slug sama sekali — slug tetap NULL dan
+     * kupon yang sudah punya pemilik tidak punya tautan berbagi. Gejalanya
+     * sunyi: kupon tampak normal, laporan performa hanya kehilangan satu
+     * baris tanpa pesan kesalahan.
+     */
+    public function setKolNamaAttribute(?string $value): void
+    {
+        $this->attributes['kol_nama'] = $value === null ? null : trim($value);
+
+        // Nama dihapus berarti kupon kembali menjadi kupon biasa. Slug yang
+        // tertinggal akan membuatnya tetap terhitung sebagai kupon berbagi.
+        if ($this->attributes['kol_nama'] === null || $this->attributes['kol_nama'] === '') {
+            $this->attributes['kol_slug'] = null;
+        } elseif (blank($this->attributes['kol_slug'] ?? null)) {
+            $this->attributes['kol_slug'] = \Illuminate\Support\Str::slug($this->attributes['kol_nama']);
+        }
+    }
+
+    /** Apakah kupon ini kupon berbagi milik seorang KOL. */
+    public function punyaKol(): bool
+    {
+        return filled($this->kol_slug);
+    }
+
+    /**
+     * Tautan berbagi untuk KOL.
+     *
+     * Menunjuk halaman katalog dengan kode kupon sudah terpasang, supaya KOL
+     * cukup membagikan satu alamat dan pembeli tidak perlu mengetik kodenya.
+     */
+    public function tautanKol(): ?string
+    {
+        if (! $this->punyaKol()) {
+            return null;
+        }
+
+        return route('front.home', ['kupon' => $this->code]);
+    }
+
+    public function scopeKode($query, string $kode)
+    {
+        return $query->where('code', mb_strtoupper(trim($kode)));
+    }
+
+    public function scopeBerlaku(Builder $query): Builder
+    {
+        return $query->where('is_active', true)
+            ->where(fn (Builder $q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+            ->where(fn (Builder $q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', now()));
+    }
+
+    /** Alasan kupon tidak dapat dipakai, atau null bila sah. */
+    public function alasanTidakSah(float $subtotal, float $ongkir = 0.0): ?string
+    {
+        if (! $this->is_active) {
+            return 'Kupon tidak aktif.';
+        }
+
+        if ($this->starts_at && $this->starts_at->isFuture()) {
+            return 'Kupon belum berlaku.';
+        }
+
+        if ($this->ends_at && $this->ends_at->isPast()) {
+            return 'Kupon sudah kedaluwarsa.';
+        }
+
+        if ($this->quota !== null && $this->used_count >= $this->quota) {
+            return 'Kuota kupon sudah habis.';
+        }
+
+        if ((float) $this->min_spend > 0 && $subtotal < (float) $this->min_spend) {
+            return 'Minimal belanja '.rupiah($this->min_spend).' untuk memakai kupon ini.';
+        }
+
+        return null;
+    }
+
+    public function hitungPotongan(float $subtotal, float $ongkir = 0.0): float
+    {
+        // Kupon bertingkat (Fase 2: P2-06) memakai tangga sendiri: potongan
+        // mengikuti besar belanja, bukan satu nilai tetap. Diperiksa lebih
+        // dulu supaya nilai di kolom `value` tidak ikut dipakai.
+        $bertingkat = \App\Support\KuponLanjutan::potonganBertingkat($this, $subtotal);
+
+        if ($bertingkat !== null) {
+            return $bertingkat;
+        }
+
+        return $this->type->hitung(
+            $subtotal,
+            (float) $this->value,
+            $this->max_discountBiasa(),
+            $ongkir,
+        );
+    }
+
+    /**
+     * Batas potongan biasa, atau null bila kolomnya berisi tangga bertingkat.
+     *
+     * Satu kolom dipakai dua cara: angka untuk batas potongan biasa, larik JSON
+     * untuk tangga (Fase 2: P2-06). Cast yang membaca keduanya adalah
+     * App\Casts\BatasAtauTangga.
+     */
+    public function max_discountBiasa(): ?float
+    {
+        $nilai = $this->max_discount;
+
+        if ($nilai === null || is_array($nilai)) {
+            return null;
+        }
+
+        return (float) $nilai;
+    }
+
+    public function potonganOngkir(float $subtotal, float $ongkir): float
+    {
+        return $this->type === TipeKupon::GratisOngkir
+            ? $this->hitungPotongan($subtotal, $ongkir)
+            : 0.0;
+    }
+
+    public function potonganBelanja(float $subtotal, float $ongkir): float
+    {
+        return $this->type === TipeKupon::GratisOngkir
+            ? 0.0
+            : $this->hitungPotongan($subtotal, $ongkir);
+    }
+}

@@ -1,0 +1,168 @@
+/*
+ * Service worker Bites Exhaust (Fase 2: P2-03).
+ *
+ * Tiga aturan yang menentukan bentuk berkas ini, dan ketiganya dipilih supaya
+ * tidak pernah menyajikan data yang salah:
+ *
+ * 1. HANYA aset statis yang disimpan (/build/, gambar produk, ikon). Halaman
+ *    HTML, /keranjang, /checkout, dan /admin TIDAK pernah disimpan: keranjang
+ *    berbeda untuk setiap pengunjung, dan menyajikannya dari cache berarti
+ *    pembeli melihat isi keranjang orang lain atau keranjang yang sudah basi.
+ * 2. Permintaan selain GET dilewatkan apa adanya. Menyimpan POST berarti
+ *    mengulang pesanan.
+ * 3. Saat jaringan gagal, halaman yang tidak tersimpan dijawab dengan halaman
+ *    luring sederhana, bukan galat peramban.
+ */
+
+/* ═══ VERSI CACHE ═══════════════════════════════════════════════════════
+ *
+ * Nilai ini WAJIB berubah setiap kali aplikasi dirilis. Kalau tidak, service
+ * worker tetap menyajikan aset dari cache lamanya walaupun berkas di server
+ * sudah berganti — dan cache-first di bawah membuatnya bertahan SELAMANYA,
+ * karena salinan lama selalu ditemukan lebih dulu.
+ *
+ * Gejala yang pernah terjadi: CSS di server sudah diperbaiki, `npm run build`
+ * menghasilkan berkas baru, tetapi di peramban pengguna tampilan tidak berubah
+ * sama sekali — bahkan setelah muat ulang biasa. Satu-satunya yang berhasil
+ * adalah membersihkan cache situs secara manual.
+ *
+ * SEBELUMNYA nilai ini tetap 'iksan-v1' sejak berkas ini dibuat, sehingga
+ * tidak pernah ada satu pun pembaruan aset yang benar-benar sampai ke
+ * pengunjung yang sudah pernah membuka situs.
+ *
+ * Cara menaikkan: ubah angka di sini setiap deploy (v2, v3, ...). Skrip
+ * resources/js/naikkan-versi-sw.js dapat melakukannya otomatis.
+ */
+const VERSI = 'iksan-v19';
+
+const SHELL_LURING = '/offline.html';
+
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(VERSI).then((cache) => cache.addAll([SHELL_LURING])).then(() => self.skipWaiting())
+    );
+});
+
+self.addEventListener('activate', (event) => {
+    // Versi lama dibuang supaya aset yang sudah tidak dipakai tidak menumpuk.
+    event.waitUntil(
+        caches.keys()
+            .then((kunci) => Promise.all(kunci.filter((k) => k !== VERSI).map((k) => caches.delete(k))))
+            .then(() => self.clients.claim())
+    );
+});
+
+/** Aset yang boleh disimpan: build, gambar produk, ikon, dan manifes. */
+function bolehDisimpan(url) {
+    return /\/(build|storage\/products|storage\/hero)\//.test(url.pathname)
+        || /\.(webp|jpg|jpeg|png|svg|woff2?|css|js)$/i.test(url.pathname)
+        || url.pathname === '/manifest.webmanifest';
+}
+
+self.addEventListener('fetch', (event) => {
+    const permintaan = event.request;
+
+    if (permintaan.method !== 'GET') {
+        return;
+    }
+
+    const url = new URL(permintaan.url);
+
+    // Asal lain (PayPal, CDN) tidak disentuh.
+    if (url.origin !== self.location.origin) {
+        return;
+    }
+
+    if (bolehDisimpan(url)) {
+        // Cache-first untuk aset: namanya memuat hash isi, jadi isinya tidak
+        // pernah berubah selama namanya sama.
+        event.respondWith(
+            caches.match(permintaan).then((tersimpan) => {
+                if (tersimpan) {
+                    return tersimpan;
+                }
+
+                return fetch(permintaan).then((respons) => {
+                    if (respons.ok) {
+                        const salinan = respons.clone();
+                        caches.open(VERSI).then((cache) => cache.put(permintaan, salinan));
+                    }
+
+                    return respons;
+                });
+            })
+        );
+
+        return;
+    }
+
+    // Halaman: selalu ke jaringan. Kalau jaringan mati, halaman luring.
+    event.respondWith(
+        fetch(permintaan).catch(() => caches.match(SHELL_LURING).then((r) => r || Response.error()))
+    );
+});
+/* ── Notifikasi push (Fase 3: P3-05) ────────────────────────────────────
+ *
+ * Pesan dikirim oleh server dalam bentuk JSON: {title, body, url, icon}.
+ *
+ * Dua peristiwa yang wajib ada:
+ *   push          — menampilkan notifikasi
+ *   notificationclick — menangani klik
+ *
+ * Peraturan klik yang penting: kalau panel SUDAH terbuka di tab lain, jangan
+ * membuka tab baru — cukup memfokuskannya. Membuka tab kedua untuk notifikasi
+ * yang sama adalah cara tercepat membuat admin menutup semuanya.
+ */
+self.addEventListener('push', (event) => {
+    if (! event.data) return;
+
+    let muatan;
+
+    try {
+        muatan = event.data.json();
+    } catch (e) {
+        // Muatan bukan JSON: tampilkan teksnya apa adanya, jangan gugurkan
+        // notifikasi hanya karena bentuknya berbeda.
+        muatan = { title: 'Panel', body: event.data.text() };
+    }
+
+    const judul = muatan.title || 'Panel';
+    const opsi = {
+        body: muatan.body || '',
+        icon: muatan.icon || '/ikon-pwa-192.png',
+        badge: muatan.badge || '/ikon-pwa-192.png',
+        // Satu tag: notifikasi baru menimpa yang lama, tidak menumpuk.
+        tag: muatan.tag || 'panel-admin',
+        renotify: Boolean(muatan.renotify),
+        data: { url: muatan.url || '/admin' },
+    };
+
+    event.waitUntil(self.registration.showNotification(judul, opsi));
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+
+    const tujuan = (event.notification.data && event.notification.data.url) || '/admin';
+
+    // Absolute-kan relatif ke origin service worker.
+    const alamat = new URL(tujuan, self.location.origin).href;
+
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((daftar) => {
+            // Tab yang sudah membuka alamat itu cukup difokuskan.
+            for (const klien of daftar) {
+                if (klien.url === alamat && 'focus' in klien) {
+                    return klien.focus();
+                }
+            }
+
+            // Tidak ada? Buka tab baru, asalkan peramban mengizinkan.
+            if (self.clients.openWindow) {
+                return self.clients.openWindow(alamat);
+            }
+
+            return undefined;
+        }),
+    );
+});
