@@ -7,13 +7,13 @@
 # Pesanan baru masuk
 @endif
 
-**{{ $pesanan->order_number }}** · {{ $metode }} · {{ $pesanan->currency }} **{{ rupiah($pesanan->grand_total) }}**
+**{{ $pesanan->order_number }}** · {{ $metode }} · **{{ dolar($pesanan->grand_total) }}**
 
 @component('mail::table')
 | Produk | Jumlah | Subtotal |
 |:-------|-------:|---------:|
 @foreach ($pesanan->items as $item)
-| {{ $item->product_name }}@if ($item->variant_name) · {{ $item->variant_name }}@endif | {{ $item->quantity }} | {{ $pesanan->currency }} {{ rupiah($item->subtotal) }} |
+| {{ $item->product_name }}@if ($item->variant_name) · {{ $item->variant_name }}@endif | {{ $item->quantity }} | {{ dolar($item->subtotal) }} |
 @endforeach
 @endcomponent
 

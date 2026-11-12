@@ -109,9 +109,13 @@
                 {{-- Harga: elemen paling penting di halaman ini.
                      Diberi jarak atas lebih besar (mt-6) dan ukuran lebih
                      tegas (text-4xl) supaya hierarkinya jelas di atas SKU,
-                     stok, dan keterangan lain. --}}
-                <p class="tech mt-6 text-3xl font-semibold tabular-nums sm:text-4xl">{{ rupiah($harga) }}</p>
-                <x-harga-asing :nominal="$harga" class="mt-1.5" />
+                     stok, dan keterangan lain.
+
+                     Satu angka saja. <x-harga-asing> yang dulu menempel di
+                     bawahnya sudah dilepas: ia menampilkan "≈ $..." dari
+                     rupiah, dan sekarang angka besarnya SUDAH dolar — dua
+                     baris akan menyebut mata uang yang sama dua kali. --}}
+                <p class="tech mt-6 text-3xl font-semibold tabular-nums sm:text-4xl">{{ dolar($harga) }}</p>
 
                 {{-- Stok dan SKU digabung satu baris tenang: keduanya
                      informasi sekunder, dan sebelumnya memakan dua baris
@@ -273,7 +277,11 @@
                                     x-bind:class="buka ? 'rotate-180' : ''" />
                         </button>
 
-                        <div id="spesifikasi-produk" x-show="buka" x-cloak
+                        {{-- <dl> WAJIB membungkus: sebelumnya barisnya <div> berisi
+                             dt/dd tanpa <dl> induk dan axe menandai 18 pelanggaran
+                             `dlitem`. <div> di dalam <dl> sah menurut HTML5, jadi
+                             tata letak grid per baris tidak berubah. --}}
+                        <dl id="spesifikasi-produk" x-show="buka" x-cloak
                              x-transition:enter="transition ease-out duration-200"
                              x-transition:enter-start="opacity-0 -translate-y-1"
                              x-transition:enter-end="opacity-100 translate-y-0"
@@ -287,7 +295,7 @@
                                     <dd class="tech text-sm">{{ $baris['nilai'] }}</dd>
                                 </div>
                             @endforeach
-                        </div>
+                        </dl>
                     </div>
                 @endif
                 {{-- Info produk (SKU, berat, varian, kategori) sebagai accordion. --}}
@@ -303,7 +311,10 @@
                                 x-bind:class="buka ? 'rotate-180' : ''" />
                     </button>
 
-                    <div id="info-produk" x-show="buka" x-cloak
+                    {{-- <dl> wajib: dt/dd di dalam <div> biasa ditandai axe
+                         sebagai `dlitem`. <div> di dalam <dl> sah, dan grid
+                         dua kolomnya tetap sama. --}}
+                    <dl id="info-produk" x-show="buka" x-cloak
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 -translate-y-1"
                          x-transition:enter-end="opacity-100 translate-y-0"
@@ -327,7 +338,7 @@
                             <dt class="part-no">{{ __('site.footer.categories') }}</dt>
                             <dd class="tech mt-1">{{ $product->category?->nama() }}</dd>
                         </div>
-                    </div>
+                    </dl>
                 </div>
             </div>
         </div>
@@ -371,7 +382,7 @@
              style="bottom: calc(var(--h-navbawah, calc(100px + env(safe-area-inset-bottom, 0px))) + 4px)">
             <div class="flex items-center gap-2">
                 <div class="min-w-0 flex-1">
-                    <p class="tech truncate text-lg font-medium">{{ rupiah($harga) }}</p>
+                    <p class="tech truncate text-lg font-medium">{{ dolar($harga) }}</p>
                     <p class="truncate text-xs text-muted">
                         {{ $varian?->nama() ?? $product->judul() }}
                         @if ($tersedia > 0) · {{ __('site.product.in_stock', ['count' => $tersedia]) }} @endif

@@ -16,7 +16,7 @@
             </h1>
             <p class="mt-1 text-sm text-muted">
                 Pesanan <span class="tech">{{ $pesanan->order_number }}</span> ·
-                {{ rupiah($pesanan->grand_total) }}
+                {{ dolar($pesanan->grand_total) }}
             </p>
         </div>
 
@@ -94,7 +94,7 @@
                     <div class="mt-4 rounded-lg bg-sunken p-3 text-sm">
                         <p class="flex items-center justify-between">
                             <span class="text-muted">Nominal</span>
-                            <span class="tech font-medium">{{ rupiah($pesanan->grand_total) }}</span>
+                            <span class="tech font-medium">{{ dolar($pesanan->grand_total) }}</span>
                         </p>
                         <p class="mt-2 text-xs text-dim">
                             Transfer tepat sebesar nominal di atas agar pembayaran mudah dicocokkan.

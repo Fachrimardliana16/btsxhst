@@ -29,7 +29,7 @@
                 {{ $slide->title_id ?: '(tanpa judul)' }}
             </h1>
             <p class="mt-1 text-sm text-muted">
-                {{ $slide->media_type === 'video' ? '{{ __('site.admin.hero_sunting.video') }}' : '{{ __('site.admin.hero_sunting.gambar') }}' }} ·
+                {{ $slide->media_type === 'video' ? __('site.admin.hero_sunting.video') : __('site.admin.hero_sunting.gambar') }} ·
                 {{ $slide->is_active ? 'aktif' : 'nonaktif' }}
                 @if ($slide->starts_at || $slide->ends_at)
                     · berjadwal

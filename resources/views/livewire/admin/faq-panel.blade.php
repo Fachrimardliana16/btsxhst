@@ -113,7 +113,7 @@
 
                                             <button type="button" wire:click="ubahBeranda({{ $faq->id }})"
                                                     class="text-[length:var(--t-xs)] {{ $faq->tampil_di_beranda ? 'text-steel' : 'text-dim' }} hover:underline">
-                                                {{ $faq->tampil_di_beranda ? '{{ __('site.admin.faq_panel.tampil') }} di beranda' : 'Hanya di halaman FAQ' }}
+                                                {{ $faq->tampil_di_beranda ? __('site.admin.faq_panel.tampil') . ' di beranda' : 'Hanya di halaman FAQ' }}
                                             </button>
                                         </div>
                                     </td>
@@ -150,7 +150,7 @@
             <div class="plate h-fit p-4 lg:sticky lg:top-20">
                 <div class="flex items-start justify-between gap-2">
                     <div>
-                        <p class="part-no">{{ $suntingId ? '{{ __('site.admin.faq_panel.sunting') }}' : 'Baru' }}</p>
+                        <p class="part-no">{{ $suntingId ? __('site.admin.faq_panel.sunting') : 'Baru' }}</p>
                         <h2 class="font-display text-lg font-semibold">
                             {{ $suntingId ? 'Ubah FAQ' : 'Tambah FAQ' }}
                         </h2>

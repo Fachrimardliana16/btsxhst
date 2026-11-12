@@ -199,7 +199,7 @@
                 </div>
                 <div>
                     <dt class="part-no">{{ __('site.admin.pengguna_peran.status') }}</dt>
-                    <dd class="mt-1">{{ $dipilihDetail->is_blocked ? '{{ __('site.admin.pengguna_peran.diblokir') }}' : '{{ __('site.admin.pengguna_peran.aktif') }}' }}</dd>
+                    <dd class="mt-1">{{ $dipilihDetail->is_blocked ? __('site.admin.pengguna_peran.diblokir') : __('site.admin.pengguna_peran.aktif') }}</dd>
                 </div>
             </dl>
 

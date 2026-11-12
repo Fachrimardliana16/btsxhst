@@ -11,6 +11,7 @@ use App\Mail\PesananAdmin;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Support\HargaDolar;
 use App\Support\Internasional;
 use App\Support\Pengaturan;
 use App\Support\SakelarNotifikasi;
@@ -80,7 +81,12 @@ class PesananService
                     ));
                 }
 
-                $harga = $varian->hargaAkhir();
+                // Harga baris dalam DOLAR — sama dengan yang dibaca pembeli di
+                // halaman produk dan keranjang. Kolom orders.* tidak punya
+                // satuan sendiri; sebelum ini isinya rupiah dan hanya
+                // ditampilkan sebagai dolar lewat kurs, sehingga angka yang
+                // ditagih PayPal bisa berbeda dari yang tampil di layar.
+                $harga = HargaDolar::dariVarian($varian);
                 $totalBaris = round($harga * $item->quantity, 2);
                 $beratBaris = $varian->berat();
 
@@ -108,16 +114,23 @@ class PesananService
             }
 
             $toko = Pengaturan::instance();
-            $ongkir = (float) $toko->angka('shipping_flat_rate', 0);
+            $ongkir = HargaDolar::dariRupiah(
+                (float) $toko->angka('shipping_flat_rate', 0),
+            ) ?? 0.0;
             $persenPajak = (float) $toko->angka('tax_percent', 0);
 
+            // Kupon diterjemahkan ke dolar lebih dulu: ambang minimal, nilai
+            // nominal, dan batas potongannya tersimpan dalam rupiah, sedangkan
+            // $subtotal di sini sudah dolar.
             $kupon = $keranjang->kupon();
-            $diskonBelanja = $kupon?->potonganBelanja($subtotal, $ongkir) ?? 0.0;
-            $diskonOngkir = $kupon?->potonganOngkir($subtotal, $ongkir) ?? 0.0;
+            $diskonBelanja = $kupon === null ? 0.0 : HargaDolar::kuponPotongan($kupon, $subtotal, $ongkir);
+            $diskonOngkir = $kupon !== null && $kupon->type === \App\Enums\TipeKupon::GratisOngkir
+                ? $ongkir
+                : ($kupon?->potonganOngkir($subtotal, $ongkir) ?? 0.0);
             $dasarPajak = max(0.0, $subtotal - $diskonBelanja);
             $pajak = round($dasarPajak * ($persenPajak / 100), 2);
             $ongkirAkhir = max(0.0, $ongkir - $diskonOngkir);
-            $total = max(0.0, $dasarPajak + $pajak + $ongkirAkhir);
+            $total = round(max(0.0, $dasarPajak + $pajak + $ongkirAkhir), 2);
 
             $order = Order::query()->create([
                 'order_number' => $this->nomorPesanan(),
@@ -132,7 +145,11 @@ class PesananService
                 'tax_amount' => $pajak,
                 'shipping_cost' => $ongkirAkhir,
                 'grand_total' => $total,
-                'currency' => $toko->teks('paypal_currency', 'IDR'),
+                // Mata uang pesanan ini — bukan pengaturan gateway. Semua
+                // nominal di atas sudah dolar, jadi kolom ini harus
+                // mengatakannya; PayPal membacanya untuk menentukan mata uang
+                // tagihan, dan laporan admin memakainya untuk menjumlahkan.
+                'currency' => HargaDolar::MATA,
                 'coupon_id' => $kupon?->id,
                 'shipping_address_snapshot' => [
                     'label' => 'Alamat pengiriman',
@@ -151,7 +168,7 @@ class PesananService
                 // dihitung manual oleh admin setelah pesanan masuk (lihat
                 // catatan di bawah), jadi biayanya belum masuk di sini.
                 'shipping_country' => $data['negara'] ?? 'ID',
-                'shipping_currency' => $data['mataUang'] ?? 'IDR',
+                'shipping_currency' => $data['mataUang'] ?? HargaDolar::MATA,
                 'shipping_is_intl' => ! Internasional::dalamNegeri((string) ($data['negara'] ?? 'ID')),
                 'customer_note' => $data['catatan'] ?? null,
                 // Pesanan yang belum dibayar dalam 24 jam dibatalkan penjadwal,

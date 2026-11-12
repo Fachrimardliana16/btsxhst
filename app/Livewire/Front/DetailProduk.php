@@ -5,6 +5,7 @@ namespace App\Livewire\Front;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Keranjang;
+use App\Support\HargaDolar;
 use App\Support\Pengaturan;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -180,7 +181,14 @@ class DetailProduk extends Component
         $toko = Pengaturan::instance();
         $varian = $this->varian();
         $tersedia = $this->tersediaUntukDijual();
-        $harga = $varian?->hargaAkhir() ?? $this->product->hargaMulai();
+
+        // Harga dalam dolar, dihitung di sini — bukan di view. Dua tempat di
+        // halaman ini menampilkan harga (blok utama dan bilah beli lengket di
+        // bawah), plus ringkasan untuk mesin pencari; tiga sumber angka
+        // berarti tiga kesempatan berbeda.
+        $harga = $varian !== null
+            ? HargaDolar::dariVarian($varian)
+            : HargaDolar::mulai($this->product);
         $spesifikasi = $this->product->spesifikasi();
 
         $terkait = Product::query()
@@ -285,10 +293,11 @@ class DetailProduk extends Component
         $bagian = ["{$nama}".($kategori ? " adalah produk {$kategori}" : '')." dari {$toko}."];
 
         if ($harga !== '') {
-            // $harga berupa angka berformat ("1250000.00"), bukan teks rupiah.
-            // Menyisipkannya apa adanya menghasilkan "Harganya 1250000" —
-            // terbaca sebagai nomor telepon oleh pembaca maupun mesin jawaban.
-            $bagian[] = 'Harganya mulai '.rupiah((float) $harga).'.';
+            // $harga sudah berupa nominal dolar ("235.21"), bukan angka
+            // rupiah. Menyisipkannya apa adanya menghasilkan "Harganya
+            // 235.21" — tanpa simbol, dan mesin jawaban mengutipnya sebagai
+            // nomor versi.
+            $bagian[] = 'Harganya mulai '.dolar((float) $harga).'.';
         }
 
         $bagian[] = $tersedia > 0

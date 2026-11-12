@@ -258,6 +258,7 @@ return [
         'body' => 'Kami memakai cookie untuk mengingat zona pengiriman yang Anda pilih, supaya kolom negara tidak perlu diisi ulang setiap kali berkunjung. Data pribadi tetap terenkripsi dan tidak kami bagikan.',
         'accept' => 'Setuju',
         'learn_more' => 'Selengkapnya',
+        'learn_more_privacy' => 'Baca kebijakan privasi',
     ],
 
     'common' => [

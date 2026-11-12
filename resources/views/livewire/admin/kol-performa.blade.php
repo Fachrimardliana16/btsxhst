@@ -68,14 +68,14 @@
                     {{ match ($urut) {
                         'pesanan' => 'Terbanyak pesanan',
                         'nama' => 'Nama A-Z',
-                        default => '{{ __('site.admin.kol_performa.penjualan') }} terbesar',
+                        default => __('site.admin.kol_performa.penjualan') . ' terbesar',
                     } }}
                     <x-ikon name="chevron-down" :size="14" class="text-dim" />
                 </button>
 
                 <div x-show="bukaUrut" x-cloak @click.outside="bukaUrut = false"
                      class="plate absolute right-0 z-20 mt-1 w-52 overflow-hidden p-1 shadow-lg">
-                    @foreach (['penjualan' => '{{ __('site.admin.kol_performa.penjualan') }} terbesar', 'pesanan' => 'Terbanyak pesanan', 'nama' => 'Nama A-Z'] as $nilai => $label)
+                    @foreach (['penjualan' => __('site.admin.kol_performa.penjualan') . ' terbesar', 'pesanan' => 'Terbanyak pesanan', 'nama' => 'Nama A-Z'] as $nilai => $label)
                         <button type="button" wire:click="aturUrut('{{ $nilai }}')" @click="bukaUrut = false"
                                 class="flex w-full items-center justify-between gap-2 rounded-[var(--r-kecil)] px-3 py-2 text-left text-sm hover:bg-sunken">
                             {{ $label }}

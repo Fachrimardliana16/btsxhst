@@ -62,7 +62,7 @@
                                     @if ($item->variant) · {{ $item->variant->sku_variant }} @endif
                                 </p>
 
-                                <p class="tech mt-2 text-sm">{{ rupiah($item->hargaSatuan()) }}</p>
+                                <p class="tech mt-2 text-sm">{{ harga_nilai($item->hargaSatuan()) }}</p>
 
                                 @if ($maks <= 0)
                                     <p class="mt-1 text-xs text-danger">{{ __('site.product.out_of_stock') }}</p>
@@ -94,7 +94,7 @@
                                     </div>
 
                                     <div class="flex items-center gap-2">
-                                        <p class="tech font-medium">{{ rupiah($item->subtotal()) }}</p>
+                                        <p class="tech font-medium">{{ harga_nilai($item->subtotal()) }}</p>
 
                                         {{-- Hapus sengaja dipisah dari tombol
                                              jumlah: menekannya keliru tidak
@@ -126,27 +126,27 @@
                     <div class="mt-4 space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-muted">{{ __('site.cart.subtotal') }}</span>
-                            <span class="tech">{{ rupiah($ringkasan['subtotal']) }}</span>
+                            <span class="tech">{{ dolar($ringkasan['subtotal']) }}</span>
                         </div>
 
                         @if ($ringkasan['diskon'] > 0)
                             <div class="flex justify-between text-ok">
                                 <span>{{ __('site.cart.discount') }}</span>
-                                <span class="tech">-{{ rupiah($ringkasan['diskon']) }}</span>
+                                <span class="tech">-{{ dolar($ringkasan['diskon']) }}</span>
                             </div>
                         @endif
 
                         @if ($ringkasan['ongkir'] > 0)
                             <div class="flex justify-between">
                                 <span class="text-muted">{{ __('site.cart.shipping') }}</span>
-                                <span class="tech">{{ rupiah($ringkasan['ongkir']) }}</span>
+                                <span class="tech">{{ dolar($ringkasan['ongkir']) }}</span>
                             </div>
                         @endif
 
                         @if ($ringkasan['pajak'] > 0)
                             <div class="flex justify-between">
                                 <span class="text-muted">{{ __('site.cart.tax') }}</span>
-                                <span class="tech">{{ rupiah($ringkasan['pajak']) }}</span>
+                                <span class="tech">{{ dolar($ringkasan['pajak']) }}</span>
                             </div>
                         @endif
                     </div>
@@ -155,7 +155,7 @@
 
                     <div class="flex items-baseline justify-between">
                         <span class="font-semibold">{{ __('site.cart.total') }}</span>
-                        <span class="tech text-2xl font-medium">{{ rupiah($ringkasan['total']) }}</span>
+                        <span class="tech text-2xl font-medium">{{ dolar($ringkasan['total']) }}</span>
                     </div>
 
                     <div class="measure-line my-4"></div>

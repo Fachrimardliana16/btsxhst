@@ -180,8 +180,8 @@
                 </td>
                 <td class="mono kecil">{{ $item->sku }}</td>
                 <td class="kanan mono">{{ $item->quantity }}</td>
-                <td class="kanan mono">{{ rupiah($item->unit_price) }}</td>
-                <td class="kanan mono">{{ rupiah($item->subtotal) }}</td>
+                <td class="kanan mono">{{ dolar($item->unit_price) }}</td>
+                <td class="kanan mono">{{ dolar($item->subtotal) }}</td>
             </tr>
         @endforeach
     </tbody>
@@ -190,7 +190,7 @@
 <table class="ringkasan">
     <tr>
         <td class="kecil">Subtotal</td>
-        <td class="kanan mono">{{ rupiah($order->subtotal) }}</td>
+        <td class="kanan mono">{{ dolar($order->subtotal) }}</td>
     </tr>
 
     @if ((float) $order->discount_amount > 0)
@@ -198,27 +198,27 @@
             <td class="kecil">
                 Diskon @if ($order->coupon) <span class="mono">({{ $order->coupon->code }})</span> @endif
             </td>
-            <td class="kanan mono">−{{ rupiah($order->discount_amount) }}</td>
+            <td class="kanan mono">−{{ dolar($order->discount_amount) }}</td>
         </tr>
     @endif
 
     @if ((float) $order->shipping_cost > 0)
         <tr>
             <td class="kecil">Ongkos kirim</td>
-            <td class="kanan mono">{{ rupiah($order->shipping_cost) }}</td>
+            <td class="kanan mono">{{ dolar($order->shipping_cost) }}</td>
         </tr>
     @endif
 
     @if ((float) $order->tax_amount > 0)
         <tr>
             <td class="kecil">Pajak</td>
-            <td class="kanan mono">{{ rupiah($order->tax_amount) }}</td>
+            <td class="kanan mono">{{ dolar($order->tax_amount) }}</td>
         </tr>
     @endif
 
     <tr class="total">
         <td>Total</td>
-        <td class="kanan mono">{{ rupiah($order->grand_total) }}</td>
+        <td class="kanan mono">{{ dolar($order->grand_total) }}</td>
     </tr>
 </table>
 

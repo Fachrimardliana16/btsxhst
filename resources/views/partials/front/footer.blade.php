@@ -168,7 +168,7 @@
                         sm:flex-row sm:items-center sm:gap-6 lg:mt-12">
                 @if ($daftarBank !== [])
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-[#6f6f74]">{{ __('site.footer.payment_methods') }}</span>
+                        <span class="footer-label">{{ __('site.footer.payment_methods') }}</span>
                         @foreach ($daftarBank as $bank)
                             <span class="border border-white/15 px-2 py-1 text-[#d8d8d6]">{{ $bank }}</span>
                         @endforeach
@@ -177,7 +177,7 @@
 
                 @if ($daftarEkspedisi !== [])
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-[#6f6f74]">{{ __('site.footer.couriers') }}</span>
+                        <span class="footer-label">{{ __('site.footer.couriers') }}</span>
                         @foreach ($daftarEkspedisi as $kurir)
                             <span class="border border-white/15 px-2 py-1 text-[#d8d8d6]">{{ $kurir }}</span>
                         @endforeach

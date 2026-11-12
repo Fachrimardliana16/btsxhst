@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Mempercayai proxy (cloudflared) yang berjalan di mesin ini.
@@ -51,6 +53,36 @@ class PercayaiProxy
             $request->setTrustedProxies($daftar, Request::HEADER_X_FORWARDED_PROTO);
         }
 
-        return $next($request);
+        // ── SKEMA DIKUNCI SETELAH PROXY DIPERCAYA ──────────────────────────
+        //
+        // Ini perbaikan "Does not use HTTPS — insecure requests" dari
+        // PageSpeed. Sebelumnya skema dibiarkan mengikuti permintaan, jadi
+        // halaman yang datang lewat tunnel tetap dapat merender URL aset,
+        // canonical, dan formulir sebagai http:// bila ada satu jalur kode
+        // yang memakai APP_URL atau kehilangan header. Peramban lalu
+        // memblokirnya sebagai campuran konten.
+        //
+        // Kuncinya: HANYA ketika permintaan memang sudah terbukti aman
+        // ($request->isSecure()). Akses pengembangan lewat
+        // http://127.0.0.1:8100 tetap http, jadi CSS tidak hilang seperti
+        // percobaan forceScheme tanpa syarat yang pernah merusak situs ini.
+        if ($request->isSecure()) {
+            URL::forceScheme('https');
+        }
+
+        $respons = $next($request);
+
+        // HSTS: perintahkan peramban memakai https untuk permintaan
+        // berikutnya — termasuk aset yang URL-nya terlanjur ditulis http di
+        // CSS atau basis data. Ini penetral racun campuran konten yang paling
+        // andal, karena berlaku sebelum aset diminta.
+        if ($request->isSecure() && $respons instanceof Response) {
+            $respons->headers->set(
+                'Strict-Transport-Security',
+                'max-age=31536000; includeSubDomains'
+            );
+        }
+
+        return $respons;
     }
 }

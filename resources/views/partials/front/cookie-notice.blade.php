@@ -27,8 +27,12 @@
                 {{ __('site.cookie.accept') }}
             </button>
 
+            {{-- Teks tombol utuh: "Learn more" sendirian tidak menjelaskan apa
+                 pun kalau dibaca lewat daftar tautan pembaca layar (audit SEO
+                 link-text). Nama tujuannya ikut ditulis, dan tautannya menyebut
+                 tujuannya untuk pengguna pembaca layar. --}}
             <a href="{{ route('front.page', 'kebijakan-privasi') }}" class="btn btn-ghost btn-sm">
-                {{ __('site.cookie.learn_more') }}
+                {{ __('site.cookie.learn_more_privacy') }}
             </a>
         </div>
     </div>

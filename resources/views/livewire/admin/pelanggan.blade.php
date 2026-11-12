@@ -190,7 +190,7 @@
                     <div class="flex gap-3">
                         <dt class="part-no w-24 flex-none pt-0.5">{{ __('site.admin.pelanggan.status') }}</dt>
                         <dd class="{{ $rinci->is_blocked ? 'text-danger' : 'text-ok' }}">
-                            {{ $rinci->is_blocked ? '{{ __('site.admin.pelanggan.diblokir') }}' : '{{ __('site.admin.pelanggan.aktif') }}' }}
+                            {{ $rinci->is_blocked ? __('site.admin.pelanggan.diblokir') : __('site.admin.pelanggan.aktif') }}
                         </dd>
                     </div>
                     @if ($rinci->phone_number)
@@ -207,7 +207,7 @@
                     <div class="flex gap-3">
                         <dt class="part-no w-24 flex-none pt-0.5">{{ __('site.admin.pelanggan.dua_faktor') }}</dt>
                         <dd class="{{ $rinci->punyaDuaFaktor() ? 'text-ok' : 'text-dim' }}">
-                            {{ $rinci->punyaDuaFaktor() ? '{{ __('site.admin.pelanggan.aktif') }}' : 'Belum aktif' }}
+                            {{ $rinci->punyaDuaFaktor() ? __('site.admin.pelanggan.aktif') : 'Belum aktif' }}
                         </dd>
                     </div>
                     <div class="flex gap-3">

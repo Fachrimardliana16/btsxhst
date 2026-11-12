@@ -195,18 +195,25 @@
 
                 <div class="flex items-center gap-1.5">
                     @foreach ($slides as $idx => $slide)
+                        {{-- Sasaran sentuh: pil ini tingginya 8px (h-2), gagal audit
+                             target-size — ambangnya 24x24 px plus jarak aman 24 px
+                             ke tetangga. Kini tombolnya kotak 24x24 transparan dan
+                             PIL-nya pindah ke <span> di dalam, jadi tampilan tetap
+                             sama persis tetapi area kliknya memenuhi ambang. --}}
                         <button type="button"
                                 @click="i = {{ $idx }}; berhenti()"
-                                class="h-2 rounded-full transition-all duration-300"
-                                :class="i === {{ $idx }} ? 'w-6 bg-promo' : 'w-2 bg-white/40 hover:bg-white/70'"
+                                class="flex h-6 w-6 items-center justify-center rounded-full"
                                 aria-label="Pilih slide {{ $idx + 1 }}">
+                            <span class="block h-2 rounded-full transition-all duration-300"
+                                  :class="i === {{ $idx }} ? 'w-6 bg-promo' : 'w-2 bg-white/40 group-hover:bg-white/70'"></span>
                         </button>
                     @endforeach
                 </div>
 
                 <button type="button"
                         @click="jeda = !jeda; jeda ? berhenti() : mulai()"
-                        class="ml-1 text-white/60 hover:text-white"
+                        class="ml-1 flex h-6 w-6 items-center justify-center text-white/60 hover:text-white"
+                        aria-label="Jeda atau putar slide otomatis"
                         :title="jeda ? 'Putar slide' : 'Jeda slide'">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                         <g x-show="!jeda"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></g>

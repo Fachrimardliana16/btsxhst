@@ -259,6 +259,7 @@ return [
         'body' => 'We use a cookie to remember the shipping zone you pick, so the country field does not need to be filled in again on every visit. Personal data stays encrypted and is never shared.',
         'accept' => 'Accept',
         'learn_more' => 'Learn more',
+        'learn_more_privacy' => 'Read the privacy policy',
     ],
 
     'common' => [

@@ -151,8 +151,15 @@ class Coupon extends Model
             return 'Kuota kupon sudah habis.';
         }
 
-        if ((float) $this->min_spend > 0 && $subtotal < (float) $this->min_spend) {
-            return 'Minimal belanja '.rupiah($this->min_spend).' untuk memakai kupon ini.';
+        // $subtotal yang masuk ke sini sudah dalam dolar (lihat
+        // Keranjang::ringkasan()), sedangkan min_spend tersimpan dalam rupiah.
+        // Membandingkannya langsung membuat kupon dengan minimal Rp 500.000
+        // selalu ditolak, dan pesannya menulis "Minimal belanja Rp 500.000"
+        // untuk pembeli yang melihat dolar di seluruh halaman lain.
+        $minimal = \App\Support\HargaDolar::dariRupiah($this->min_spend) ?? 0.0;
+
+        if ($minimal > 0 && $subtotal < $minimal) {
+            return 'Minimal belanja '.dolar($minimal).' untuk memakai kupon ini.';
         }
 
         return null;

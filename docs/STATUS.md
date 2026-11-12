@@ -21,9 +21,10 @@ Commit: `9c512a7` · Tag: `v1.0-live`
 
 ## ⚠️ Yang WAJIB diketahui saat melanjutkan
 
-### 1. Tumpukan mati setelah komputer restart
+### 1. Tumpukan mati setelah komputer restart — sekarang dijaga otomatis
 
-Tunnel, nginx, dan php-cgi **tidak hidup sendiri**. Setelah reboot:
+Tunnel, nginx, dan php-cgi **tidak hidup sendiri**. Dulu setelah reboot harus
+dinyalakan manual:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File D:\Projects\iksanknalpot2\tools\nyalakan-produksi.ps1
@@ -31,6 +32,32 @@ powershell -ExecutionPolicy Bypass -File D:\Projects\iksanknalpot2\tools\nyalaka
 
 Hentikan: tambahkan `-Stop`. Skrip ini juga membangun ulang cache config,
 route, view, dan event dengan `--env=production`.
+
+**Sejak 9 Nov 2026 ada penjaga otomatis** — Scheduled Task
+`BitesExhaust-Watchdog`:
+
+| Aspek | Nilai |
+|---|---|
+| Skrip | `tools/jaga-produksi.ps1` |
+| Pendaftaran | `tools/daftarkan-penjaga.ps1` (idempoten, pakai XML) |
+| Jadwal | tiap 5 menit + saat boot (delay 1 menit) + saat logon |
+| Log | `tools/out/jaga.log` |
+| Hasil uji | nginx dimatikan → pulih ~11 detik; tunnel dimatikan → pulih ~13 detik |
+
+Penjaga hanya menyentuh tumpukan produksi (tunnel `bites`, port 8200/930x).
+Tunnel lain di mesin ini (9router, port 20128) tidak diganggu.
+
+Periksa statusnya:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File D:\Projects\iksanknalpot2\tools\cek-status.ps1
+```
+
+> **Penting:** jangan jalankan `nyalakan-produksi.ps1` dari dalam proses penjaga.
+> Proses anak (nginx/php-cgi/cloudflared) membuat Task Scheduler menahan tugas
+> berstatus `Running` sampai batas 15 menit lalu menerminasinya (kode 267014).
+> Penjaga memicu restart lewat WMI (`Win32_Process.Create` → `jalankan-penyalakan.cmd`)
+> supaya proses lahir di luar job object tugas.
 
 ### 2. Antrean belum jalan — ini yang paling mendesak
 

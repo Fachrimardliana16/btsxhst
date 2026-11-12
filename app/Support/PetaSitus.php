@@ -195,8 +195,11 @@ class PetaSitus
             $fakta[] = '- Jam operasional: '.$jam;
         }
 
-        $fakta[] = '- Mata uang: IDR (Rupiah)';
-        $fakta[] = '- Pengiriman: seluruh Indonesia';
+        // Dolar: ini berkas yang dibaca mesin jawaban untuk menjawab "berapa
+        // harganya". Menulis rupiah di sini membuat mereka mengutip angka yang
+        // tidak pernah tampil di halaman produk.
+        $fakta[] = '- Mata uang: USD (Dolar Amerika Serikat)';
+        $fakta[] = '- Pengiriman: seluruh Indonesia dan mancanegara';
         $fakta[] = '- Situs: '.url('/');
 
         if ($fakta !== []) {

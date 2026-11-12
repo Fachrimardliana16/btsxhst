@@ -117,6 +117,12 @@
     --c-text-muted: #55606f;
     --c-text-dim: #6b7280;
 
+    /* Satu aksen untuk teks di atas LATAR GELAP (#08121b, footer + pita gelap).
+       #0062ad hanya 3.01:1 di sana: warna aksen normal dirancang untuk latar
+       terang, bukan untuk dibalik. #4da3e8 = 6.94:1 di #08121b, dan tetap
+       memakai keluarga biru yang sama supaya tidak terasa warna lain. */
+    --c-accent-on-dark: #4da3e8;
+
     --c-line: #d3d9e0;
     --c-line-soft: #e5e9ef;
 
@@ -137,6 +143,25 @@
     --c-ok: #2f7d4f;
     --c-warn: #9a6b12;
     --c-danger: #b42318;
+
+    /* ── PANEL SOROT (50 / 30 / 10) ──────────────────────────────────────
+       Untuk blok yang harus lebih menonjol dari isi sekitarnya — dipakai
+       pertama kali oleh 06 / CTA "belum yakin ukuran?".
+
+       Pembagiannya, bukan tiga kuning yang setara: satu bidang 50% (dasar
+       panel), satu bidang 30% (bingkai + ornamen), satu aksen 10% (tanda
+       nomor). Kalau ketiganya sekuat kuning yang sama, mata tidak tahu mana
+       yang harus dibaca lebih dulu, dan hasilnya justru bukan sorotan.
+
+       Nada dasar #FEF3C7 dipilih setelah percobaan pertama dengan #FFFBEB
+       gagal: selisihnya dari putih terlalu kecil, dan CTA ini duduk tepat
+       di bawah section berlatar putih penuh sehingga keduanya menyatu di
+       layar. Teks #111827 di atasnya tetap lolos kontras (16.4:1), dan
+       aksen 10% memakai #CA8A04 — bukan #EAB308 — karena nada itu terlalu
+       dekat dengan bingkai 30% sehingga tidak terbedakan. */
+    --c-sorot-dasar: #fef3c7;
+    --c-sorot-garis: #facc15;
+    --c-sorot-aksen: #ca8a04;
 
     --carbon-weave: rgba(17, 24, 39, 0.04);
     --metal-sheen: rgba(255, 255, 255, 0.6);

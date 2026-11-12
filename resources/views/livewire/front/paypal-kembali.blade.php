@@ -34,7 +34,7 @@
                     </dl>
                     <dl class="mt-2 flex items-baseline justify-between text-sm">
                         <dt class="text-muted">Total dibayar</dt>
-                        <dd class="tech">{{ $pesanan->currency }} {{ rupiah($pesanan->grand_total) }}</dd>
+                        <dd class="tech">{{ dolar($pesanan->grand_total) }}</dd>
                     </dl>
 
                     <div class="mt-6 flex flex-wrap gap-2">

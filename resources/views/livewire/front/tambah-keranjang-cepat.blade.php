@@ -5,7 +5,7 @@
 
      Tata letak: lebar penuh, tinggi sentuh 44px. Dulu kotak 40px di sisi harga;
      karena kartu dua kolom di ponsel sempit, tombol itu mengambil ruang
-     horizontal sehingga harga "Rp 1.250.000" terpotong.
+     horizontal sehingga harga (kini dolar, "$257.35") terpotong.
 
      Umpan balik sengaja TIDAK memesan tinggi tetap. Versi sebelumnya selalu
      menyisakan satu baris kosong di bawah tombol pada setiap kartu, dan itu

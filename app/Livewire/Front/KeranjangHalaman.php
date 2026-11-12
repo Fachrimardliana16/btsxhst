@@ -54,7 +54,7 @@ class KeranjangHalaman extends Component
             if ($dariTautan !== '') {
                 $kupon = Coupon::query()->kode($dariTautan)->berlaku()->first();
 
-                if ($kupon !== null && $kupon->alasanTidakSah($keranjang->subtotal()) === null) {
+                if ($kupon !== null && $kupon->alasanTidakSah($keranjang->ringkasan()['subtotal']) === null) {
                     $keranjang->terapkanKupon($kupon);
                     $this->kodeKupon = $kupon->code;
                     $this->pesanKupon = __('site.cart.coupon_applied', ['kode' => $kupon->code]);
@@ -164,7 +164,16 @@ class KeranjangHalaman extends Component
             return;
         }
 
-        $alasan = $kupon->alasanTidakSah($keranjang->subtotal());
+        // Dibandingkan dalam DOLAR, sama dengan ringkasan dan checkout.
+        //
+        // Dulu memakai $keranjang->subtotal() (rupiah) dan alasanTidakSah()
+        // membandingkannya dengan min_spend (rupiah) — cocok. Setelah harga
+        // ditampilkan dan dihitung dalam dolar, dua skala itu bercampur: kupon
+        // "minimal Rp 10.000.000" lolos untuk subtotal $250, karena 250
+        // dianggap lebih besar dari angka rupiahnya. ringkasan()['subtotal']
+        // adalah satu-satunya angka dolar yang sudah benar.
+        $subtotalDolar = $keranjang->ringkasan()['subtotal'];
+        $alasan = $kupon->alasanTidakSah($subtotalDolar);
 
         if ($alasan !== null) {
             $keranjang->terapkanKupon(null);

@@ -38,13 +38,20 @@
     {{-- 05 / LAYANAN BENGKEL --}}
     @include('partials.front.layanan-bengkel')
 
-    {{-- 06 / CTA "BELUM YAKIN UKURAN?" — panel terang, bukan pita karbon.
-         Dulu: latar gelap + judul kiri + dua tombol setara kanan, sehingga
-         terbaca seperti banner promosi. Sekarang panel berbingkai dengan
-         nomor besar sebagai latar, satu pertanyaan, dan satu aksi utama;
-         tautan kontak jadi tautan bergaris bawah, bukan tombol kedua. --}}
-    <section class="container-page pb-14 pt-4 lg:pb-20 lg:pt-6">
-        <div class="cta-ukur px-8 py-12 sm:px-12 lg:px-16 lg:py-16 rounded-3xl bg-gradient-to-r from-surface via-surface to-accent/5 border border-line-soft shadow-xl shadow-black/[0.02]">
+    {{-- 06 / CTA "BELUM YAKIN UKURAN?" — panel sorot kuning (50/30/10).
+         Warna, bingkai, dan pita diambil dari .cta-ukur di hero-race.css;
+         kelas latar/bingkai Tailwind sengaja TIDAK ditulis di sini karena
+         utility menang atas komponen CSS dan akan mengembalikannya putih.
+         Rincian pembagian 50/30/10 ada di komentar blok CSS tersebut. --}}
+    {{-- Jarak atas lebih lega dari sebelumnya (pt-4 lg:pt-6). Section 05 di
+         atasnya berlatar putih penuh dan berakhir tepat di sini; tanpa jeda,
+         bidang kuning CTA menempel ke putih itu dan keduanya terbaca sebagai
+         satu blok panjang, bukan sebagai panel yang disorot. --}}
+    <section class="container-page pb-14 pt-10 lg:pb-20 lg:pt-16">
+        {{-- Bayangan TIDAK ditulis dengan utility Tailwind di sini: `shadow-xl`
+             dan `shadow-black/[0.02]` akan menimpa box-shadow kuning dari
+             .cta-ukur, persis seperti bg-gradient yang dulu menimpanya. --}}
+        <div class="cta-ukur px-8 py-12 sm:px-12 lg:px-16 lg:py-16 rounded-3xl">
             <span class="cta-ukur__nomor" aria-hidden="true">?</span>
 
             <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">

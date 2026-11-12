@@ -34,9 +34,9 @@
     {{-- Angka ringkas --}}
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
         @foreach ([
-            ['label' => '{{ __('site.admin.keamanan.kejadian') }}', 'nilai' => $ringkas['total'], 'ikon' => 'activity'],
+            ['label' => __('site.admin.keamanan.kejadian'), 'nilai' => $ringkas['total'], 'ikon' => 'activity'],
             ['label' => 'Gagal masuk', 'nilai' => $ringkas['gagalMasuk'], 'ikon' => 'lock'],
-            ['label' => '{{ __('site.admin.keamanan.blokir') }} {{ __('site.admin.keamanan.aktif') }}', 'nilai' => $ringkas['blokirAktif'], 'ikon' => 'shield'],
+            ['label' => __('site.admin.keamanan.blokir') . ' {{ __('site.admin.keamanan.aktif') }}', 'nilai' => $ringkas['blokirAktif'], 'ikon' => 'shield'],
             ['label' => 'Akses tidak sah', 'nilai' => $ringkas['aksesTidakSah'], 'ikon' => 'alert'],
         ] as $k)
             <div class="plate p-4">
@@ -138,14 +138,14 @@
                                     {{ $b['sampai']?->translatedFormat('d M Y, H:i') }}
                                 </td>
                                 <td class="p-3">
-                                    @if ($b['{{ __('site.admin.keamanan.aktif') }}'])
+                                    @if ($b[__('site.admin.keamanan.aktif')])
                                         <span class="rounded-full bg-danger/12 px-2 py-0.5 text-xs text-danger">{{ __('site.admin.keamanan.aktif') }}</span>
                                     @else
                                         <span class="rounded-full bg-sunken px-2 py-0.5 text-xs text-muted">{{ __('site.admin.keamanan.kedaluwarsa') }}</span>
                                     @endif
                                 </td>
                                 <td class="p-3 text-right">
-                                    @if ($b['{{ __('site.admin.keamanan.aktif') }}'])
+                                    @if ($b[__('site.admin.keamanan.aktif')])
                                         <button type="button" wire:click="buka{{ __('site.admin.keamanan.blokir') }}('{{ $b['hash'] }}')"
                                                 wire:confirm="{{ __('site.admin.keamanan.buka_blokir') }} alamat ini?"
                                                 class="btn btn-outline btn-sm">{{ __('site.admin.keamanan.buka_blokir') }}</button>
@@ -162,7 +162,7 @@
     {{-- Saringan --}}
     <div class="plate flex flex-wrap items-center gap-2 p-3">
         <span class="part-no">{{ __('site.admin.keamanan.rentang') }}</span>
-        @foreach (['1' => '{{ __('site.admin.keamanan.jam_24') }}', '7' => '{{ __('site.admin.keamanan.hari_7') }}', '30' => '30 hari', '90' => '90 hari'] as $nilai => $label)
+        @foreach (['1' => __('site.admin.keamanan.jam_24'), '7' => __('site.admin.keamanan.hari_7'), '30' => '30 hari', '90' => '90 hari'] as $nilai => $label)
             <button type="button" wire:click="aturHari('{{ $nilai }}')"
                     class="btn {{ $hari === $nilai ? 'btn-primary' : 'btn-outline' }} btn-sm">{{ $label }}</button>
         @endforeach

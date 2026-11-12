@@ -29,11 +29,11 @@ Pesanan **{{ $pesanan->order_number }}** sudah kami terima dan sedang kami perik
 | Produk | Jumlah | Subtotal |
 |:-------|-------:|---------:|
 @foreach ($pesanan->items as $item)
-| {{ $item->product_name }}@if ($item->variant_name) · {{ $item->variant_name }}@endif | {{ $item->quantity }} | {{ $pesanan->currency }} {{ rupiah($item->subtotal) }} |
+| {{ $item->product_name }}@if ($item->variant_name) · {{ $item->variant_name }}@endif | {{ $item->quantity }} | {{ dolar($item->subtotal) }} |
 @endforeach
 @endcomponent
 
-**Total: {{ $pesanan->currency }} {{ rupiah($pesanan->grand_total) }}**
+**Total: {{ dolar($pesanan->grand_total) }}**
 
 @if ($kejadian === 'dibuat' && $rekening)
 @component('mail::panel')

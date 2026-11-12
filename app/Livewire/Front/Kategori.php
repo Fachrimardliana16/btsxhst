@@ -5,6 +5,7 @@ namespace App\Livewire\Front;
 use App\Models\Category;
 use App\Models\Product;
 use App\Support\CacheKatalog;
+use App\Support\HargaDolar;
 use App\Support\Pengaturan;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
@@ -85,7 +86,7 @@ class Kategori extends Component
         }
 
         $ringkasan = "{$namaKategori} dari {$toko->teks('site_name', 'Bites Exhaust')}: "
-            ."{$jumlah} produk tersedia, mulai ".rupiah($this->hargaTerendah($kategori)).'. '.$deskripsi;
+            ."{$jumlah} produk tersedia, mulai ".dolar(HargaDolar::dariRupiah($this->hargaTerendah($kategori))).'. '.$deskripsi;
 
         return view('livewire.front.kategori', [
             'kategori' => $kategori,

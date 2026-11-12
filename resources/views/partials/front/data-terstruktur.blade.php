@@ -32,12 +32,21 @@
     $tersedia = array_values(array_filter($sku, fn (array $v) => $v['stok'] > 0));
 
     if ($tersedia !== []) {
+        // Harga di data terstruktur WAJIB sama dengan yang dilihat pembeli.
+        // Mencantumkan rupiah sementara halaman menulis dolar membuat Google
+        // menandai halaman sebagai harga tidak cocok, dan pembeli dari hasil
+        // pencarian datang dengan angka yang salah di kepalanya.
+        $hargaDolar = array_map(
+            fn (array $v) => \App\Support\HargaDolar::dariRupiah($v['harga']),
+            $tersedia,
+        );
+
         $data['offers'] = [
             '@type' => 'AggregateOffer',
-            'priceCurrency' => 'IDR',
+            'priceCurrency' => \App\Support\HargaDolar::MATA,
             'offerCount' => count($tersedia),
-            'lowPrice' => (string) min(array_column($tersedia, 'harga')),
-            'highPrice' => (string) max(array_column($tersedia, 'harga')),
+            'lowPrice' => (string) min($hargaDolar),
+            'highPrice' => (string) max($hargaDolar),
             'availability' => 'https://schema.org/InStock',
             'url' => url()->current(),
         ];

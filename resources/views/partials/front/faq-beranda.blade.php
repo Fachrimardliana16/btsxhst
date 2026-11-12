@@ -110,7 +110,7 @@
                         class="btn btn-outline"
                         x-on:click="terbuka = !terbuka"
                         :aria-expanded="terbuka ? 'true' : 'false'">
-                    <span x-text="terbuka ? '{{ __('site.home.faq_less') }}' : '{{ __('site.home.faq_more') }}'">
+                    <span x-text="terbuka ? __('site.home.faq_less') : __('site.home.faq_more')">
                         {{ __('site.home.faq_more') }}
                     </span>
                     <x-ikon name="chevron-down" :size="16"

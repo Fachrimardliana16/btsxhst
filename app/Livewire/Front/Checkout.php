@@ -67,9 +67,19 @@ class Checkout extends Component
     // ditulis dalam atribut. Aturannya ada di buatPesanan().
     public string $negara = 'ID';
 
-    /** Pilihan mata uang pembayaran: IDR atau USD. */
-    #[Validate('required|in:IDR,USD')]
-    public string $mataUang = 'IDR';
+    /**
+     * Mata uang tagihan: selalu USD.
+     *
+     * Dulu IDR atau USD, dipilih pembeli dan disesuaikan dengan negara.
+     * Pilihan itu dihapus bersama kolomnya: pasarnya luar negeri, seluruh
+     * harga di situs sudah ditulis dalam dolar, dan membiarkan pembeli
+     * menukar mata uang di langkah terakhir hanya akan menagih angka yang
+     * berbeda dari yang ia baca di halaman produk.
+     *
+     * Properti tetap ada — bukan dihapus — karena PesananService dan
+     * kolom `orders.shipping_currency` membacanya.
+     */
+    public string $mataUang = 'USD';
 
     #[Validate('nullable|string|max:500')]
     public string $catatan = '';
@@ -180,38 +190,22 @@ class Checkout extends Component
     }
 
     /**
-     * Mata uang mengikuti negara tujuan.
+     * Negara berubah — mata uang TIDAK ikut berubah.
      *
-     * Bukan pemaksaan: bila pembeli luar negeri memilih IDR, pilihannya
-     * dihormati — yang tersimpan tetap IDR. Tapi url pengisi form tidak boleh
-     * menawarkan USD untuk pengiriman ke Jakarta; itu mengira-ngira.
+     * Dulu pengiriman ke luar negeri menyarankan USD dan dalam negeri
+     * memaksa IDR. Sekarang tagihannya selalu USD untuk semua negara, jadi
+     * fungsi ini hanya menjaga nilainya bila ada permintaan lama yang masih
+     * membawa `mataUang=IDR` dari sesi sebelumnya.
      */
     public function updatedNegara(string $nilai): void
     {
-        $nilai = strtoupper($nilai);
-
-        if (Internasional::dalamNegeri($nilai)) {
-            $this->mataUang = 'IDR';
-
-            return;
-        }
-
-        // Dalam-negeri -> luar-negeri: USD lebih umum bagi pembeli asing.
-        // Yang kembali memakai zona tersimpan tidak diusulkan USD bila ia
-        // sengaja memilih IDR sebelumnya.
-        if ($this->mataUang === 'IDR' && $nilai !== ZonaPelanggan::sekarang()) {
-            $this->mataUang = 'USD';
-        }
+        $this->mataUang = 'USD';
     }
 
-    /** Pindah ke luar negeri: mata uang USD ikut diusulkan. */
+    /** Nilai mata uang dari permintaan lama selalu dikembalikan ke USD. */
     public function updatedMataUang(string $nilai): void
     {
-        $nilai = strtoupper($nilai);
-
-        if (! in_array($nilai, ['IDR', 'USD'], true)) {
-            $this->mataUang = 'IDR';
-        }
+        $this->mataUang = 'USD';
     }
 
     /**
@@ -535,11 +529,10 @@ class Checkout extends Component
             // (string) menimpa variabel ini (daftar), sehingga @foreach atasnya
             // gagal dan halaman checkout tidak dapat dirender sama sekali.
             'daftarKurir' => $kurir,
-            // Ringkasan checkout dalam mata uang pembeli. Perkiraan, karena
-            // kurs berubah; yang dipakai untuk membayar tetap IDR.
-            'perkiraanAsing' => $this->mataUang === 'IDR'
-                ? null
-                : Internasional::perkiraan((float) $keranjang->ringkasan()['total'], $this->mataUang),
+            // Ringkasan checkout tidak lagi mengirim perkiraan mata uang asing.
+            // Pilihan mata uang dihapus dan seluruh situs kini menagih USD,
+            // jadi satu-satunya angka yang perlu dibaca pembeli sudah ada di
+            // $ringkasan — dalam dolar.
         ])
             ->title(__('site.checkout.title').' · '.$toko->teks('site_name'))
             ->layoutData([

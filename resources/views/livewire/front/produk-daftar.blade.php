@@ -71,7 +71,7 @@
 
                 @if (filled($hargaMin) || filled($hargaMaks))
                     <button type="button" wire:click="$set('hargaMin', ''); $set('hargaMaks', '')" class="badge badge-outline gap-1">
-                        {{ __('site.catalog.price_range') }}: {{ filled($hargaMin) ? rupiah($hargaMin) : '0' }} – {{ filled($hargaMaks) ? rupiah($hargaMaks) : '∞' }}
+                        {{ __('site.catalog.price_range') }}: {{ filled($hargaMin) ? dolar($hargaMin) : '$0' }} – {{ filled($hargaMaks) ? dolar($hargaMaks) : '∞' }}
                         <x-ikon name="close" :size="12" />
                         <span class="visually-hidden">{{ __('site.catalog.remove_filter') }}</span>
                     </button>
@@ -119,14 +119,14 @@
 
                     <div class="measure-line my-4"></div>
 
-                    <p class="label">{{ __('site.catalog.price_range') }}</p>
+                    <p class="label">{{ __('site.catalog.price_range') }} (USD)</p>
                     <div class="flex items-center gap-2">
                         <label class="sr-only" for="harga-min">{{ __('site.catalog.min') }}</label>
-                        <input id="harga-min" type="number" inputmode="numeric" class="field !min-h-[40px]" placeholder="{{ __('site.catalog.min') }}"
+                        <input id="harga-min" type="number" inputmode="decimal" min="0" step="1" class="field !min-h-[40px]" placeholder="{{ __('site.catalog.min') }}"
                                wire:model.live.debounce.600ms="hargaMin">
                         <span class="text-dim">-</span>
                         <label class="sr-only" for="harga-maks">{{ __('site.catalog.max') }}</label>
-                        <input id="harga-maks" type="number" inputmode="numeric" class="field !min-h-[40px]" placeholder="{{ __('site.catalog.max') }}"
+                        <input id="harga-maks" type="number" inputmode="decimal" min="0" step="1" class="field !min-h-[40px]" placeholder="{{ __('site.catalog.max') }}"
                                wire:model.live.debounce.600ms="hargaMaks">
                     </div>
 

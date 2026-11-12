@@ -87,7 +87,7 @@
                              class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                              style="object-position: {{ $s->posisiFokus() }}"
                              loading="lazy" decoding="async" />
-                    @elseif ($s->media_type === '{{ __('site.admin.hero.video') }}')
+                    @elseif ($s->media_type === __('site.admin.hero.video'))
                         <div class="flex h-full w-full items-center justify-center gap-2 text-dim">
                             <x-ikon name="activity" :size="26" />
                             <span class="tech text-xs">{{ __('site.admin.hero.video') }}</span>
@@ -148,7 +148,7 @@
                 <div class="flex flex-1 flex-col gap-2 p-3">
 
                     <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-                        <span class="tech">{{ $s->media_type === '{{ __('site.admin.hero.video') }}' ? '{{ __('site.admin.hero.video') }}' : 'gambar' }}</span>
+                        <span class="tech">{{ $s->media_type === __('site.admin.hero.video') ? __('site.admin.hero.video') : 'gambar' }}</span>
 
                         @if ($urlHp)
                             <span class="text-dim">·</span>

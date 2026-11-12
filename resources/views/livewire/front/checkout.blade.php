@@ -108,15 +108,18 @@
                             </select>
                         </div>
 
-                        <div>
-                            <label class="label" for="mataUang">{{ __('site.checkout.currency') }}</label>
-                            <select id="mataUang" class="field" wire:model.live="mataUang" @disabled($danNegeri)>
-                                <option value="IDR">Rupiah (IDR)</option>
-                                <option value="USD">US Dollar (USD)</option>
-                            </select>
-                            @if ($danNegeri)
-                                <p class="mt-1 text-xs text-dim">Pengiriman dalam negeri ditagih dalam Rupiah.</p>
-                            @endif
+                        {{-- Pilihan mata uang dihapus. Seluruh situs kini
+                             menampilkan dan menagih dalam dolar, jadi kolom
+                             pilihan hanya akan menawarkan Rupiah yang tidak
+                             pernah dipakai — atau, lebih buruk, mengubah
+                             mata uang pesanan tanpa mengubah angka yang
+                             dibaca pembeli di halaman sebelumnya. --}}
+                        <div class="sm:col-span-2">
+                            <p class="label">{{ __('site.checkout.currency') }}</p>
+                            <p class="text-sm">
+                                <span class="tech font-medium">USD</span>
+                                <span class="text-muted">— US Dollar. Tagihan dan pembayaran dalam dolar.</span>
+                            </p>
                         </div>
 
                         @unless ($danNegeri)
@@ -127,7 +130,7 @@
                                         <li>Tulis alamat dalam huruf Latin. Nama jalan dan nomor saja sudah cukup — jangan campur bahasa setempat.</li>
                                         <li>Ongkir internasional dihitung manual oleh admin setelah pesanan masuk. Anda akan dihubungi lewat surel atau WhatsApp sebelum pesanan dikirim.</li>
                                         <li>Bea masuk dan pajak impor di negara tujuan menjadi tanggungan pembeli.</li>
-                                        <li>Harga yang dibayar tetap dalam Rupiah. {{ $kodeTelepon }} saja hanyalah kode telepon yang disarankan.</li>
+                                        <li>Semua harga dan tagihan dalam dolar AS. {{ $kodeTelepon }} saja hanyalah kode telepon yang disarankan.</li>
                                     </ul>
                                 </div>
                             </div>
@@ -202,27 +205,27 @@
                 <div class="mt-4 space-y-2 text-sm">
                     <div class="flex justify-between">
                         <span class="text-muted">{{ __('site.cart.subtotal') }}</span>
-                        <span class="tech">{{ rupiah($ringkasan['subtotal']) }}</span>
+                        <span class="tech">{{ dolar($ringkasan['subtotal']) }}</span>
                     </div>
 
                     @if ($ringkasan['diskon'] > 0)
                         <div class="flex justify-between text-ok">
                             <span>{{ __('site.cart.discount') }}</span>
-                            <span class="tech">-{{ rupiah($ringkasan['diskon']) }}</span>
+                            <span class="tech">-{{ dolar($ringkasan['diskon']) }}</span>
                         </div>
                     @endif
 
                     @if ($ringkasan['ongkir'] > 0)
                         <div class="flex justify-between">
                             <span class="text-muted">{{ __('site.cart.shipping') }}</span>
-                            <span class="tech">{{ rupiah($ringkasan['ongkir']) }}</span>
+                            <span class="tech">{{ dolar($ringkasan['ongkir']) }}</span>
                         </div>
                     @endif
 
                     @if ($ringkasan['pajak'] > 0)
                         <div class="flex justify-between">
                             <span class="text-muted">{{ __('site.cart.tax') }}</span>
-                            <span class="tech">{{ rupiah($ringkasan['pajak']) }}</span>
+                            <span class="tech">{{ dolar($ringkasan['pajak']) }}</span>
                         </div>
                     @endif
                 </div>
@@ -231,21 +234,14 @@
 
                 <div class="flex items-baseline justify-between">
                     <span class="font-semibold">{{ __('site.cart.total') }}</span>
-                    <span class="tech text-2xl font-medium">{{ rupiah($ringkasan['total']) }}</span>
+                    <span class="tech text-2xl font-medium">{{ dolar($ringkasan['total']) }}</span>
                 </div>
 
-                {{-- Perkiraan dalam mata uang pembeli asing.
-                     Sengaja BERADA di bawah total IDR, bukan menggantikannya:
-                     yang dipakai membayar tetap Rupiah, jadi angka itu yang
-                     dinomordukan dan angka ini yang diberi tanda "perkiraan". --}}
-                @if ($perkiraanAsing !== null)
-                    <p class="mt-1 text-xs text-dim">
-                        Perkiraan {{ $perkiraanAsing['mata'] }}: {{ $perkiraanAsing['teks'] }}
-                        @if ($perkiraanAsing['kurs'])
-                            (kurs {{ number_format($perkiraanAsing['kurs'], 0, ',', '.') }} · {{ $perkiraanAsing['sumber'] }})
-                        @endif
-                    </p>
-                @endif
+                {{-- Perkiraan mata uang asing dihapus bersama pilihan mata
+                     uang. Dulu total ditulis rupiah lalu dolar kecil di
+                     bawahnya sebagai "perkiraan"; sekarang totalnya sudah
+                     dolar, dan menambahkan "perkiraan USD" di bawah angka
+                     USD membuat pembeli ragu mana yang akan ditagih. --}}
 
                 <div class="measure-line my-4"></div>
 

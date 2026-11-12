@@ -52,8 +52,15 @@ function HentikanSemua {
     # Hanya proses milik TUMPUKAN PRODUKSI ini.
     # Pengembangan memakai port 8100/920x dan conf iksan.conf; jangan diganggu.
 
+    # Perintah sebenarnya: cloudflared tunnel --config ...\bites.yml --no-autoupdate run bites
+    # Setelah "tunnel " yang muncul adalah "--config", BUKAN "run bites", sehingga pola
+    # lama ("tunnel\s+(run\s+)?bites") TIDAK PERNAH cocok dan proses lama menumpuk.
+    # Cocokkan lewat "run <nama>" ATAU berkas konfigurasi tunnel ini.
     Get-CimInstance Win32_Process -Filter "Name='cloudflared.exe'" -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandLine -match "tunnel\s+(run\s+)?$namaTunnel(\s|`"|$)" } |
+        Where-Object {
+            $_.CommandLine -match "run\s+$namaTunnel(\s|`"|$)" -or
+            $_.CommandLine -match [regex]::Escape("$namaTunnel.yml")
+        } |
         ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 
     Get-CimInstance Win32_Process -Filter "Name='php-cgi.exe'" -ErrorAction SilentlyContinue |

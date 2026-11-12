@@ -44,7 +44,7 @@
                     <dl class="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
                         <div>
                             <dt class="part-no">{{ __('site.cart.total') }}</dt>
-                            <dd class="tech mt-1">{{ rupiah($data['total']) }}</dd>
+                            <dd class="tech mt-1">{{ dolar($data['total']) }}</dd>
                         </div>
                         <div>
                             <dt class="part-no">Item</dt>

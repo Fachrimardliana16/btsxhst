@@ -22,7 +22,7 @@
                     </div>
                     <div>
                         <dt class="part-no">{{ __('site.cart.total') }}</dt>
-                        <dd class="tech mt-1 text-lg">{{ rupiah($order->grand_total) }}</dd>
+                        <dd class="tech mt-1 text-lg">{{ dolar($order->grand_total) }}</dd>
                     </div>
                 </dl>
             </div>
@@ -40,7 +40,7 @@
 
                     <p class="mt-3 text-sm text-muted">
                         Pesanan ini belum dibayar. Selesaikan pembayaran lewat PayPal
-                        sebesar <span class="tech font-medium text-ink">{{ $order->currency }} {{ rupiah($order->grand_total) }}</span>.
+                        sebesar <span class="tech font-medium text-ink">{{ dolar($order->grand_total) }}</span>.
                         Pesanan diproses setelah pembayaran dikonfirmasi.
                     </p>
 
@@ -62,7 +62,7 @@
                     <p class="part-no">02 / {{ __('site.order.manual_instructions') }}</p>
 
                     <p class="mt-3 text-sm text-muted">
-                        Transfer sebesar <span class="tech font-medium text-ink">{{ rupiah($order->grand_total) }}</span>
+                        Transfer sebesar <span class="tech font-medium text-ink">{{ dolar($order->grand_total) }}</span>
                         ke salah satu rekening berikut, lalu kirim bukti transfer melalui WhatsApp.
                         Pesanan diproses setelah pembayaran diverifikasi.
                     </p>
@@ -90,9 +90,9 @@
                                 @if ($item->variant_name)
                                     <span class="text-muted">· {{ $item->variant_name }}</span>
                                 @endif
-                                <span class="tech block text-xs text-dim">{{ $item->quantity }} × {{ rupiah($item->unit_price) }}</span>
+                                <span class="tech block text-xs text-dim">{{ $item->quantity }} × {{ dolar($item->unit_price) }}</span>
                             </span>
-                            <span class="tech flex-none">{{ rupiah($item->subtotal) }}</span>
+                            <span class="tech flex-none">{{ dolar($item->subtotal) }}</span>
                         </li>
                     @endforeach
                 </ul>
@@ -102,18 +102,18 @@
                 <div class="space-y-1 text-sm">
                     <div class="flex justify-between">
                         <span class="text-muted">{{ __('site.cart.subtotal') }}</span>
-                        <span class="tech">{{ rupiah($order->subtotal) }}</span>
+                        <span class="tech">{{ dolar($order->subtotal) }}</span>
                     </div>
                     @if ((float) $order->discount_amount > 0)
                         <div class="flex justify-between text-ok">
                             <span>{{ __('site.cart.discount') }}</span>
-                            <span class="tech">-{{ rupiah($order->discount_amount) }}</span>
+                            <span class="tech">-{{ dolar($order->discount_amount) }}</span>
                         </div>
                     @endif
                     @if ((float) $order->shipping_cost > 0)
                         <div class="flex justify-between">
                             <span class="text-muted">{{ __('site.cart.shipping') }}</span>
-                            <span class="tech">{{ rupiah($order->shipping_cost) }}</span>
+                            <span class="tech">{{ dolar($order->shipping_cost) }}</span>
                         </div>
                     @endif
                 </div>
@@ -122,7 +122,7 @@
 
                 <div class="flex items-baseline justify-between">
                     <span class="font-semibold">{{ __('site.cart.total') }}</span>
-                    <span class="tech text-2xl font-medium">{{ rupiah($order->grand_total) }}</span>
+                    <span class="tech text-2xl font-medium">{{ dolar($order->grand_total) }}</span>
                 </div>
             </div>
 

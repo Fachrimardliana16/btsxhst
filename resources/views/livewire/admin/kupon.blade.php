@@ -12,7 +12,7 @@
             <h1 class="mt-1 font-display text-2xl font-semibold">{{ __('site.admin.kupon.judul') }}</h1>
             <p class="mt-1 text-sm text-muted">
                 {{ number_format($jumlah['semua'], 0, ',', '.') }} kupon ·
-                {{ number_format($jumlah['{{ __('site.admin.kupon.berjalan') }}'], 0, ',', '.') }} sedang berlaku
+                {{ number_format($jumlah[__('site.admin.kupon.berjalan')], 0, ',', '.') }} sedang berlaku
                 @if ($jumlah['habis'] > 0) · <span class="text-warn">{{ $jumlah['habis'] }} {{ __('site.admin.kupon.kuota_habis') }}</span> @endif
             </p>
         </div>
@@ -38,7 +38,7 @@
                    placeholder="{{ __('site.admin.kupon.cari_placeholder') }}" aria-label="{{ __('site.admin.kupon.cari') }}">
         </div>
 
-        @foreach (['semua' => 'Semua', '{{ __('site.admin.kupon.berjalan') }}' => 'Berjalan', 'habis' => 'Kuota habis', '{{ __('site.admin.kupon.kedaluwarsa') }}' => 'Kedaluwarsa'] as $nilai => $label)
+        @foreach (['semua' => 'Semua', __('site.admin.kupon.berjalan') => 'Berjalan', 'habis' => 'Kuota habis', __('site.admin.kupon.kedaluwarsa') => 'Kedaluwarsa'] as $nilai => $label)
             <button type="button" wire:click="aturKeadaan('{{ $nilai }}')"
                     class="btn {{ $keadaan === $nilai ? 'btn-primary' : 'btn-outline' }} btn-sm">{{ $label }}</button>
         @endforeach
@@ -144,9 +144,9 @@
                                     <td class="p-3">
                                         <div class="flex items-center justify-end gap-1">
                                             <button type="button" wire:click="ubah{{ __('site.admin.kupon.aktif') }}({{ $k->id }})"
-                                                    class="btn-icon btn-icon-sm" title="{{ $k->is_active ? 'Nonaktifkan' : '{{ __('site.admin.kupon.aktif') }}kan' }}">
+                                                    class="btn-icon btn-icon-sm" title="{{ $k->is_active ? 'Nonaktifkan' : __('site.admin.kupon.aktif') . 'kan' }}">
                                                 <x-ikon name="{{ $k->is_active ? 'check' : 'close' }}" :size="15" />
-                                                <span class="visually-hidden">{{ $k->is_active ? 'Nonaktifkan' : '{{ __('site.admin.kupon.aktif') }}kan' }}</span>
+                                                <span class="visually-hidden">{{ $k->is_active ? 'Nonaktifkan' : __('site.admin.kupon.aktif') . 'kan' }}</span>
                                             </button>
                                             <button type="button" wire:click="sunting({{ $k->id }})"
                                                     class="btn-icon btn-icon-sm" title="{{ __('site.admin.kupon.sunting') }}">
@@ -177,7 +177,7 @@
             <div class="plate h-fit p-4 lg:sticky lg:top-20">
                 <div class="flex items-start justify-between gap-2">
                     <div>
-                        <p class="part-no">{{ $suntingId ? '{{ __('site.admin.kupon.sunting') }}' : 'Baru' }}</p>
+                        <p class="part-no">{{ $suntingId ? __('site.admin.kupon.sunting') : 'Baru' }}</p>
                         <h2 class="font-display text-lg font-semibold">
                             {{ $suntingId ? 'Ubah kupon' : 'Tambah kupon' }}
                         </h2>

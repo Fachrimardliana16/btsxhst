@@ -133,6 +133,38 @@ Skrip ini juga membangun ulang cache `config`, `route`, `view`, dan `event`
 dengan `--env=production` setiap kali dinyalakan. Tanpa itu, mengubah
 `.env.production` tidak akan berpengaruh.
 
+### 6a. Penjaga otomatis (`BitesExhaust-Watchdog`)
+
+Sejak 9 Nov 2026 tumpukan tidak perlu dinyalakan manual. Scheduled Task
+memeriksa setiap 5 menit, saat boot, dan saat logon; bila mendeteksi
+tumpukan mati, ia memicu `nyalakan-produksi.ps1` sendiri.
+
+```powershell
+# Daftarkan / daftarkan ulang (aman dijalankan berulang)
+powershell -ExecutionPolicy Bypass -File D:\Projects\iksanknalpot2\tools\daftarkan-penjaga.ps1
+
+# Lihat keadaan tumpukan + penjaga
+powershell -ExecutionPolicy Bypass -File D:\Projects\iksanknalpot2\tools\cek-status.ps1
+
+# Uji pemulihan sungguhan (memadamkan nginx / tunnel lalu menunggu pulih)
+powershell -ExecutionPolicy Bypass -File D:\Projects\iksanknalpot2\tools\uji-penjaga.ps1
+powershell -ExecutionPolicy Bypass -File D:\Projects\iksanknalpot2\tools\uji-tunnel.ps1
+```
+
+Berkas terkait:
+
+| Berkas | Isi |
+|---|---|
+| `tools/jaga-produksi.ps1` | Pemeriksa + pemicu restart |
+| `tools/jalankan-penyalakan.cmd` | Dipanggil lewat WMI agar proses tidak jadi anak tugas |
+| `tools/daftarkan-penjaga.ps1` | Pendaftaran tugas (XML, `Duration` tanpa batas) |
+| `tools/out/jaga.log` | Catatan setiap kali penjaga bertindak |
+
+Prinsipnya sengaja konservatif: lokal 8200 dicoba 3× sebelum dianggap mati,
+dan kegagalan publik butuh 2 putaran berturut-turut. Satu probe gagal tidak
+boleh memicu restart — restart salah tembak berarti downtime yang dibuat
+sendiri.
+
 ---
 
 ## 7. Setelah mengubah kode atau `.env.production`

@@ -12,6 +12,7 @@ use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Support\HargaDolar;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
@@ -61,6 +62,10 @@ class KeranjangCheckoutTest extends TestCase
             'description_id' => 'Deskripsi',
             'description_en' => 'Description',
             'base_price' => 4250000,
+            // Harga jual dalam dolar. Ditulis eksplisit supaya tes tidak
+            // bergantung pada kurs harian: sebelumnya rupiah adalah satu-satunya
+            // harga, sekarang dolar yang ditampilkan dan ditagih.
+            'base_price_usd' => 250.00,
             'weight_gram' => 4200,
             'is_published' => true,
             'published_at' => now(),
@@ -230,10 +235,15 @@ class KeranjangCheckoutTest extends TestCase
 
         $ringkasan = app(Keranjang::class)->ringkasan();
 
-        $this->assertSame(4250000.0, (float) $ringkasan['subtotal']);
-        $this->assertSame(25000.0, (float) $ringkasan['ongkir']);
-        $this->assertSame(467500.0, (float) $ringkasan['pajak']);
-        $this->assertSame(4742500.0, (float) $ringkasan['total']);
+        // Semua angka ringkasan dalam DOLAR. Ongkir dan pajak tetap tersimpan
+        // dalam rupiah di pengaturan (25000 / 11%) lalu diterjemahkan.
+        $ongkir = HargaDolar::dariRupiah(25000.0);
+        $pajak = round(250.00 * 0.11, 2);
+
+        $this->assertSame(250.00, (float) $ringkasan['subtotal']);
+        $this->assertSame((float) $ongkir, (float) $ringkasan['ongkir']);
+        $this->assertSame($pajak, (float) $ringkasan['pajak']);
+        $this->assertSame(round(250.00 + $pajak + $ongkir, 2), (float) $ringkasan['total']);
     }
 
     public function test_catatan_keranjang_tersimpan_dan_diteruskan_ke_checkout(): void
@@ -331,7 +341,9 @@ class KeranjangCheckoutTest extends TestCase
             ->call('terapkanKupon')
             ->assertSee('PERSEN10');
 
-        $this->assertSame(425000.0, (float) app(Keranjang::class)->ringkasan()['diskon']);
+        // 10% dari $250.00 — kupon persen tidak ikut dikonversi, hanya
+        // ambang minimalnya yang diterjemahkan dari rupiah.
+        $this->assertSame(25.0, (float) app(Keranjang::class)->ringkasan()['diskon']);
     }
 
     public function test_kupon_nominal_dipotong_dari_subtotal(): void
@@ -341,7 +353,13 @@ class KeranjangCheckoutTest extends TestCase
 
         Livewire::test(KeranjangHalaman::class)->set('kodeKupon', 'POTONG200')->call('terapkanKupon');
 
-        $this->assertSame(200000.0, (float) app(Keranjang::class)->ringkasan()['diskon']);
+        // Nilai kupon nominal tersimpan dalam rupiah dan diterjemahkan ke
+        // dolar sebelum dipotong: kalau tidak, "Rp 200.000" akan memotong
+        // $200.000 dari subtotal $250.
+        $this->assertSame(
+            (float) HargaDolar::dariRupiah(200000.0),
+            (float) app(Keranjang::class)->ringkasan()['diskon'],
+        );
     }
 
     public function test_kupon_gratis_ongkir_menghapus_ongkir_tanpa_menyentuh_subtotal(): void
@@ -403,6 +421,8 @@ class KeranjangCheckoutTest extends TestCase
         // Minimal belanja di antara harga satu unit dan harga dua unit, supaya
         // syaratnya terpenuhi saat kupon dipasang lalu tidak lagi terpenuhi
         // setelah jumlahnya diturunkan.
+        // Ambang di antara $250 (satu unit) dan $500 (dua unit). Ditulis dalam
+        // rupiah seperti di panel; HargaDolar menerjemahkannya ke dolar.
         $this->buatKupon('MENDEKATI', 'percent', 10, ['min_spend' => 5000000]);
         $this->isiKeranjang(2);
 
@@ -521,8 +541,11 @@ class KeranjangCheckoutTest extends TestCase
         $this->assertSame('Pembeli Uji', $order->namaPenerima());
         $this->assertSame('Knalpot Full System NMAX', $item->product_name);
         $this->assertSame('Stainless', $item->variant_name);
-        $this->assertSame('4250000.00', (string) $item->unit_price);
-        $this->assertSame(8500000.0, (float) $order->grand_total);
+        // Snapshot pesanan dalam DOLAR: inilah angka yang ditagih PayPal dan
+        // yang dibaca pembeli di halaman sukses, invoice, dan surel.
+        $this->assertSame('250.00', (string) $item->unit_price);
+        $this->assertSame(500.0, (float) $order->grand_total);
+        $this->assertSame('USD', $order->currency);
 
         // Stok fisik TIDAK berkurang; yang bertambah hanya tahanannya.
         $this->assertSame(10, (int) $this->varian->fresh()->stock_quantity);

@@ -43,7 +43,7 @@
                                     <span class="block truncate font-medium">{{ $p->judul() }}</span>
                                     <span class="tech block text-xs text-dim">{{ $p->sku }}</span>
                                 </span>
-                                <span class="tech flex-none text-sm">{{ rupiah($p->hargaMulai()) }}</span>
+                                <span class="tech flex-none text-sm">{{ harga_produk($p, false) }}</span>
                             </a>
                         </li>
                     @endforeach

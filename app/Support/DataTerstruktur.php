@@ -219,7 +219,11 @@ class DataTerstruktur
                     'name' => 'Indonesia',
                 ];
 
-                $data['currenciesAccepted'] = 'IDR';
+                // Dolar, bukan rupiah: harga yang dilihat pembeli di seluruh
+                // situs sudah dolar, dan Google memakai `priceRange` ini untuk
+                // potongan harga di hasil pencarian. Mencantumkan rupiah di sini
+                // memasang angka yang tidak pernah muncul di halaman mana pun.
+                $data['currenciesAccepted'] = HargaDolar::MATA;
                 $data['paymentAccepted'] = 'Transfer Bank, Tunai';
 
                 /* ── Penanda untuk mesin jawaban (GEO) ────────────────────────
@@ -270,12 +274,14 @@ class DataTerstruktur
                 });
 
                 if ($rentang !== null) {
-                    // Bentuk yang diminta schema.org: "Rp 250.000 – Rp 4.500.000".
-                    // Dua angka, bukan satu, karena pembeli membandingkan rentang.
+                    // Bentuk yang diminta schema.org: "$25.00 – $282.25".
+                    // Dua angka, bukan satu, karena pembeli membandingkan
+                    // rentang. Nilai rupiah dari kueri di atas diterjemahkan
+                    // ke dolar lebih dulu — sama dengan harga di kartu produk.
                     $data['priceRange'] = sprintf(
-                        'Rp %s – Rp %s',
-                        number_format((float) $rentang[0], 0, ',', '.'),
-                        number_format((float) $rentang[1], 0, ',', '.'),
+                        '%s – %s',
+                        HargaDolar::format(HargaDolar::dariRupiah($rentang[0])),
+                        HargaDolar::format(HargaDolar::dariRupiah($rentang[1])),
                     );
                 }
 

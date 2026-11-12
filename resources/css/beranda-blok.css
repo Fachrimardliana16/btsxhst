@@ -387,7 +387,9 @@
     display: grid;
     place-items: center;
     gap: .5rem;
-    color: var(--c-text-dim);
+    /* --c-text-dim #6b7280 hanya 4.27:1 di atas --c-surface-sunken #eef1f5 —
+       di bawah ambang 4.5 untuk teks 12px. --c-text-muted #55606f = 5.64:1. */
+    color: var(--c-text-muted);
     font-size: .75rem;
     text-align: center;
     padding: 1rem;

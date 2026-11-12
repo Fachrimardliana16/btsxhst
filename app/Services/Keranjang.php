@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Enums\StatusPesanan;
+use App\Enums\TipeKupon;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Coupon;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Support\HargaDolar;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -188,6 +190,28 @@ class Keranjang
         return (string) ($this->ambil()?->note ?? '');
     }
 
+    /**
+     * Subtotal keranjang dalam dolar.
+     *
+     * Dipakai untuk memeriksa syarat kupon: min_spend kupon tersimpan dalam
+     * rupiah dan diterjemahkan oleh alasanTidakSah(), jadi subtotal yang
+     * dibandingkan HARUS dolar. Memakai subtotal() (rupiah) di sini membuat
+     * kupon "minimal Rp 10.000.000" lolos untuk keranjang $250.
+     *
+     * Sengaja tidak memanggil ringkasan(): ringkasan() memanggil kupon(),
+     * yang memanggil metode ini — itu lingkaran tanpa ujung.
+     */
+    private function subtotalDolar(): float
+    {
+        $jumlah = 0.0;
+
+        foreach ($this->items() as $item) {
+            $jumlah += HargaDolar::dariVarian($item->variant) * $item->quantity;
+        }
+
+        return round($jumlah, 2);
+    }
+
     public function kupon(): ?Coupon
     {
         $coupon = $this->ambil()?->coupon;
@@ -197,7 +221,7 @@ class Keranjang
         }
 
         // Kupon yang sudah tidak berlaku tidak boleh tetap menempel.
-        return $coupon->alasanTidakSah($this->subtotal()) === null ? $coupon : null;
+        return $coupon->alasanTidakSah($this->subtotalDolar()) === null ? $coupon : null;
     }
 
     /**
@@ -331,16 +355,44 @@ class Keranjang
         $this->jumlahCache = null;
     }
 
-    /** Ringkasan biaya. Satu tempat, dipakai keranjang dan checkout. */
+    /**
+     * Ringkasan biaya. Satu tempat, dipakai keranjang dan checkout.
+     *
+     * ── DIHITUNG DALAM DOLAR ────────────────────────────────────────────
+     * Pasarnya luar negeri dan seluruh situs menulis harga dalam dolar, jadi
+     * ringkasan ini menghitung dolar — bukan rupiah yang dikonversi belakangan.
+     *
+     * Bedanya bukan kosmetik. Bila subtotal dan ongkir dihitung dalam rupiah
+     * lalu dibagi kurs, kupon yang berbunyi "minimal belanja Rp 500.000"
+     * dibandingkan dengan subtotal rupiah, sedangkan batas ongkir dan
+     * pembulatan bekerja pada skala yang berbeda. Angka yang tampil akhirnya
+     * tidak sama dengan angka yang ditagih. Di sini semua pihak berada di
+     * skala yang sama: harga varian, ongkir, pajak, dan nilai kupon.
+     *
+     * Nilai rupiah tetap menjadi sumber kebenaran untuk HARGA PRODUK (lewat
+     * `base_price_usd` yang disalin dari kurs), tetapi perhitungan pesanan
+     * berjalan penuh dalam dolar supaya konsisten dengan yang dibaca pembeli.
+     */
     public function ringkasan(): array
     {
-        $subtotal = $this->subtotal();
+        $subtotal = $this->subtotalDolar();
+
         $kupon = $this->kupon();
-        $ongkir = (float) \App\Support\Pengaturan::instance()->angka('shipping_flat_rate', 0);
+        $ongkir = HargaDolar::dariRupiah(
+            \App\Support\Pengaturan::instance()->angka('shipping_flat_rate', 0),
+        ) ?? 0.0;
         $persenPajak = (float) \App\Support\Pengaturan::instance()->angka('tax_percent', 0);
 
-        $potonganBelanja = $kupon?->potonganBelanja($subtotal, $ongkir) ?? 0.0;
+        // Kupon diterjemahkan ke dolar lebih dulu (lihat catatan di
+        // HargaDolar): ambang minimal, nilai nominal, dan batas potongannya
+        // semuanya tersimpan dalam rupiah.
+        $potonganBelanja = $kupon === null ? 0.0 : HargaDolar::kuponPotongan($kupon, $subtotal, $ongkir);
         $potonganOngkir = $kupon?->potonganOngkir($subtotal, $ongkir) ?? 0.0;
+
+        // Gratis ongkir dihitung dari skala dolar yang sama.
+        if ($kupon !== null && $kupon->type === TipeKupon::GratisOngkir) {
+            $potonganOngkir = $ongkir;
+        }
 
         $dasarPajak = max(0.0, $subtotal - $potonganBelanja);
         $pajak = round($dasarPajak * ($persenPajak / 100), 2);
@@ -349,10 +401,10 @@ class Keranjang
         return [
             'item' => $this->jumlahItem(),
             'subtotal' => $subtotal,
-            'diskon' => $potonganBelanja,
-            'ongkir' => $ongkirAkhir,
+            'diskon' => round($potonganBelanja, 2),
+            'ongkir' => round($ongkirAkhir, 2),
             'pajak' => $pajak,
-            'total' => max(0.0, $dasarPajak + $pajak + $ongkirAkhir),
+            'total' => round(max(0.0, $dasarPajak + $pajak + $ongkirAkhir), 2),
             'kupon' => $kupon,
         ];
     }

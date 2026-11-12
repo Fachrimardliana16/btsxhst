@@ -158,7 +158,7 @@
             <div class="plate h-fit p-4 lg:sticky lg:top-20">
                 <div class="flex items-start justify-between gap-2">
                     <div>
-                        <p class="part-no">{{ $suntingId ? '{{ __('site.admin.kategori.sunting') }}' : 'Baru' }}</p>
+                        <p class="part-no">{{ $suntingId ? __('site.admin.kategori.sunting') : 'Baru' }}</p>
                         <h2 class="font-display text-lg font-semibold">
                             {{ $suntingId ? 'Ubah kategori' : 'Tambah kategori' }}
                         </h2>

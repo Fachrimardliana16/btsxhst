@@ -17,8 +17,10 @@
          tidak di daftar — pembeli memilih dari gambar dan harga.
       2. Jumlah varian pindah ke atas gambar sebagai lencana, bukan baris teks
          tersendiri. Ia informasi sekunder dan tidak boleh memakan tinggi.
-      3. Dolar digabung SEBARIS dengan rupiah, dipisah titik tengah. Dua baris
-         harga untuk satu angka membuat mata berhenti dua kali.
+      3. Harga ditulis SEKALI dalam dolar. Versi paling awal menumpuk rupiah
+         besar + "≈ $..." kecil di sebelahnya; begitu dolar menjadi harga
+         yang benar-benar ditagih, pasangan itu hanya membuat pembeli
+         bertanya mana yang harus dipercaya.
       4. Judul diberi tinggi tetap dua baris (min-h). Tanpa itu, kartu dengan
          judul satu baris dan dua baris berdampingan jadi berbeda tinggi, dan
          baris harganya tidak sejajar — itulah yang paling terasa "tidak rapi".
@@ -29,11 +31,10 @@
     /** @var \App\Models\Product $produk */
     $media = $produk->gambarUtama();
     $adaStok = $produk->adaStok();
-    $harga = $produk->hargaMulai();
+    $harga = \App\Support\HargaDolar::mulai($produk);
     $jumlahVarian = $produk->variants->where('is_active', true)->count();
     $tujuan = route('front.products.show', $produk);
     $varianPertama = $produk->variants->where('is_active', true)->first();
-    $perkiraan = \App\Support\Kurs::perkiraan($harga);
 
     // Status stok bertingkat. Ambang "terbatas" memakai kunci Pengaturan yang
     // sudah ada (low_stock_threshold, bawaan 3) — sumber yang sama dengan
@@ -121,26 +122,28 @@
 
         {{-- Tinggi tetap dua baris: kartu yang berdampingan tetap sejajar, dan
              baris harga selalu jatuh di garis yang sama. --}}
-        <h3 class="mt-1 line-clamp-2 min-h-[2.6em] text-[length:var(--t-sm)] font-semibold leading-snug lg:text-base">
+        {{-- h2, bukan h3. Di /produk dan /kategori tidak ada h2 di antara h1
+             halaman dan grid ini, sehingga h3 melompati satu tingkat dan audit
+             heading-order gagal. Di beranda kartu tetap berada di bawah h2
+             section, dan h2 setelah h2 tidak melompati apa pun. --}}
+        <h2 class="mt-1 line-clamp-2 min-h-[2.6em] text-[length:var(--t-sm)] font-semibold leading-snug lg:text-base">
             {{-- Teks judul tanpa tautan sendiri: lapisan di atas sudah menjadi
                  tautannya, dan dua tautan bernama sama membingungkan pembaca
                  layar. pointer-events-none agar klik jatuh ke lapisan. --}}
             <span class="pointer-events-none">{{ $produk->judul() }}</span>
-        </h3>
+        </h2>
 
         <div class="mt-auto pt-3">
-            {{-- Rupiah dan perkiraan dolar SEBARIS. Rupiah tidak boleh
-                 terpotong dan tidak boleh meluber ke samping: tabular-nums
-                 menjaga lebarnya tetap, basis-0 + truncate menahan luberan. --}}
-            <p class="pointer-events-none flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-                <span class="tech text-base font-semibold tabular-nums lg:text-lg">{{ rupiah($harga) }}</span>
-
-                @if ($perkiraan !== null)
-                    <span class="text-[length:var(--t-xs)] tabular-nums text-dim"
-                          title="Perkiraan pada kurs Rp {{ number_format($perkiraan['kurs'], 0, ',', '.') }} per USD">
-                        ≈ {{ $perkiraan['teks'] }}
-                    </span>
+            {{-- Harga dolar, satu angka. Dulu ada dua: rupiah besar dan
+                 "≈ $..." kecil di sebelahnya. Sekarang pasarnya luar negeri
+                 dan harga yang ditagih memang dolar, jadi pasangan itu cuma
+                 membuat pembeli bertanya mana yang harus dipercaya.
+                 tabular-nums menjaga lebarnya tetap antar kartu. --}}
+            <p class="pointer-events-none flex items-baseline gap-1.5">
+                @if ($jumlahVarian > 1)
+                    <span class="text-[length:var(--t-2xs)] text-dim">{{ \App\Support\HargaDolar::labelDari() }}</span>
                 @endif
+                <span class="tech text-base font-semibold tabular-nums lg:text-lg">{{ dolar($harga) }}</span>
             </p>
 
             {{-- Status stok SUDAH dinyatakan lencana di atas gambar. Tidak

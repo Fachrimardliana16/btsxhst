@@ -56,6 +56,48 @@ if (! function_exists('rupiah')) {
     }
 }
 
+if (! function_exists('dolar')) {
+    /**
+     * Format nominal dolar untuk tampilan: "$1,250.00".
+     *
+     * Nama pendek supaya view tidak penuh `App\Support\HargaDolar::format()`,
+     * mengikuti pola `rupiah()` yang sudah dipakai di seluruh panel admin.
+     */
+    function dolar(float|int|string|null $amount): string
+    {
+        return \App\Support\HargaDolar::format($amount);
+    }
+}
+
+if (! function_exists('harga_produk')) {
+    /** Harga produk dalam dolar, dengan awalan "mulai" bila variannya banyak. */
+    function harga_produk(\App\Models\Product $produk, bool $denganAwalan = true): string
+    {
+        return \App\Support\HargaDolar::teksProduk($produk, $denganAwalan);
+    }
+}
+
+if (! function_exists('harga_varian')) {
+    /** Harga varian dalam dolar. */
+    function harga_varian(\App\Models\ProductVariant $varian): string
+    {
+        return \App\Support\HargaDolar::format(\App\Support\HargaDolar::dariVarian($varian));
+    }
+}
+
+if (! function_exists('harga_nilai')) {
+    /**
+     * Nominal rupiah apa pun (ongkir, diskon, total) dalam dolar.
+     *
+     * Dipakai untuk baris ringkasan keranjang dan pesanan, yang disimpan
+     * dalam rupiah tetapi harus dibaca pembeli dalam dolar.
+     */
+    function harga_nilai(float|int|string|null $rupiah): string
+    {
+        return \App\Support\HargaDolar::format(\App\Support\HargaDolar::dariRupiah($rupiah));
+    }
+}
+
 if (! function_exists('tanggal')) {
     /**
      * Memformat tanggal memakai pola dari panel (`date_format`).

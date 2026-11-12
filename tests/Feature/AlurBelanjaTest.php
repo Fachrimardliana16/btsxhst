@@ -12,6 +12,7 @@ use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Product;
+use App\Support\HargaDolar;
 use App\Models\ProductVariant;
 use App\Services\Keranjang;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,7 +47,7 @@ class AlurBelanjaTest extends TestCase
 
     private Product $produk;
 
-    private function siapkanKatalog(int $stok = 10, float $harga = 250000): void
+    private function siapkanKatalog(int $stok = 10, float $harga = 250000, float $hargaUsd = 25.00): void
     {
         Queue::fake();
 
@@ -63,6 +64,9 @@ class AlurBelanjaTest extends TestCase
             'title_id' => 'Knalpot Full System',
             'slug' => 'knalpot-full-system',
             'base_price' => $harga,
+            // Harga jual dolar, ditulis eksplisit supaya tes tidak bergantung
+            // pada kurs harian — dolar inilah yang kini tampil dan ditagih.
+            'base_price_usd' => $hargaUsd,
             'weight_gram' => 3000,
             'is_published' => true,
             'is_featured' => true,
@@ -82,6 +86,7 @@ class AlurBelanjaTest extends TestCase
             'sku_variant' => 'ALUR-001-SS',
             'variant_name_id' => 'Stainless',
             'price_adjustment' => 50000,
+            'price_adjustment_usd' => 5.00,
             'stock_quantity' => $stok,
             'reserved_quantity' => 0,
             'is_active' => true,
@@ -196,14 +201,17 @@ class AlurBelanjaTest extends TestCase
         $keranjang = app(Keranjang::class);
         $keranjang->terapkanKupon($kupon);
 
-        // subtotal() adalah jumlah barang SEBELUM potongan; yang sudah
-        // dipotong adalah ringkasan()['total']. 600.000 - 10% = 540.000, masih
-        // di bawah batas potongan 100.000.
+        // Semua angka dalam DOLAR. Dua unit x ($25.00 + $5.00) = $60.00;
+        // potongan 10% = $6.00, TETAPI batas potongan Rp 100.000 yang
+        // tersimpan di kupon diterjemahkan ke dolar lebih dulu (~$5.53),
+        // jadi yang dipakai batas itulah — bukan nilai persennya.
         $ringkas = $keranjang->ringkasan();
 
-        $this->assertSame(600000.0, (float) $ringkas['subtotal'], 'subtotal sebelum potongan');
-        $this->assertSame(60000.0, (float) $ringkas['diskon'], 'potongan 10%');
-        $this->assertSame(540000.0, (float) $ringkas['total'], 'total setelah potongan');
+        $batas = HargaDolar::dariRupiah(100000.0);
+
+        $this->assertSame(60.0, (float) $ringkas['subtotal'], 'subtotal sebelum potongan');
+        $this->assertSame((float) $batas, (float) $ringkas['diskon'], 'potongan dibatasi nilai dolar');
+        $this->assertSame(round(60.0 - $batas, 2), (float) $ringkas['total'], 'total setelah potongan');
 
         Livewire::test(Checkout::class)
             ->set($this->isiCheckout())
@@ -213,7 +221,7 @@ class AlurBelanjaTest extends TestCase
 
         $pesanan = Order::query()->firstOrFail();
 
-        $this->assertSame(540000.0, (float) $pesanan->grand_total);
+        $this->assertSame(round(60.0 - $batas, 2), (float) $pesanan->grand_total);
         $this->assertSame($kupon->id, $pesanan->coupon_id);
         $this->assertSame(1, $kupon->fresh()->used_count);
     }
@@ -297,7 +305,9 @@ class AlurBelanjaTest extends TestCase
 
         // Harga diubah setelah barang masuk keranjang, seperti saat admin
         // memperbarui harga ketika pembeli sedang mengisi formulir.
-        $this->produk->update(['base_price' => 300000]);
+        // Harga rupiah DAN dolar diubah bersama: yang ditagih adalah dolar,
+        // jadi mengubah rupiah saja tidak akan mengubah nilai pesanan.
+        $this->produk->update(['base_price' => 300000, 'base_price_usd' => 30.00]);
 
         Livewire::test(Checkout::class)
             ->set($this->isiCheckout())
@@ -305,7 +315,8 @@ class AlurBelanjaTest extends TestCase
             ->call('buatPesanan');
 
         // Yang dipakai harga saat checkout, bukan yang tersimpan di keranjang.
-        $this->assertSame(350000.0, (float) Order::query()->firstOrFail()->grand_total);
+        // ($30.00 + $5.00 penyesuaian varian) = $35.00.
+        $this->assertSame(35.0, (float) Order::query()->firstOrFail()->grand_total);
     }
 
     public function test_checkout_ditolak_bila_stok_berkurang_sebelum_dibayar(): void

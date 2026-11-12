@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductLike;
 use App\Support\CacheKatalog;
 use App\Support\DataTerstruktur;
+use App\Support\HargaDolar;
 use App\Support\Keamanan;
 use App\Support\Pengaturan;
 use Illuminate\Contracts\View\View;
@@ -128,8 +129,12 @@ class ProdukDaftar extends Component
                 ->with(['media', 'variants', 'category'])
                 ->when($kategori !== null, fn ($q) => $q->where('category_id', $kategori->id))
                 ->cari($this->kata)
-                ->when($this->hargaMin !== '' && is_numeric($this->hargaMin), fn ($q) => $q->where('base_price', '>=', (float) $this->hargaMin))
-                ->when($this->hargaMaks !== '' && is_numeric($this->hargaMaks), fn ($q) => $q->where('base_price', '<=', (float) $this->hargaMaks))
+                // Batas harga dari pembeli dalam DOLAR, sedangkan base_price
+                // tersimpan dalam rupiah. Membandingkannya langsung membuat
+                // filter "min $100" membuang semua produk. Dikonversi balik ke
+                // rupiah lewat kurs yang sama dengan yang dipakai menampilkan.
+                ->when($this->hargaMin !== '' && is_numeric($this->hargaMin), fn ($q) => $q->where('base_price', '>=', (float) $this->hargaMin * HargaDolar::kurs()))
+                ->when($this->hargaMaks !== '' && is_numeric($this->hargaMaks), fn ($q) => $q->where('base_price', '<=', (float) $this->hargaMaks * HargaDolar::kurs()))
                 ->when($this->urut === 'price_asc', fn ($q) => $q->orderBy('base_price'))
                 ->when($this->urut === 'price_desc', fn ($q) => $q->orderByDesc('base_price'))
                 ->when($this->urut === 'name', fn ($q) => $q->orderBy('title_id'))

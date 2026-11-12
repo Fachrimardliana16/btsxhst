@@ -16,8 +16,8 @@
                 {{ number_format($jumlah['semua'], 0, ',', '.') }} produk ·
                 {{ number_format($jumlah['terbit'], 0, ',', '.') }} terbit ·
                 {{ number_format($jumlah['draf'], 0, ',', '.') }} draf
-                @if ($jumlah['{{ __('site.admin.produk_daftar.habis') }}'] > 0)
-                    · <span class="text-danger">{{ number_format($jumlah['{{ __('site.admin.produk_daftar.habis') }}'], 0, ',', '.') }} stok {{ __('site.admin.produk_daftar.habis') }}</span>
+                @if ($jumlah[__('site.admin.produk_daftar.habis')] > 0)
+                    · <span class="text-danger">{{ number_format($jumlah[__('site.admin.produk_daftar.habis')], 0, ',', '.') }} stok {{ __('site.admin.produk_daftar.habis') }}</span>
                 @endif
             </p>
         </div>
@@ -265,7 +265,7 @@
                                         class="inline-flex flex-none items-center gap-1.5 rounded-full px-2 py-0.5 text-xs
                                                {{ $produk->is_published ? 'bg-ok/12 text-ok' : 'bg-sunken text-muted' }}">
                                     <span class="h-1.5 w-1.5 rounded-full {{ $produk->is_published ? 'bg-ok' : 'bg-line' }}"></span>
-                                    {{ $produk->is_published ? '{{ __('site.admin.produk_daftar.terbit') }}' : '{{ __('site.admin.produk_daftar.draf') }}' }}
+                                    {{ $produk->is_published ? __('site.admin.produk_daftar.terbit') : __('site.admin.produk_daftar.draf') }}
                                 </button>
                             </div>
 
