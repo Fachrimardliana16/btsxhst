@@ -76,6 +76,13 @@ class PaypalGateway
                 'brand_name' => mb_substr((string) Pengaturan::instance()->teks('site_name', 'Bites Exhaust'), 0, 127),
                 'user_action' => 'PAY_NOW',
                 'shipping_preference' => 'NO_SHIPPING',
+                // Alamat kembali WAJIB untuk alur redirect (bukan JS SDK).
+                // Tanpa return_url, PayPal tidak punya tujuan setelah pembeli
+                // menyetujui pembayaran: halaman PayPal berputar tanpa
+                // mengembalikan pembeli, dan penangkapan dana di
+                // PaypalKembali tidak pernah dijalankan.
+                'return_url' => route('front.paypal.kembali', ['ulid' => $pesanan->ulid]),
+                'cancel_url' => route('front.paypal.kembali', ['ulid' => $pesanan->ulid, 'gagal' => 1]),
             ],
         ];
 
