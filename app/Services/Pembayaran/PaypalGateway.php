@@ -251,7 +251,36 @@ class PaypalGateway
 
         $jenis = (string) ($peristiwa['event_type'] ?? '');
 
-        if (! in_array($jenis, ['PAYMENT.CAPTURE.COMPLETED', 'CHECKOUT.ORDER.APPROVED'], true)) {
+        // APPROVED bukan bukti uang masuk. Peristiwa ini hanya berarti pembeli
+        // menekan setuju; dana baru berpindah setelah /capture. Menandainya
+        // lunas di sini membuat pesanan tampak terbayar padahal tidak ada
+        // transaksi — dan penangkapan di halaman kembali tidak pernah berjalan
+        // bila pembeli menutup peramban. Karena itu APPROVED memicu capture
+        // dari sisi server, bukan pencatatan pembayaran.
+        if ($jenis === 'CHECKOUT.ORDER.APPROVED') {
+            $sumber = (array) ($peristiwa['resource'] ?? []);
+            $idPaypal = (string) ($sumber['id'] ?? '');
+            $nomorPesanan = (string) (data_get($sumber, 'purchase_units.0.reference_id') ?? '');
+            $pesanan = $this->cariPesanan($nomorPesanan, $sumber);
+
+            if ($pesanan === null) {
+                return ['diabaikan' => true, 'alasan' => 'No order matches this event.'];
+            }
+
+            if ($idPaypal === '') {
+                return ['diabaikan' => true, 'alasan' => 'Peristiwa tanpa id pesanan PayPal.'];
+            }
+
+            if ($this->sudahDibayar($pesanan)) {
+                return ['diabaikan' => true, 'alasan' => 'Pembayaran pesanan ini sudah tercatat.'];
+            }
+
+            $this->tangkap($pesanan, $idPaypal);
+
+            return ['diabaikan' => false, 'alasan' => 'Pembayaran ditangkap.'];
+        }
+
+        if ($jenis !== 'PAYMENT.CAPTURE.COMPLETED') {
             return ['diabaikan' => true, 'alasan' => 'Peristiwa '.$jenis.' tidak memengaruhi status pesanan.'];
         }
 
@@ -316,8 +345,23 @@ class PaypalGateway
         array $muatan,
     ): Payment {
         $pembayaran = DB::transaction(function () use ($pesanan, $transaksiId, $nominal, $mataUang, $muatan): Payment {
+            // Kunci baris pesanan supaya capture dari halaman kembali dan
+            // webhook yang datang hampir bersamaan tidak membuat dua baris
+            // pembayaran. Pembayaran pertama yang menang; yang kedua memakai
+            // baris yang sama.
+            $terkunci = Order::query()->whereKey($pesanan->getKey())->lockForUpdate()->first() ?? $pesanan;
+
+            $ada = Payment::query()
+                ->where('order_id', $terkunci->id)
+                ->where('provider', 'paypal')
+                ->first();
+
+            if ($ada !== null) {
+                return $ada;
+            }
+
             $payment = Payment::query()->create([
-                'order_id' => $pesanan->id,
+                'order_id' => $terkunci->id,
                 'provider' => 'paypal',
                 'provider_transaction_id' => $transaksiId,
                 'provider_status' => 'completed',
@@ -327,7 +371,7 @@ class PaypalGateway
                 'verified_at' => now(),
             ]);
 
-            $pesanan->update(['payment_status' => StatusPembayaran::Paid]);
+            $terkunci->update(['payment_status' => StatusPembayaran::Paid]);
 
             return $payment;
         });
@@ -350,6 +394,15 @@ class PaypalGateway
         ], null, $pesanan);
 
         return $pembayaran;
+    }
+
+    /** Apakah pesanan ini sudah punya pembayaran PayPal yang tercatat. */
+    private function sudahDibayar(Order $pesanan): bool
+    {
+        return Payment::query()
+            ->where('order_id', $pesanan->id)
+            ->where('provider', 'paypal')
+            ->exists();
     }
 
     /**
