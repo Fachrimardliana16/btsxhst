@@ -327,6 +327,11 @@ class PengaturanSitus extends KomponenAdmin
     /** Isi ulang nilai formulir untuk tab aktif. */
     private function muat(): void
     {
+        // Instalasi baru belum punya baris `settings`, dan formulir dibangun
+        // dari baris itu. Tanpa langkah ini halaman tampil dengan tab kosong:
+        // tidak ada satu pun kolom yang dapat diisi.
+        KomponenPengaturan::pastikanSkema($this->tab);
+
         $this->nilai = KomponenPengaturan::formulir($this->tab);
         $this->berkas = [];
     }

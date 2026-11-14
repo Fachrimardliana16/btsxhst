@@ -34,6 +34,50 @@ class KomponenPengaturan
     ];
 
     /**
+     * Pastikan baris untuk satu grup ada, tanpa mengisi nilai apa pun.
+     *
+     * Formulir membaca kolomnya dari tabel `settings`. Instalasi baru yang
+     * belum di-seed karena itu menampilkan tab kosong. Baris yang belum ada
+     * dibuat dengan nilai null — bukan nilai contoh — sehingga pemilik toko
+     * mulai dari keadaan kosong dan mengisinya sendiri lewat panel.
+     *
+     * Baris yang sudah ada tidak disentuh: nilai maupun metadatanya dibiarkan,
+     * supaya membuka halaman ini tidak pernah menimpa pengaturan yang berlaku.
+     */
+    public static function pastikanSkema(string $grup): void
+    {
+        $ada = Setting::query()
+            ->where('group_name', $grup)
+            ->pluck('key')
+            ->flip();
+
+        foreach (DefinisiPengaturan::untukGrup($grup) as $b) {
+            [$key, , , $type, $label, $encrypted, $public] = $b;
+            $options = $b[7] ?? null;
+
+            if ($ada->has($key)) {
+                continue;
+            }
+
+            $setting = new Setting();
+            $setting->fill([
+                'key' => $key,
+                'group_name' => $grup,
+                'type' => $type,
+                'label' => $label,
+                'options_json' => $options,
+                'is_encrypted' => $encrypted,
+                'is_public' => $public,
+            ]);
+
+            // Enkripsi dibaca dari atribut, jadi is_encrypted sudah terisi
+            // sebelum value ditetapkan (lihat catatan di SettingSeeder).
+            $setting->value = null;
+            $setting->save();
+        }
+    }
+
+    /**
      * Nilai formulir satu grup pengaturan.
      *
      * @return array<string, mixed>
