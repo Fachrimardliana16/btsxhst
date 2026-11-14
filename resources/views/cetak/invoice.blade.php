@@ -91,10 +91,14 @@
 
 @include('cetak._salinan')
 
-<div class="tanpa-cetak" style="margin-bottom:12px">
-    <button type="button" data-aksi="cetak" style="padding:7px 14px;font:inherit;cursor:pointer">Cetak</button>
-    <span class="kecil">atau tekan Ctrl+P</span>
-</div>
+{{-- dompdf tidak menjalankan @media print, jadi tombol ini harus tidak
+     dirender sama sekali saat berkas dibuat untuk diunduh. --}}
+@unless ($pdf ?? false)
+    <div class="tanpa-cetak" style="margin-bottom:12px">
+        <button type="button" onclick="window.print()" style="padding:7px 14px;font:inherit;cursor:pointer">Cetak</button>
+        <span class="kecil">atau tekan Ctrl+P</span>
+    </div>
+@endunless
 
 <div class="tajuk">
     <div>

@@ -88,10 +88,12 @@
 
 @include('cetak._salinan')
 
-<div class="tanpa-cetak" style="margin-bottom:10px">
-    <button type="button" data-aksi="cetak" style="padding:7px 14px;font:inherit;cursor:pointer">Cetak</button>
-    <span class="kecil">atau tekan Ctrl+P</span>
-</div>
+@unless ($pdf ?? false)
+    <div class="tanpa-cetak" style="margin-bottom:10px">
+        <button type="button" onclick="window.print()" style="padding:7px 14px;font:inherit;cursor:pointer">Cetak</button>
+        <span class="kecil">atau tekan Ctrl+P</span>
+    </div>
+@endunless
 
 <div class="tajuk">
     <div>

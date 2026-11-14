@@ -38,7 +38,7 @@ class DokumenPesanan
         $order = $this->pesanan($ulid);
 
         return DokumenPdf::dari(
-            view('cetak.resi', $this->data($order, denganAlamat: false)),
+            view('cetak.resi', $this->data($order, denganAlamat: true, pdf: true)),
             self::KERTAS_RESI,
             'resi-'.$order->order_number.'.pdf',
         );
@@ -49,7 +49,7 @@ class DokumenPesanan
         $order = $this->pesanan($ulid);
 
         return DokumenPdf::dari(
-            view('cetak.invoice', $this->data($order, denganAlamat: true)),
+            view('cetak.invoice', $this->data($order, denganAlamat: true, pdf: true)),
             self::KERTAS_A4,
             'invoice-'.$order->order_number.'.pdf',
         );
@@ -60,19 +60,12 @@ class DokumenPesanan
         $order = $this->pesanan($ulid);
 
         return DokumenPdf::dari(
-            view('cetak.surat-jalan', $this->data($order, denganAlamat: true)),
+            view('cetak.surat-jalan', $this->data($order, denganAlamat: true, pdf: true)),
             self::KERTAS_A4,
             'surat-jalan-'.$order->order_number.'.pdf',
         );
     }
 
-    /**
-     * Pratinjau HTML di peramban.
-     *
-     * Dipertahankan karena admin kadang hanya ingin melihat isinya sebelum
-     * mencetak, dan karena peramban dapat mencetak ke printer langsung tanpa
-     * mengunduh berkas lebih dulu.
-     */
     /**
      * Pratinjau HTML di peramban.
      *
@@ -91,7 +84,7 @@ class DokumenPesanan
 
         abort_unless(in_array($jenis, ['resi', 'invoice', 'surat-jalan'], true), 404);
 
-        return view('cetak.'.$jenis, $this->data($order, denganAlamat: $jenis !== 'resi'));
+        return view('cetak.'.$jenis, $this->data($order, denganAlamat: true));
     }
 
     /**
@@ -159,13 +152,14 @@ class DokumenPesanan
     /**
      * @return array<string, mixed>
      */
-    private function data(Order $order, bool $denganAlamat): array
+    private function data(Order $order, bool $denganAlamat, bool $pdf = false): array
     {
         return [
             'order' => $order,
             'toko' => Pengaturan::instance(),
             'alamat' => $denganAlamat ? $order->alamat() : [],
             'salinan' => $order->status === StatusPesanan::Cancelled,
+            'pdf' => $pdf,
         ];
     }
 

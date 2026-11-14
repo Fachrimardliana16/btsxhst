@@ -98,11 +98,26 @@ class DokumenPdf
     {
         $html = $tampilan->render();
 
-        // @page di dalam Blade ditulis untuk peramban (size: 80mm auto). dompdf
-        // tidak mengenal kata kunci "auto" dan mengabaikannya tanpa pesan,
-        // sehingga hasilnya ukuran bawaan. Ukuran yang sudah pasti dipasang di
-        // sini, menimpa yang ada.
-        $html = preg_replace('/@page\s*\{[^}]*\}/i', '@page { size: '.$kertas.'; margin: 8mm; }', $html, 1);
+        // @page di dalam Blade ditulis untuk peramban dan dompdf. Yang tidak
+        // dijamin: `size: auto` (dompdf mengabaikannya tanpa pesan, hasilnya
+        // ukuran bawaan) dan ukuran bernama yang tidak dikenal. Ukuran lembar
+        // sudah pasti diberikan lewat setPaper(), jadi deklarasi size di HTML
+        // hanya perlu disamakan.
+        //
+        // Margin TIDAK ikut ditimpa. Versi sebelumnya mengganti seluruh blok
+        // @page dengan "margin: 8mm", sehingga margin 4mm pada label — dan
+        // 14mm pada invoice — hilang tanpa terlihat. Yang diubah hanya `size`.
+        $html = preg_replace_callback(
+            '/@page\s*\{([^}]*)\}/i',
+            function (array $m) use ($kertas): string {
+                $sisa = preg_replace('/size\s*:[^;]*(;|$)/i', '', $m[1]) ?? '';
+                $sisa = trim($sisa);
+
+                return '@page { size: '.$kertas.';'.($sisa !== '' ? ' '.$sisa : '').' }';
+            },
+            $html,
+            1,
+        );
 
         return $html ?? '';
     }

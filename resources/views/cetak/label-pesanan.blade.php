@@ -1,12 +1,11 @@
-{{-- Satu label 100x150 mm untuk cetak resi banyak.
+{{-- Satu label pengiriman 100x150 mm.
 
-     Dipisah dari cetak/resi.blade.php karena pemakaiannya berbeda, meski
-     isinya mirip. Berkas itu satu pesanan per permintaan dengan tombol
-     "Cetak"; berkas ini dipanggil dari model lewat view()->render() dan
-     dirangkai dengan label lain dalam SATU PDF. Yang tidak boleh ada di sini:
-     tombol cetak (label kedua sudah tidak terlihat), <html>/<head> penuh
-     (satu dokumen hanya boleh punya satu), dan gaya yang bergantung pada
-     halaman.
+     Dipakai dua jalur sekaligus:
+       • cetak/resi.blade.php — satu pesanan, dengan tombol Cetak di peramban;
+       • ResiBanyak            — banyak label dirangkai dalam SATU PDF.
+     Karena itu label ini tidak memuat <html>/<head> maupun tombol: satu
+     dokumen hanya boleh punya satu <head>, dan tombol yang tercetak ke PDF
+     hanya menghabiskan ruang kertas label.
 
      Variabel:
        $order        — pesanan
@@ -30,118 +29,155 @@
     // Kenapa $gaya ada: lihat catatan di ResiBanyak. Ringkasnya — <style> di
     // dalam <body> yang diulang untuk setiap label ikut dihitung sebagai isi
     // halaman, dan satu label pun menjadi dua halaman.
+    $alamat = $alamat ?? $order->alamat();
     $negaraLuar = ! \App\Support\Internasional::dalamNegeri((string) $order->shipping_country);
+
+    // Nomor yang dipindai kurir. Bila resi belum diisi, nomor pesanan dipakai
+    // sebagai ganti: label tetap dapat ditempel dan dilacak di sistem sendiri,
+    // dan baris kecil di bawah barcode menyebut bahwa resi resmi belum ada.
+    $nomorResi = trim((string) $order->tracking_number);
+    $sumberBarcode = $nomorResi !== '' ? $nomorResi : (string) $order->order_number;
+    $barcode = \App\Support\Barcode128::dataUri($sumberBarcode, 84, 12);
+
+    $telepon = $alamat['phone_number'] ?? $order->teleponPenerima();
+    $kota = trim((string) ($alamat['city'] ?? ''));
+    $provinsi = trim((string) ($alamat['state_province'] ?? ''));
+    $kodePos = trim((string) ($alamat['postal_code'] ?? ''));
+
+    $berat = $order->beratTotal();
+
+    // Label tunggal (cetak/resi.blade.php) tidak mengirim dua variabel ini.
+    $nomorSeri = $nomorSeri ?? 1;
+    $totalLabel = $totalLabel ?? 1;
 @endphp
 
 <div class="label{{ ($terakhir ?? false) ? ' label-terakhir' : '' }}">
 
-    {{-- Nomor seri. Dua puluh label yang sudah dilepas dari lembaran jasnya
-         mustahil disusun ulang kalau tidak ada nomor; nomor ini yang
-         menyelamatkan saat satu label terlepas dan harus ditempel manual. --}}
-    @if ($totalLabel > 1)
-        <p class="rapat kecil" style="text-align:right">
-            Label {{ $nomorSeri }} dari {{ $totalLabel }}
-        </p>
+    @if ($salinan ?? false)
+        {{-- Tanda air SALINAN untuk pesanan yang sudah dibatalkan (F8-09).
+             Memakai partial yang sama dengan dokumen lain: satu sumber. --}}
+        @include('cetak._salinan')
     @endif
 
-    {{-- Pengirim --}}
-    <p class="tengah rapat besar">{{ $toko->teks('site_name', 'Bites Exhaust') }}</p>
-    <p class="tengah rapat kecil">{{ $toko->teks('phone_number') }}</p>
-    <p class="tengah rapat kecil">{{ $toko->teks('address_full') }}</p>
+    <table class="kepala-label">
+        <tr>
+            <td>
+                <span class="kurir">{{ $order->shipping_courier ?: 'KURIR' }}</span>
+            </td>
+            <td class="kanan">
+                @if (filled($order->shipping_service))
+                    <span class="layanan">{{ $order->shipping_service }}</span>
+                @endif
+                <br>
+                <span class="cod">NON-COD</span>
+                @if ($totalLabel > 1)
+                    <br><span class="kecil">{{ $nomorSeri }}/{{ $totalLabel }}</span>
+                @endif
+            </td>
+        </tr>
+    </table>
 
-    <div class="tebal"></div>
-
-    {{-- Penerima --}}
-    <p class="rapat kecil">PENERIMA</p>
-    <p class="rapat" style="font-weight:700">{{ $alamat['recipient_name'] ?? $order->namaPenerima() }}</p>
-    <p class="rapat alamat">{{ $alamat['phone_number'] ?? $order->teleponPenerima() }}</p>
-    <p class="rapat alamat">
-        {{ $alamat['address_line_1'] ?? '' }}
-        @if (filled($alamat['address_line_2'] ?? null))<br>{{ $alamat['address_line_2'] }}@endif
-        <br>
-        {{ $alamat['city'] ?? '' }}{{ filled($alamat['city'] ?? null) ? ', ' : '' }}{{ $alamat['state_province'] ?? '' }}
-        {{ $alamat['postal_code'] ?? '' }}
-        @if ($negaraLuar)
-            <br><span style="font-weight:700">{{ \App\Support\Internasional::namaNegara((string) $order->shipping_country) }}</span>
+    <div class="barcode">
+        @if ($barcode !== null)
+            <img src="{{ $barcode }}" alt="Barcode {{ $sumberBarcode }}">
         @endif
-    </p>
-
-    @if (filled($order->customer_note))
-        <div class="putus"></div>
-        <p class="rapat kecil">CATATAN PEMBELI</p>
-        <p class="rapat alamat">{{ $order->customer_note }}</p>
-    @endif
-
-    <div class="tebal"></div>
-
-    {{-- Nomor pesanan dan resi --}}
-    <div class="baris">
-        <span class="kecil">NO. PESANAN</span>
-        <span style="font-weight:700">{{ $order->order_number }}</span>
+        <div class="resi-teks">{{ $sumberBarcode }}</div>
+        @if ($nomorResi === '')
+            <div class="kecil">Nomor resi belum diisi — ini nomor pesanan.</div>
+        @endif
     </div>
 
-    <div class="kotak-resi">
-        <p class="rapat kecil">NOMOR RESI</p>
-        <p class="rapat nomor-resi">{{ $order->tracking_number ?: '— belum diisi —' }}</p>
+    {{-- Penerima: blok terbesar, karena inilah yang dibaca kurir di depan
+         pintu. Nama, telepon, dan kota diberi bobot paling kuat. --}}
+    <div class="blok">
+        <p class="judul-kecil rapat">Penerima</p>
+        <p class="nama-penerima rapat">{{ $alamat['recipient_name'] ?? $order->namaPenerima() }}</p>
+        @if (filled($telepon))
+            <p class="telp-penerima rapat">{{ $telepon }}</p>
+        @endif
+        <p class="alamat-penerima rapat">
+            {{ $alamat['address_line_1'] ?? '' }}
+            @if (filled($alamat['address_line_2'] ?? null))
+                <br>{{ $alamat['address_line_2'] }}
+            @endif
+        </p>
+        <p class="kota-penerima rapat">
+            {{ collect([$kota, $provinsi])->filter()->implode(', ') }}{{ $kodePos !== '' ? ' '.$kodePos : '' }}
+        </p>
+        @if ($negaraLuar)
+            <p class="kota-penerima rapat">{{ \App\Support\Internasional::namaNegara((string) $order->shipping_country) }}</p>
+        @endif
     </div>
 
-    <div class="baris kecil">
-        <span>{{ $order->shipping_courier ?: 'kurir belum dipilih' }}</span>
-        <span>{{ $order->shipping_service ?: '' }}</span>
+    <div class="blok">
+        <p class="judul-kecil rapat">Pengirim</p>
+        <p class="pengirim-label rapat">
+            <b>{{ $toko->teks('site_name', 'Bites Exhaust') }}</b>
+            @if (filled($toko->teks('phone_number')))
+                &middot; {{ $toko->teks('phone_number') }}
+            @endif
+        </p>
+        @if (filled($toko->teks('address_full')))
+            <p class="pengirim-label rapat">{{ $toko->teks('address_full') }}</p>
+        @endif
     </div>
 
-    @if ($negaraLuar)
-        {{-- Luar negeri: penanda yang bisa dilihat kurir tanpa membaca isi
-             halaman ini. Ongkos internasional disepakati terpisah, dan paket
-             ini butuh penanganan bea cukai. --}}
-        <div class="putus"></div>
-        <p class="rapat kecil">PENGIRIMAN LUAR NEGERI — CARGO INTERNASIONAL</p>
-    @endif
-
-    {{-- Tanda air SALINAN untuk pesanan yang sudah dibatalkan (checklist F8-09).
-         Memakai partial yang sama dengan resi tunggal: satu sumber, satu bentuk. --}}
-    @include("cetak._salinan")
-
-    <div class="putus"></div>
-
-    {{-- Isi paket. Resi ikut menempel di paket, jadi harga tidak dicetak di sini:
-         tidak perlu diketahui kurir, dan tidak perlu dilihat orang lain.
-
-         Daftar dibatasi DUA baris. Terukur pada label 100x150 mm: tiga baris
-         item sudah cukup untuk mendorong label meluap menjadi halaman kedua,
-         apalagi bila pesanan juga membawa tanda air SALINAN dan catatan
-         pembeli — dua blok yang menambah tinggi. Dua baris plus ringkasan
-         "+N lainnya" muat di semua pesanan yang saya coba.
-
-         Total barang di bawah tetap menyebut jumlah penuh, jadi kurir dapat
-         menghitung isi paket tanpa membaca seluruh daftar. --}}
-    <p class="rapat kecil">ISI PAKET</p>
-
-    <table>
-        @foreach ($order->items->take(2) as $item)
+    <div class="blok">
+        <table class="meta-label">
             <tr>
-                <td style="width:34px" class="kanan">{{ $item->quantity }}×</td>
-                <td>
-                    {{ $item->product_name }}
-                    @if ($item->variant_name)<br><span class="kecil">{{ $item->variant_name }}@endif</span>
-                    @if ($item->sku)<br><span class="kecil">{{ $item->sku }}@endif</span>
+                <td class="judul-kecil" style="width:24mm">No. Pesanan</td>
+                <td><b>{{ $order->order_number }}</b></td>
+                <td class="kanan">{{ $order->created_at?->format('d/m/Y') }}</td>
+            </tr>
+            <tr>
+                <td class="judul-kecil">Isi Paket</td>
+                <td colspan="2">
+                    {{ $order->jumlahItem() }} pcs
+                    <span class="kecil">&middot;</span>
+                    {{ $berat > 0 ? number_format($berat / 1000, 2, ',', '.').' kg' : 'berat belum diisi' }}
                 </td>
             </tr>
+        </table>
+    </div>
+
+    {{-- Daftar isi dibatasi DUA baris. Terukur pada label 100x150 mm: tiga
+         baris sudah cukup untuk mendorong label meluap menjadi halaman kedua,
+         apalagi bila pesanan juga membawa tanda air SALINAN dan catatan
+         pembeli. Ringkasan "+N lainnya" menjaga informasi tetap lengkap.
+
+         Ditulis sebagai paragraf, bukan tabel: dompdf memberi kolom pertama
+         tabel otomatis lebar yang jauh lebih besar dari isinya, sehingga nama
+         barang terdorong ke tengah label. --}}
+    <div class="blok">
+        @foreach ($order->items->take(2) as $item)
+            <p class="rapat isi-baris">
+                <span class="isi-qty">{{ $item->quantity }}&times;</span>{{ $item->product_name }}@if ($item->variant_name)
+                    <span class="kecil">&middot; {{ $item->variant_name }}</span>
+                @endif
+            </p>
         @endforeach
 
         @if ($order->items->count() > 2)
-            <tr>
-                <td class="kanan kecil">+</td>
-                <td class="kecil">+{{ $order->items->count() - 2 }} lainnya</td>
-            </tr>
+            <p class="rapat isi-baris kecil">+{{ $order->items->count() - 2 }} barang lainnya</p>
         @endif
-    </table>
-
-    <div class="putus"></div>
-
-    <div class="baris">
-        <span class="kecil">TOTAL BARANG</span>
-        <span style="font-weight:700">{{ $order->jumlahItem() }} pcs</span>
     </div>
+
+    @if (filled($order->customer_note))
+        <div class="blok">
+            <p class="judul-kecil rapat">Catatan Pembeli</p>
+            {{-- Dipotong 120 huruf: sekitar dua baris pada 9,5px. Catatan yang
+                 lebih panjang mendorong label ke halaman kedua, dan label
+                 terbelah menempel di paket yang salah. --}}
+            <p class="alamat-penerima rapat" style="margin-top:.6mm">{{ \Illuminate\Support\Str::limit($order->customer_note, 120) }}</p>
+        </div>
+    @endif
+
+    @if ($negaraLuar)
+        <p class="kaki-label"><b>PENGIRIMAN LUAR NEGERI — CARGO INTERNASIONAL</b></p>
+    @endif
+
+    <p class="kaki-label">
+        Barang wajib diperiksa saat diterima. Klaim maksimal 3 hari sejak paket diterima.
+    </p>
 
 </div>
