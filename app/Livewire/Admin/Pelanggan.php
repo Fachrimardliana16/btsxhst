@@ -117,7 +117,7 @@ class Pelanggan extends KomponenAdmin
             $pengguna,
         );
 
-        $this->pesan = $pengguna->is_blocked ? __('site.msg.pelanggan.diblokir') : 'Blokir akun dibuka.';
+        $this->pesan = $pengguna->is_blocked ? __('site.msg.pelanggan.diblokir') : 'Account unblocked.';
     }
 
     /**
@@ -181,7 +181,7 @@ class Pelanggan extends KomponenAdmin
             'ke' => $tujuan->value,
         ], auth()->id(), $pengguna);
 
-        $this->pesan = 'Peran diubah menjadi '.$tujuan->label().'.';
+        $this->pesan = 'Role changed to '.$tujuan->label().'.';
     }
 
     public function hapus(int $id): void
@@ -202,7 +202,7 @@ class Pelanggan extends KomponenAdmin
         if ($pengguna->orders_count > 0) {
             $this->addError(
                 'umum',
-                'Pelanggan ini punya '.$pengguna->orders_count.' orders. Block it instead of deleting.',
+                'This customer has '.$pengguna->orders_count.' orders. Block them instead of deleting.',
             );
 
             return;
@@ -279,6 +279,6 @@ class Pelanggan extends KomponenAdmin
                 'diblokir' => User::query()->where('is_blocked', true)->count(),
             ],
             'superAdminTerakhir' => $this->superAdminTersisa(),
-        ])->layout('layouts.admin', ['judul' => 'Pelanggan', 'bagian' => 'Penjualan']);
+        ])->layout('layouts.admin', ['judul' => 'Customers', 'bagian' => 'Sales']);
     }
 }

@@ -108,7 +108,7 @@ class Dashboard extends KomponenAdmin
         if ($tanpaGambar > 0) {
             $peringatan[] = [
                 'nada' => 'warn',
-                'teks' => $tanpaGambar.' produk belum punya gambar.',
+                'teks' => __('site.msg.dashboard.produk_tanpa_gambar', ['jumlah' => $tanpaGambar]),
                 'rute' => $rute('admin.products.index'),
             ];
         }
@@ -123,7 +123,30 @@ class Dashboard extends KomponenAdmin
             ];
         }
 
-        if (blank(Pengaturan::instance()->teks('whatsapp_number'))) {
+        // ── Kelengkapan pengaturan penting ────────────────────────────
+        //
+        // Peringatan ini dulu hanya memeriksa nomor WhatsApp, padahal masalah
+        // yang sama berlaku untuk semua pengaturan yang membuat fitur situs
+        // berhenti bekerja tanpa suara: nama toko kosong, email kontak kosong,
+        // SMTP belum diisi, dan kredensial PayPal masih placeholder. Semuanya
+        // ditampilkan sebagai satu daftar yang menautkan langsung ke tab
+        // pengaturannya.
+
+        $toko = Pengaturan::instance();
+        $kosong = fn (string $kunci): bool => trim((string) $toko->teks($kunci, '')) === '';
+
+        // Nama toko punya cadangan dari terjemahan, jadi accessor tidak pernah
+        // kosong. Yang diperiksa nilai tersimpannya, karena nama cadangan itu
+        // bukan pilihan admin.
+        if (\App\Support\KomponenPengaturan::mentah('site_name') === null) {
+            $peringatan[] = [
+                'nada' => 'danger',
+                'teks' => __('site.msg.dashboard.site_name_belum'),
+                'rute' => $rute('admin.settings.index', ['tab' => 'identity']),
+            ];
+        }
+
+        if ($kosong('whatsapp_number')) {
             $peringatan[] = [
                 'nada' => 'danger',
                 'teks' => __('site.msg.dashboard.wa_belum'),
@@ -131,13 +154,60 @@ class Dashboard extends KomponenAdmin
             ];
         }
 
+        if ($kosong('contact_email')) {
+            $peringatan[] = [
+                'nada' => 'warn',
+                'teks' => __('site.msg.dashboard.contact_email_belum'),
+                'rute' => $rute('admin.settings.index', ['tab' => 'contact']),
+            ];
+        }
+
+        // Nilai efektif, bukan nilai mentah: SMTP dari .env tetap dihitung
+        // sudah terisi karena KonfigurasiMail hanya menimpa yang tidak kosong.
+        if (config('mail.default') === 'smtp' && trim((string) config('mail.mailers.smtp.host')) === '') {
+            $peringatan[] = [
+                'nada' => 'danger',
+                'teks' => __('site.msg.dashboard.mail_belum'),
+                'rute' => $rute('admin.settings.index', ['tab' => 'email']),
+            ];
+        }
+
+        $modeBayar = (string) $toko->teks('payment_mode', 'manual');
+
+        if (in_array($modeBayar, ['paypal', 'both'], true)) {
+            $idPaypal = strtoupper(trim((string) $toko->teks('paypal_client_id', '')));
+            $rahasiaPaypal = strtoupper(trim((string) $toko->teks('paypal_client_secret', '')));
+
+            // Placeholder bawaan seeder juga dianggap belum diisi: secara
+            // teknis ada isinya, tetapi PayPal akan menolaknya.
+            $paypalBelumSiap = $idPaypal === '' || $rahasiaPaypal === ''
+                || str_contains($idPaypal, 'CONTOH')
+                || str_contains($rahasiaPaypal, 'CONTOH');
+
+            if ($paypalBelumSiap) {
+                $peringatan[] = [
+                    'nada' => 'danger',
+                    'teks' => __('site.msg.dashboard.paypal_kredensial_belum'),
+                    'rute' => $rute('admin.settings.index', ['tab' => 'payment']),
+                ];
+            }
+
+            if ($kosong('paypal_webhook_id')) {
+                $peringatan[] = [
+                    'nada' => 'warn',
+                    'teks' => __('site.msg.dashboard.paypal_webhook_belum'),
+                    'rute' => $rute('admin.settings.index', ['tab' => 'payment']),
+                ];
+            }
+        }
+
         return view('livewire.admin.dashboard', [
             'judul' => 'Dashboard',
-            'bagian' => 'Ringkasan',
+            'bagian' => 'Overview',
             'kartu' => [
                 ['label' => __('site.msg.dashboard.pesanan_hari_ini'), 'nilai' => (string) $pesananHariIni, 'ikon' => 'receipt'],
-                ['label' => 'Pendapatan hari ini', 'nilai' => rupiah($pendapatanHariIni), 'ikon' => 'chart'],
-                ['label' => 'Menunggu diproses', 'nilai' => (string) $menungguProses, 'ikon' => 'box'],
+                ['label' => "Today's revenue", 'nilai' => dolar($pendapatanHariIni), 'ikon' => 'chart'],
+                ['label' => 'Awaiting processing', 'nilai' => (string) $menungguProses, 'ikon' => 'box'],
                 ['label' => __('site.msg.dashboard.stok_menipis'), 'nilai' => (string) $stokMenipis, 'ikon' => 'alert'],
             ],
             'seri' => $seri,
@@ -145,6 +215,6 @@ class Dashboard extends KomponenAdmin
             'terbaru' => $terbaru,
             'terlaris' => $terlaris,
             'peringatan' => $peringatan,
-        ])->layout('layouts.admin', ['judul' => 'Dashboard', 'bagian' => 'Ringkasan']);
+        ])->layout('layouts.admin', ['judul' => 'Dashboard', 'bagian' => 'Overview']);
     }
 }

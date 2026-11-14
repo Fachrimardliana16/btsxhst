@@ -12,8 +12,8 @@
             <p class="part-no">{{ __('site.admin.faq_panel.eyebrow') }}</p>
             <h1 class="mt-1 font-display text-2xl font-semibold">{{ __('site.admin.faq_panel.judul') }}</h1>
             <p class="mt-1 text-sm text-muted">
-                {{ $jumlahAktif }} aktif, {{ $jumlahBeranda }} tampil di beranda.
-                Urutan di sini menentukan urutan tampil di situs.
+                {{ $jumlahAktif }} active, {{ $jumlahBeranda }} shown on the homepage.
+                Order here determines the order on the site.
             </p>
         </div>
 
@@ -56,7 +56,7 @@
                 <div class="p-8 text-center">
                     <x-ikon name="info" :size="28" class="mx-auto text-dim" />
                     <p class="mt-3 text-sm text-muted">
-                        {{ $cari !== '' ? 'Tidak ada FAQ yang cocok dengan pencarian.' : 'Belum ada FAQ. Tambahkan yang pertama.' }}
+                        {{ $cari !== '' ? 'No FAQs match this search.' : 'No FAQs yet. Add the first one.' }}
                     </p>
                 </div>
             @else
@@ -64,7 +64,7 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-line-soft text-left">
-                                <th class="part-no p-3 font-medium">Urutan</th>
+                                <th class="part-no p-3 font-medium">Order</th>
                                 <th class="part-no p-3 font-medium">{{ __('site.admin.faq_panel.pertanyaan') }}</th>
                                 <th class="part-no p-3 font-medium">{{ __('site.admin.faq_panel.kelompok') }}</th>
                                 <th class="part-no p-3 font-medium">{{ __('site.admin.faq_panel.tampil') }}</th>
@@ -91,29 +91,28 @@
                                     </td>
 
                                     <td class="max-w-[26rem] p-3">
-                                        <p class="font-medium">{{ $faq->question_id }}</p>
-                                        <p class="mt-0.5 line-clamp-2 text-xs text-muted">{{ $faq->answer_id }}</p>
-                                        @if (blank($faq->question_en))
-                                            <p class="mt-1 text-[length:var(--t-xs)] text-warn">{{ __('site.admin.faq_panel.belum_ada_en') }}</p>
-                                        @endif
+                                        <p class="font-medium">{{ $faq->question_en ?: $faq->question_id }}</p>
+                                        <p class="mt-0.5 line-clamp-2 text-xs text-muted">{{ $faq->answer_en ?: $faq->answer_id }}</p>
                                     </td>
 
                                     <td class="p-3">
-                                        <span class="badge">{{ $faq->label{{ __('site.admin.faq_panel.kelompok') }}() }}</span>
+                                        <span class="badge">{{ $faq->labelKelompok() }}</span>
                                     </td>
 
                                     <td class="p-3">
                                         <div class="flex flex-col items-start gap-1">
                                             <button type="button" wire:click="ubahAktif({{ $faq->id }})"
+                                                    wire:confirm="{{ $faq->is_active ? 'Deactivate' : 'Activate' }} this FAQ?"
                                                     class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[length:var(--t-xs)]
                                                            {{ $faq->is_active ? 'bg-ok/12 text-ok' : 'bg-danger/12 text-danger' }}">
                                                 <span class="h-1.5 w-1.5 rounded-full {{ $faq->is_active ? 'bg-ok' : 'bg-danger' }}"></span>
-                                                {{ $faq->is_active ? 'Aktif' : 'Nonaktif' }}
+                                                {{ $faq->is_active ? 'Active' : 'Inactive' }}
                                             </button>
 
                                             <button type="button" wire:click="ubahBeranda({{ $faq->id }})"
+                                                    wire:confirm="{{ $faq->tampil_di_beranda ? 'Remove this FAQ from the homepage?' : 'Show this FAQ on the homepage?' }}"
                                                     class="text-[length:var(--t-xs)] {{ $faq->tampil_di_beranda ? 'text-steel' : 'text-dim' }} hover:underline">
-                                                {{ $faq->tampil_di_beranda ? __('site.admin.faq_panel.tampil') . ' di beranda' : 'Hanya di halaman FAQ' }}
+                                                {{ $faq->tampil_di_beranda ? 'Shown on homepage' : 'FAQ page only' }}
                                             </button>
                                         </div>
                                     </td>
@@ -126,7 +125,7 @@
                                                 <span class="visually-hidden">{{ __('site.admin.faq_panel.sunting') }}</span>
                                             </button>
                                             <button type="button" wire:click="hapus({{ $faq->id }})"
-                                                    wire:confirm="{{ __('site.admin.faq_panel.hapus') }} FAQ &quot;{{ \Illuminate\Support\Str::limit($faq->question_id, 60) }}&quot;?"
+                                                    wire:confirm="{{ __('site.admin.faq_panel.hapus') }} FAQ &quot;{{ \Illuminate\Support\Str::limit($faq->question_en ?: $faq->question_id, 60) }}&quot;?"
                                                     class="btn-icon btn-icon-sm hover:text-danger" title="{{ __('site.admin.faq_panel.hapus') }}">
                                                 <x-ikon name="trash" :size="15" />
                                                 <span class="visually-hidden">{{ __('site.admin.faq_panel.hapus') }}</span>
@@ -150,9 +149,9 @@
             <div class="plate h-fit p-4 lg:sticky lg:top-20">
                 <div class="flex items-start justify-between gap-2">
                     <div>
-                        <p class="part-no">{{ $suntingId ? __('site.admin.faq_panel.sunting') : 'Baru' }}</p>
+                        <p class="part-no">{{ $suntingId ? __('site.admin.faq_panel.sunting') : 'New' }}</p>
                         <h2 class="font-display text-lg font-semibold">
-                            {{ $suntingId ? 'Ubah FAQ' : 'Tambah FAQ' }}
+                            {{ $suntingId ? 'Edit FAQ' : 'Add FAQ' }}
                         </h2>
                     </div>
                     <button type="button" wire:click="tutupForm" class="btn-icon btn-icon-sm" title="{{ __('site.admin.faq_panel.tutup') }}">
@@ -173,16 +172,10 @@
                     </div>
 
                     <div>
-                        <label for="pertanyaan_id" class="part-no">{{ __('site.admin.faq_panel.pertanyaan') }} (Indonesia)</label>
+                        <label for="pertanyaan_id" class="part-no">{{ __('site.admin.faq_panel.pertanyaan') }}</label>
                         <input id="pertanyaan_id" type="text" wire:model="pertanyaan_id"
                                class="field mt-1" aria-invalid="{{ $errors->has('pertanyaan_id') ? 'true' : 'false' }}">
                         @error('pertanyaan_id') <p class="field-error">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <label for="pertanyaan_en" class="part-no">{{ __('site.admin.faq_panel.pertanyaan') }} (Inggris) — opsional</label>
-                        <input id="pertanyaan_en" type="text" wire:model="pertanyaan_en" class="field mt-1">
-                        @error('pertanyaan_en') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -190,13 +183,6 @@
                         <textarea id="jawaban_id" wire:model="jawaban_id" class="field mt-1" rows="5"
                                   aria-invalid="{{ $errors->has('jawaban_id') ? 'true' : 'false' }}"></textarea>
                         @error('jawaban_id') <p class="field-error">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <label for="jawaban_en" class="part-no">{{ __('site.admin.faq_panel.jawaban_en') }}</label>
-                        <textarea id="jawaban_en" wire:model="jawaban_en" class="field mt-1" rows="5"></textarea>
-                        <p class="mt-1 text-xs text-dim">{{ __('site.admin.faq_panel.kosong_terjemahan') }}</p>
-                        @error('jawaban_en') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
 
                     <label class="flex items-center gap-2">
@@ -212,12 +198,12 @@
                             <input type="checkbox" wire:model="diBeranda">
                             <span></span>
                         </span>
-                        <span class="text-sm">{{ __('site.admin.faq_panel.tampil') }}kan di beranda (bawah CTA)</span>
+                        <span class="text-sm">{{ __('site.admin.faq_panel.tampil_beranda') }}</span>
                     </label>
 
                     <div class="flex items-center gap-2 pt-1">
                         <button type="submit" class="btn btn-primary flex-1" wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="simpan">{{ $suntingId ? 'Simpan perubahan' : 'Tambah' }}</span>
+                            <span wire:loading.remove wire:target="simpan">{{ $suntingId ? 'Save changes' : 'Add' }}</span>
                             <span wire:loading wire:target="simpan">{{ __('site.admin.faq_panel.menyimpan') }}</span>
                         </button>
                         <button type="button" wire:click="tutupForm" class="btn btn-outline">{{ __('site.admin.faq_panel.batal') }}</button>

@@ -13,11 +13,11 @@ enum StatusPembayaran: string
     public function label(): string
     {
         return match ($this) {
-            self::Unpaid => 'Belum Bayar',
-            self::Pending => 'Menunggu Verifikasi',
-            self::Paid => 'Lunas',
-            self::Failed => 'Gagal',
-            self::Refunded => 'Dana Dikembalikan',
+            self::Unpaid => 'Unpaid',
+            self::Pending => 'Awaiting Verification',
+            self::Paid => 'Paid',
+            self::Failed => 'Failed',
+            self::Refunded => 'Refunded',
         };
     }
 

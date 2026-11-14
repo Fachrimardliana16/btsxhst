@@ -9,24 +9,10 @@ document.documentElement.classList.add('js');
 const THEME_KEY = 'iksan.theme';
 const LANG_KEY = 'iksan.lang';
 
-/** Terapkan tema sebelum first paint. Dipanggil inline di <head>. */
-function applyStoredTheme() {
-    document.documentElement.setAttribute('data-theme', 'light');
-}
-
-applyStoredTheme();
-
-/** Ikuti perubahan preferensi sistem bila pengguna belum memilih manual. */
-window
-    .matchMedia('(prefers-color-scheme: dark)')
-    .addEventListener('change', (event) => {
-        if (!localStorage.getItem(THEME_KEY)) {
-            document.documentElement.setAttribute(
-                'data-theme',
-                event.matches ? 'dark' : 'light',
-            );
-        }
-    });
+/* Tema dipasang oleh skrip inline di <head> setiap layout (panel memakai
+   pilihan tersimpan, sisi depan selalu terang). Berkas ini TIDAK boleh
+   menimpanya: dulu baris di sini memaksa `light`, sehingga tombol tema di
+   panel tampak mati — pilihan tersimpan hilang setiap halaman dimuat. */
 
 window.iksanTheme = {
     get current() {
@@ -63,6 +49,14 @@ window.iksanTheme = {
 
 window.iksanTheme.perbaruiIkon();
 
+/* Header admin dirender ulang setiap wire:navigate. Markup barunya kembali ke
+   keadaan awal (ikon matahari tersembunyi), jadi ikon harus disesuaikan lagi
+   setelah navigasi — kalau tidak, tema gelap menampilkan ikon bulan dan
+   tombolnya terlihat tidak bereaksi. */
+document.addEventListener('livewire:navigated', () => {
+    window.iksanTheme.perbaruiIkon();
+});
+
 /**
  * Satu pendengar klik untuk seluruh halaman.
  *
@@ -81,7 +75,12 @@ document.addEventListener('click', (event) => {
 
     const aksi = pemicu.dataset.aksi;
 
-    // ganti-tema disabled
+    // Tombol tema di navbar panel. Ikon ditukar oleh perbaruiIkon(), dan
+    // pilihan disimpan agar bertahan setelah navigasi Livewire.
+    if (aksi === 'ganti-tema') {
+        window.iksanTheme.toggle();
+        return;
+    }
 
     // Tombol cari di mana pun: navbar, hero beranda, drawer.
     //
@@ -444,12 +443,12 @@ const reveal = (() => {
             var wire = ambilWire(tombol);
 
             if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                tulis('Peramban ini tidak mendukung notifikasi push.', false);
+                tulis('This browser does not support push notifications.', false);
                 return;
             }
 
             if (!kunci) {
-                tulis('Kunci VAPID belum dipasang di berkas .env.', false);
+                tulis('The VAPID keys are not set in the .env file.', false);
                 return;
             }
 
@@ -472,7 +471,7 @@ const reveal = (() => {
                 return daftar;
             }).then(function (daftar) {
                 if (!daftar) {
-                    tulis('Service worker tidak terpasang. Muat ulang halaman ini.', false);
+                    tulis('The service worker is not installed. Reload this page.', false);
                     return null;
                 }
 
@@ -488,7 +487,7 @@ const reveal = (() => {
                 var kunci = langganan.toJSON();
 
                 if (!wire) {
-                    tulis('Langganan dibuat di peramban, tetapi panel tidak menerimanya. Muat ulang lalu coba lagi.', false);
+                    tulis('The subscription was created in the browser, but the panel did not receive it. Reload and try again.', false);
                     return;
                 }
 
@@ -498,16 +497,16 @@ const reveal = (() => {
                     kunci.keys.auth,
                     namaPeramban()
                 ).then(function () {
-                    tulis('Perangkat ini akan menerima notifikasi.', true);
+                    tulis('This device will receive notifications.', true);
                 });
             }).catch(function (galat) {
                 // Salam NotFoundError punya arti khusus: izin ditolak, atau
                 // service worker tidak menerima push. Yang lain dibiarkan
                 // terbaca apa adanya daripada disimpulkan.
-                var teks = 'Gagal: ' + (galat && galat.message ? galat.message : galat);
+                var teks = 'Failed: ' + (galat && galat.message ? galat.message : galat);
 
                 if (galat && galat.name === 'NotAllowedError') {
-                    teks = 'Izin notifikasi ditolak. Aktifkan di pengaturan peramban untuk situs ini.';
+                    teks = 'Notification permission denied. Enable it in the browser settings for this site.';
                 }
 
                 tulis(teks, false);
@@ -712,3 +711,355 @@ document.addEventListener('livewire:navigated', pasangAngkaHero);
    mengecil sampai muat, bukan terpotong elipsis). Berkas terpisah supaya
    app.js tetap ringan; logika spesifik navbar satu tanggung jawab. */
 import './ukuran-brand.js';
+
+/* ── Pemotong gambar sebelum unggah ────────────────────────────────────
+ *
+ * Input berkas dengan atribut `data-crop` ditahan di sini sebelum Livewire
+ * sempat mengunggahnya. Tanpa penahanan, foto potret masuk apa adanya lalu
+ * `object-cover` memangkasnya sendiri — bagian penting hilang dan kartu
+ * produk terlihat berlubang.
+ *
+ * Cara kerjanya: listener `change` di fase capture menghentikan peramban
+ * sebelum event mencapai input, sehingga `wire:model` tidak mengunggah
+ * berkas asli. Setelah dipotong, berkas hasil dimasukkan ke input yang sama
+ * lewat DataTransfer dan event `change` baru dikirim — kali ini dibiarkan
+ * lewat supaya Livewire mengunggah hasil potongannya.
+ */
+const RASIO_POTONG = {
+    product: [1200, 900],
+    'hero-desktop': [1920, 1080],
+    'hero-mobile': [1080, 1920],
+};
+
+let potongAntrean = [];
+let potongHasil = [];
+let potongIndeks = 0;
+let potongInput = null;
+let potongGambar = null;
+let potongZoom = 1;
+let potongX = 0;
+let potongY = 0;
+let potongTarget = [1200, 900];
+let potongSeret = null;
+
+const potongEl = {};
+
+function potongSiap() {
+    if (potongEl.akar) return true;
+
+    const akar = document.getElementById('pemotong');
+    if (!akar) return false;
+
+    potongEl.akar = akar;
+    potongEl.kanvas = document.getElementById('pemotong-kanvas');
+    potongEl.bingkai = document.getElementById('pemotong-bingkai');
+    potongEl.zoom = document.getElementById('pemotong-zoom');
+    potongEl.hitung = document.getElementById('pemotong-hitung');
+    potongEl.pakai = document.getElementById('pemotong-pakai');
+    potongEl.batal = document.getElementById('pemotong-batal');
+
+    potongEl.zoom.addEventListener('input', function () {
+        const baru = Number(this.value) || 1;
+        if (potongZoom > 0) {
+            const rasio = baru / potongZoom;
+            potongX *= rasio;
+            potongY *= rasio;
+        }
+        potongZoom = baru;
+        potongGambarUlang();
+    });
+
+    potongEl.pakai.addEventListener('click', potongKonfirmasi);
+    potongEl.batal.addEventListener('click', potongBatal);
+
+    const kanvas = potongEl.kanvas;
+    kanvas.addEventListener('pointerdown', function (e) {
+        if (!potongGambar) return;
+        potongSeret = { x: e.clientX, y: e.clientY, px: potongX, py: potongY };
+        kanvas.setPointerCapture(e.pointerId);
+    });
+    kanvas.addEventListener('pointermove', function (e) {
+        if (!potongSeret) return;
+        const skala = potongTarget[0] / Math.max(1, kanvas.clientWidth);
+        potongX = potongSeret.px + (e.clientX - potongSeret.x) * skala;
+        potongY = potongSeret.py + (e.clientY - potongSeret.y) * skala;
+        potongGambarUlang();
+    });
+    const lepas = function (e) {
+        potongSeret = null;
+        if (kanvas.hasPointerCapture?.(e.pointerId)) kanvas.releasePointerCapture(e.pointerId);
+    };
+    kanvas.addEventListener('pointerup', lepas);
+    kanvas.addEventListener('pointercancel', lepas);
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !akar.classList.contains('hidden')) potongBatal();
+    });
+
+    return true;
+}
+
+function potongMulai(input, berkas) {
+    if (!potongSiap()) return;
+
+    potongInput = input;
+    potongAntrean = berkas;
+    potongHasil = [];
+    potongIndeks = 0;
+    document.body.style.overflow = 'hidden';
+    potongEl.akar.classList.remove('hidden');
+    potongEl.akar.classList.add('flex');
+    potongMuatBerikut();
+}
+
+function potongMuatBerikut() {
+    if (potongIndeks >= potongAntrean.length) {
+        potongSelesai();
+        return;
+    }
+
+    const berkas = potongAntrean[potongIndeks];
+    const kunci = potongInput.dataset.crop;
+    potongTarget = RASIO_POTONG[kunci] || RASIO_POTONG.product;
+
+    potongEl.hitung.textContent = potongAntrean.length > 1
+        ? (potongIndeks + 1) + ' / ' + potongAntrean.length
+        : '';
+
+    potongEl.bingkai.style.aspectRatio = potongTarget[0] + ' / ' + potongTarget[1];
+
+    const url = URL.createObjectURL(berkas);
+    const gambar = new Image();
+
+    gambar.onload = function () {
+        URL.revokeObjectURL(url);
+        potongGambar = gambar;
+        potongZoom = 1;
+        potongX = 0;
+        potongY = 0;
+        potongEl.zoom.value = '1';
+        potongGambarUlang();
+        potongEl.pakai.focus();
+    };
+
+    gambar.onerror = function () {
+        URL.revokeObjectURL(url);
+        potongIndeks++;
+        potongMuatBerikut();
+    };
+
+    gambar.src = url;
+}
+
+function potongGambarUlang() {
+    if (!potongGambar || !potongEl.kanvas) return;
+
+    const [lebar, tinggi] = potongTarget;
+    const kanvas = potongEl.kanvas;
+
+    if (kanvas.width !== lebar) kanvas.width = lebar;
+    if (kanvas.height !== tinggi) kanvas.height = tinggi;
+
+    const konteks = kanvas.getContext('2d');
+    konteks.clearRect(0, 0, lebar, tinggi);
+
+    const dasar = Math.max(lebar / potongGambar.width, tinggi / potongGambar.height);
+    const skala = dasar * potongZoom;
+    const gambarLebar = potongGambar.width * skala;
+    const gambarTinggi = potongGambar.height * skala;
+
+    // Batas geser: gambar tidak boleh menyisakan tepi kosong di dalam bingkai.
+    const batasX = Math.max(0, (gambarLebar - lebar) / 2);
+    const batasY = Math.max(0, (gambarTinggi - tinggi) / 2);
+    potongX = Math.min(batasX, Math.max(-batasX, potongX));
+    potongY = Math.min(batasY, Math.max(-batasY, potongY));
+
+    const x = (lebar - gambarLebar) / 2 + potongX;
+    const y = (tinggi - gambarTinggi) / 2 + potongY;
+
+    konteks.drawImage(potongGambar, x, y, gambarLebar, gambarTinggi);
+}
+
+function potongKonfirmasi() {
+    if (!potongGambar || !potongEl.kanvas) return;
+
+    const kanvas = potongEl.kanvas;
+    const berkasAsli = potongAntrean[potongIndeks];
+    const jenisKeluaran = berkasAsli && berkasAsli.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    const ekstensi = jenisKeluaran === 'image/png' ? 'png' : 'jpg';
+    const namaDasar = (berkasAsli?.name || 'gambar').replace(/\.[^.]+$/, '');
+
+    const selesai = function (blob) {
+        if (blob) {
+            potongHasil.push(new File([blob], namaDasar + '-potong.' + ekstensi, {
+                type: jenisKeluaran,
+                lastModified: Date.now(),
+            }));
+        }
+
+        potongIndeks++;
+        potongMuatBerikut();
+    };
+
+    if (kanvas.toBlob) {
+        kanvas.toBlob(selesai, jenisKeluaran, 0.9);
+        return;
+    }
+
+    // Peramban tanpa toBlob: data URL tetap menghasilkan berkas yang sah.
+    const data = kanvas.toDataURL(jenisKeluaran, 0.9);
+    const biner = atob(data.split(',')[1]);
+    const bytes = new Uint8Array(biner.length);
+
+    for (let i = 0; i < biner.length; i++) bytes[i] = biner.charCodeAt(i);
+
+    selesai(new Blob([bytes], { type: jenisKeluaran }));
+}
+
+function potongSelesai() {
+    const input = potongInput;
+    const hasil = potongHasil;
+
+    potongTutup();
+
+    if (!input) return;
+
+    if (hasil.length === 0) {
+        input.value = '';
+        return;
+    }
+
+    const wadah = new DataTransfer();
+    hasil.forEach(function (berkas) { wadah.items.add(berkas); });
+    input.files = wadah.files;
+    input.dataset.cropSiap = '1';
+
+    // Event baru ini harus sampai ke Livewire. Penanda cropSiap membuat
+    // listener di bawah membiarkannya lewat tanpa menahan lagi.
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function potongBatal() {
+    if (potongInput) potongInput.value = '';
+    potongAntrean = [];
+    potongHasil = [];
+    potongIndeks = 0;
+    potongTutup();
+}
+
+function potongTutup() {
+    potongGambar = null;
+    potongSeret = null;
+
+    if (potongEl.akar) {
+        potongEl.akar.classList.add('hidden');
+        potongEl.akar.classList.remove('flex');
+    }
+
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('change', function (e) {
+    const input = e.target;
+
+    if (!(input instanceof HTMLInputElement) || input.type !== 'file' || !input.dataset.crop) {
+        return;
+    }
+
+    // Hasil potongan kita sendiri: biarkan Livewire menerimanya.
+    if (input.dataset.cropSiap) {
+        delete input.dataset.cropSiap;
+        return;
+    }
+
+    if (!input.files || input.files.length === 0) return;
+
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    potongMulai(input, Array.prototype.slice.call(input.files));
+}, true);
+
+/* ── Dropzone unggah ────────────────────────────────────────────────
+ *
+ * Menjatuhkan berkas ke kotak yang sama dengan memilih lewat dialog. Berkas
+ * dari `DataTransfer` disalin ke input asli lalu `change` dipancarkan ulang,
+ * sehingga jalur Livewire dan pemotongan gambar berjalan persis seperti
+ * pemilihan manual — tidak ada jalur unggah kedua yang perlu dirawat.
+ */
+(function () {
+    let zonaAktif = null;
+
+    const zonaDari = function (target) {
+        return target instanceof Element ? target.closest('[data-dropzone]') : null;
+    };
+
+    document.addEventListener('dragover', function (e) {
+        const zona = zonaDari(e.target);
+
+        if (!zona) return;
+
+        e.preventDefault();
+
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+        if (zonaAktif && zonaAktif !== zona) zonaAktif.classList.remove('is-dragover');
+        zona.classList.add('is-dragover');
+        zonaAktif = zona;
+    });
+
+    // `dragleave` juga menyala saat kursor melewati anak-anak kotak. Hanya
+    // lepaskan penanda bila kursor benar-benar keluar dari zona.
+    document.addEventListener('dragleave', function (e) {
+        const zona = zonaDari(e.target);
+
+        if (!zona) return;
+        if (e.relatedTarget instanceof Node && zona.contains(e.relatedTarget)) return;
+
+        zona.classList.remove('is-dragover');
+        if (zonaAktif === zona) zonaAktif = null;
+    });
+
+    document.addEventListener('drop', function (e) {
+        const zona = zonaDari(e.target);
+
+        if (!zona) return;
+
+        e.preventDefault();
+        zona.classList.remove('is-dragover');
+        if (zonaAktif === zona) zonaAktif = null;
+
+        const input = zona.querySelector('input[type="file"]');
+        const daftar = e.dataTransfer && e.dataTransfer.files;
+
+        if (!input || !daftar || daftar.length === 0) return;
+
+        const wadah = new DataTransfer();
+        const berkas = input.multiple ? Array.from(daftar) : [daftar[0]];
+
+        berkas.forEach(function (b) { wadah.items.add(b); });
+
+        input.files = wadah.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+})();
+
+/* Nama berkas yang dipilih, ditampilkan di dalam dropzone. */
+document.addEventListener('change', function (e) {
+    const input = e.target;
+
+    if (!(input instanceof HTMLInputElement) || input.type !== 'file') return;
+
+    const zona = input.closest('[data-dropzone]');
+    const nama = zona && zona.querySelector('[data-upload-name]');
+
+    if (!nama) return;
+
+    if (input.files && input.files.length > 0) {
+        nama.textContent = input.multiple
+            ? input.files.length + ' files selected'
+            : input.files[0].name;
+        nama.hidden = false;
+    } else {
+        nama.textContent = '';
+        nama.hidden = true;
+    }
+});

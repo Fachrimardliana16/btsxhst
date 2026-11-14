@@ -72,7 +72,7 @@ class PesananDetail extends KomponenAdmin
         $tujuan = StatusPesanan::tryFrom($this->statusTujuan);
 
         if ($tujuan === null) {
-            session()->flash('galat-admin', 'Pilih status tujuan lebih dulu.');
+            session()->flash('galat-admin', 'Choose a target status first.');
 
             return;
         }
@@ -88,7 +88,7 @@ class PesananDetail extends KomponenAdmin
             $this->catatanStatus = '';
             $this->statusTujuan = '';
 
-            session()->flash('pesan-admin', 'Status berpindah ke '.$tujuan->label().'.');
+            session()->flash('pesan-admin', 'Status moved to '.$tujuan->label().'.');
         } catch (RuntimeException $e) {
             // RuntimeException dari StatusPesananService adalah pesan bisnis
             // yang memang ditujukan untuk pengelola ("Status tidak dapat
@@ -114,10 +114,10 @@ class PesananDetail extends KomponenAdmin
             'nomorResi' => ['nullable', 'string', 'max:60'],
             'catatanAdmin' => ['nullable', 'string', 'max:2000'],
         ], [], [
-            'kurir' => 'Kurir',
-            'layanan' => 'Layanan',
-            'nomorResi' => 'Nomor resi',
-            'catatanAdmin' => 'Catatan admin',
+            'kurir' => 'Courier',
+            'layanan' => 'Service',
+            'nomorResi' => 'Tracking number',
+            'catatanAdmin' => 'Admin note',
         ]);
 
         $order = $this->cari($this->ulid);
@@ -176,7 +176,7 @@ class PesananDetail extends KomponenAdmin
             app(\App\Services\Pembayaran\PembayaranManual::class)
                 ->tolak($bayar, $this->alasanTolak, auth()->id());
 
-            session()->flash('pesan-admin', 'Bukti ditolak. Pembeli dapat mengunggah ulang.');
+            session()->flash('pesan-admin', 'Proof rejected. The customer can upload again.');
         } catch (\Throwable $e) {
             $this->addError('pembayaran', __('site.msg.pesanan.gagal_tolak', ['pesan' => $e->getMessage()]));
 
@@ -222,7 +222,7 @@ class PesananDetail extends KomponenAdmin
 
         KirimNotifikasiPesanan::dispatch($order->id, $this->kejadianKirimUlang);
 
-        session()->flash('pesan-admin', 'Notifikasi "'.$this->kejadianKirimUlang.'" untuk '.$order->order_number.' dimasukkan ke antrean pengiriman.');
+        session()->flash('pesan-admin', 'Notification "'.$this->kejadianKirimUlang.'" for '.$order->order_number.' queued for delivery.');
     }
 
     public function render(): View
@@ -230,11 +230,11 @@ class PesananDetail extends KomponenAdmin
         $order = $this->cari($this->ulid);
 
         return view('livewire.admin.pesanan-detail', [
-            'judul' => 'Pesanan '.$order->order_number,
-            'bagian' => 'Penjualan',
+            'judul' => 'Order '.$order->order_number,
+            'bagian' => 'Sales',
             'order' => $order,
             'alamat' => $order->alamat(),
             'tujuanSah' => $order->status->transisiSah(),
-        ])->layout('layouts.admin', ['judul' => 'Pesanan '.$order->order_number, 'bagian' => 'Penjualan']);
+        ])->layout('layouts.admin', ['judul' => 'Order '.$order->order_number, 'bagian' => 'Sales']);
     }
 }

@@ -21,9 +21,9 @@
             <h1 class="mt-1 font-display text-2xl font-semibold">{{ __('site.admin.keranjang_terbuka.judul') }}</h1>
             <p class="mt-1 text-sm text-muted">
                 {{ __('site.admin.keranjang_terbuka.keterangan') }}
-                {{ number_format($ringkas['total'], 0, ',', '.') }} keranjang ·
-                nilai {{ rupiah($ringkas['nilai']) }} ·
-                {{ number_format($ringkas['harian'], 0, ',', '.') }} {{ __('site.admin.keranjang_terbuka.bergerak') }}
+                {{ number_format($ringkas['total']) }} carts ·
+                value {{ dolar(\App\Support\HargaDolar::dariRupiah($ringkas['nilai'])) }} ·
+                {{ number_format($ringkas['harian']) }} {{ __('site.admin.keranjang_terbuka.bergerak') }}
             </p>
         </div>
 
@@ -64,7 +64,7 @@
                             <div class="flex items-center justify-between gap-3 text-sm">
                                 <span class="truncate">{{ $p->nama }}</span>
                                 <span class="tech flex-none text-muted">
-                                    {{ $p->jumlah }} pcs · {{ $p->keranjang }} keranjang
+                                    {{ $p->jumlah }} items · {{ $p->keranjang }} carts
                                 </span>
                             </div>
                         @endforeach
@@ -86,7 +86,7 @@
                         @foreach ($ringkas['disukai'] as $p)
                             <div class="flex items-center justify-between gap-3 text-sm">
                                 <span class="truncate">{{ $p->nama }}</span>
-                                <span class="tech flex-none text-muted">{{ $p->jumlah }} suka</span>
+                                <span class="tech flex-none text-muted">{{ $p->jumlah }} likes</span>
                             </div>
                         @endforeach
                     </div>
@@ -98,7 +98,7 @@
     {{-- ── Saringan ────────────────────────────────────────────────── --}}
     <div class="plate flex flex-wrap items-center gap-2 p-3">
         <div class="flex gap-1" role="group" aria-label="{{ __('site.admin.keranjang_terbuka.umur_keranjang') }}">
-            @foreach (['semua' => 'Semua', 'harian' => 'Baru', 'tua' => 'Mengendap'] as $nilai => $label)
+            @foreach (['semua' => 'All', 'harian' => 'New', 'tua' => 'Stale'] as $nilai => $label)
                 <button type="button" wire:click="aturUmur('{{ $nilai }}')"
                         class="btn {{ $umur === $nilai ? 'btn-primary' : 'btn-ghost' }}">
                     {{ $label }}
@@ -146,14 +146,14 @@
                                 · {{ $k->user->email }}
                             @endif
                             @if ($k->session_id)
-                                · sesi {{ mb_substr($k->session_id, 0, 10) }}
+                                · session {{ mb_substr($k->session_id, 0, 10) }}
                             @endif
                         </p>
                     </div>
 
                     <div class="text-right">
-                        <p class="part-no">{{ $k->jumlahItem() }} barang</p>
-                        <p class="tech text-lg font-medium">{{ rupiah($k->subtotal()) }}</p>
+                        <p class="part-no">{{ $k->jumlahItem() }} items</p>
+                        <p class="tech text-lg font-medium">{{ dolar(\App\Support\HargaDolar::dariRupiah($k->subtotal())) }}</p>
                     </div>
                 </div>
 
@@ -178,17 +178,17 @@
                             </div>
 
                             <div class="min-w-0 flex-1">
-                                <p class="truncate text-sm">{{ $item->product?->judul() ?? '(produk dihapus)' }}</p>
+                                <p class="truncate text-sm">{{ $item->product?->judul() ?? '(deleted product)' }}</p>
                                 <p class="tech text-xs text-dim">
-                                    {{ $varian?->nama() ?? '(varian dihapus)' }}
-                                    · stok tersedia {{ $tersedia }}
+                                    {{ $varian?->nama() ?? '(deleted variant)' }}
+                                    · {{ $tersedia }} available
                                 </p>
                             </div>
 
                             <div class="flex-none text-right">
                                 <p class="tech text-sm">{{ $item->quantity }}×</p>
                                 <p class="tech text-xs text-dim">
-                                    {{ $varian ? rupiah($varian->hargaAkhir()) : '—' }}
+                                    {{ $varian ? dolar(\App\Support\HargaDolar::dariRupiah($varian->hargaAkhir())) : '—' }}
                                 </p>
                             </div>
                         </li>
@@ -201,7 +201,7 @@
                 <p class="mt-3 font-semibold">{{ __('site.admin.keranjang_terbuka.kosong') }}</p>
                 <p class="mt-1 text-sm text-muted">
                     @if (filled($cari) || $umur !== 'semua')
-                        Tidak ada yang cocok dengan saringan ini. Coba lebarkan saringan.
+                        Nothing matches this filter. Try widening it.
                     @else
                         {{ __('site.admin.keranjang_terbuka.kosong_hint') }}
                     @endif

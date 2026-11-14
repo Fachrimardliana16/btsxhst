@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\Setting;
 use App\Services\StatusPesananService;
 use App\Support\CatatanAktivitas;
+use App\Support\HargaDolar;
 use App\Support\KomponenPengaturan;
 use App\Support\Pengaturan;
 use Illuminate\Http\UploadedFile;
@@ -52,7 +53,7 @@ class PembayaranManual
 
             throw ValidationException::withMessages([
                 'bukti' => sprintf(
-                    'Sudah %d kali mengunggah bukti untuk pesanan ini. Coba lagi dalam %d menit.',
+                    'Proof has been uploaded %d times for this order. Try again in %d minutes.',
                     self::MAKS_PER_JAM,
                     (int) ceil($detik / 60),
                 ),
@@ -64,13 +65,13 @@ class PembayaranManual
         // bukan diam-diam menumpuk bukti baru.
         if ($pesanan->payment_status === StatusPembayaran::Paid) {
             throw ValidationException::withMessages([
-                'bukti' => 'Pesanan ini sudah lunas. Hubungi kami bila terjadi pembayaran ganda.',
+                'bukti' => 'This order is already paid. Contact us if a duplicate payment occurred.',
             ]);
         }
 
         if ($pesanan->status === StatusPesanan::Cancelled) {
             throw ValidationException::withMessages([
-                'bukti' => 'Pesanan ini sudah dibatalkan dan tidak menerima pembayaran.',
+                'bukti' => 'This order has been cancelled and cannot accept payment.',
             ]);
         }
 
@@ -84,7 +85,7 @@ class PembayaranManual
                 'provider' => 'manual',
                 'provider_status' => 'menunggu-verifikasi',
                 'amount' => $pesanan->grand_total,
-                'currency' => $pesanan->currency ?? 'IDR',
+                'currency' => $pesanan->currency ?? HargaDolar::MATA,
                 'proof_path' => $jalur,
                 'payload_json' => $catatan === null ? null : ['catatan_pembeli' => $catatan],
             ]);
@@ -100,7 +101,7 @@ class PembayaranManual
 
         return [
             'bukti' => $jalur,
-            'pesan' => 'Bukti transfer diterima. Kami periksa dalam 1×24 jam kerja.',
+            'pesan' => 'Transfer proof received. We review it within one business day.',
         ];
     }
 
@@ -141,7 +142,7 @@ class PembayaranManual
 
         if (! in_array($mime, $diizinkan, true)) {
             throw ValidationException::withMessages([
-                'bukti' => 'Bukti harus berupa gambar JPG, PNG, WebP, atau PDF. Tipe terdeteksi "'
+                'bukti' => 'Proof must be a JPG, PNG, WebP, or PDF file. Detected type "'
                     .($mime === '' ? 'tidak dikenal' : $mime).'".',
             ]);
         }
@@ -149,19 +150,19 @@ class PembayaranManual
         // PDF yang sah selalu dimulai dengan %PDF-. Berkas yang mengaku PDF
         // tetapi isinya lain ditolak di sini.
         if ($mime === 'application/pdf' && ! str_starts_with($isi, '%PDF-')) {
-            throw ValidationException::withMessages(['bukti' => 'Berkas bukan PDF yang sah.']);
+            throw ValidationException::withMessages(['bukti' => 'The file is not a valid PDF.']);
         }
 
         if (str_starts_with($mime, 'image/')) {
             $info = @getimagesizefromstring($isi);
 
             if ($info === false) {
-                throw ValidationException::withMessages(['bukti' => 'Isi berkas bukan gambar yang sah.']);
+                throw ValidationException::withMessages(['bukti' => 'The file content is not a valid image.']);
             }
 
             if (min($info[0], $info[1]) < 100) {
                 throw ValidationException::withMessages([
-                    'bukti' => 'Gambar terlalu kecil untuk dibaca. Unggah tangkapan layar yang lebih jelas.',
+                    'bukti' => 'The image is too small to read. Upload a clearer screenshot.',
                 ]);
             }
         }
@@ -249,7 +250,7 @@ class PembayaranManual
         $pesanan = $pembayaran->order()->firstOrFail();
 
         if ($pembayaran->terverifikasi()) {
-            throw new RuntimeException('Pembayaran yang sudah terverifikasi tidak dapat ditolak.');
+            throw new RuntimeException('A verified payment cannot be rejected.');
         }
 
         DB::transaction(function () use ($pembayaran, $pesanan, $alasan, $olehId): void {

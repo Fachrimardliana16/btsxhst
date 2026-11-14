@@ -11,11 +11,11 @@
             <p class="part-no">{{ __('site.admin.pelanggan.eyebrow') }}</p>
             <h1 class="mt-1 font-display text-2xl font-semibold">{{ __('site.admin.pelanggan.judul') }}</h1>
             <p class="mt-1 text-sm text-muted">
-                {{ number_format($jumlah['semua'], 0, ',', '.') }} akun ·
-                {{ number_format($jumlah['pelanggan'], 0, ',', '.') }} pelanggan ·
-                {{ number_format($jumlah['panel'], 0, ',', '.') }} pengguna panel
+                {{ number_format($jumlah['semua'], 0, ',', '.') }} accounts ·
+                {{ number_format($jumlah['pelanggan'], 0, ',', '.') }} customers ·
+                {{ number_format($jumlah['panel'], 0, ',', '.') }} panel users
                 @if ($jumlah['diblokir'] > 0)
-                    · <span class="text-danger">{{ $jumlah['diblokir'] }} diblokir</span>
+                    · <span class="text-danger">{{ $jumlah['diblokir'] }} blocked</span>
                 @endif
             </p>
         </div>
@@ -31,8 +31,8 @@
 
     @if ($superAdminTerakhir <= 1)
         <div class="plate border-l-2 border-warn p-3 text-sm" role="status">
-            Hanya ada satu super admin. Akun itu tidak dapat diblokir, diturunkan perannya, atau dihapus —
-            tanpa super admin, tidak ada yang bisa mengelola admin dan kredensial pembayaran.
+            There is only one super admin. That account cannot be blocked, demoted, or deleted —
+            without a super admin, nobody can manage admins and payment credentials.
         </div>
     @endif
 
@@ -92,7 +92,7 @@
                                             <span class="flex items-center gap-2">
                                                 <span class="truncate font-medium">{{ $u->name }}</span>
                                                 @if ($u->is_blocked)
-                                                    <span class="rounded-full bg-danger/12 px-1.5 py-0.5 text-xs text-danger">diblokir</span>
+                                                    <span class="rounded-full bg-danger/12 px-1.5 py-0.5 text-xs text-danger">blocked</span>
                                                 @endif
                                                 @if (auth()->id() === $u->id)
                                                     <span class="rounded-full bg-accent/12 px-1.5 py-0.5 text-xs text-accent">{{ __('site.admin.pelanggan.anda') }}</span>
@@ -104,7 +104,7 @@
 
                                     <td class="p-3">
                                         @if (auth()->user()?->role->bisaUbahKredensial() && auth()->id() !== $u->id)
-                                            <select wire:change="ubah{{ __('site.admin.pelanggan.peran') }}({{ $u->id }}, $event.target.value)"
+                                            <select wire:change="ubahPeran({{ $u->id }}, $event.target.value)"
                                                     class="field w-auto py-1 text-[length:var(--t-xs)]" aria-label="{{ __('site.admin.pelanggan.peran') }} {{ $u->name }}">
                                                 <option value="customer" @selected($u->role->value === 'customer')>{{ __('site.admin.pelanggan.judul') }}</option>
                                                 <option value="admin" @selected($u->role->value === 'admin')>Admin</option>
@@ -118,7 +118,7 @@
                                     <td class="p-3 text-right">
                                         @if ($u->orders_count > 0)
                                             <span class="tech">{{ $u->orders_count }}</span>
-                                            <span class="block text-xs text-dim">{{ rupiah($u->total_belanja ?? 0) }}</span>
+                                            <span class="block text-xs text-dim">{{ dolar($u->total_belanja ?? 0) }}</span>
                                         @else
                                             <span class="tech text-dim">—</span>
                                         @endif
@@ -136,13 +136,14 @@
                                         <div class="flex items-center justify-end gap-1">
                                             @unless (auth()->id() === $u->id)
                                                 <button type="button" wire:click="ubahBlokir({{ $u->id }})"
+                                                        wire:confirm="{{ $u->is_blocked ? 'Unblock' : 'Block' }} {{ $u->name }}?"
                                                         class="btn-icon btn-icon-sm {{ $u->is_blocked ? 'text-danger' : '' }}"
-                                                        title="{{ $u->is_blocked ? 'Buka blokir' : 'Blokir' }}">
+                                                        title="{{ $u->is_blocked ? 'Unblock' : 'Block' }}">
                                                     <x-ikon name="{{ $u->is_blocked ? 'lock' : 'shield' }}" :size="15" />
-                                                    <span class="visually-hidden">{{ $u->is_blocked ? 'Buka blokir' : 'Blokir' }}</span>
+                                                    <span class="visually-hidden">{{ $u->is_blocked ? 'Unblock' : 'Block' }}</span>
                                                 </button>
                                                 <button type="button" wire:click="hapus({{ $u->id }})"
-                                                        wire:confirm="{{ __('site.admin.pelanggan.hapus') }} akun {{ $u->name }}?"
+                                                        wire:confirm="{{ __('site.admin.pelanggan.hapus') }} account {{ $u->name }}?"
                                                         class="btn-icon btn-icon-sm hover:text-danger" title="{{ __('site.admin.pelanggan.hapus') }}">
                                                     <x-ikon name="trash" :size="15" />
                                                     <span class="visually-hidden">{{ __('site.admin.pelanggan.hapus') }}</span>
@@ -172,7 +173,7 @@
             @else
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
-                        <p class="part-no">Akun #{{ $rinci->id }}</p>
+                        <p class="part-no">Account #{{ $rinci->id }}</p>
                         <h2 class="mt-1 font-display text-lg font-semibold">{{ $rinci->name }}</h2>
                         <p class="mt-0.5 text-xs text-dim">{{ $rinci->email }}</p>
                     </div>
@@ -207,7 +208,7 @@
                     <div class="flex gap-3">
                         <dt class="part-no w-24 flex-none pt-0.5">{{ __('site.admin.pelanggan.dua_faktor') }}</dt>
                         <dd class="{{ $rinci->punyaDuaFaktor() ? 'text-ok' : 'text-dim' }}">
-                            {{ $rinci->punyaDuaFaktor() ? __('site.admin.pelanggan.aktif') : 'Belum aktif' }}
+                            {{ $rinci->punyaDuaFaktor() ? __('site.admin.pelanggan.aktif') : 'Not enabled' }}
                         </dd>
                     </div>
                     <div class="flex gap-3">
@@ -217,7 +218,7 @@
                 </dl>
 
                 <div class="mt-4 border-t border-line-soft pt-4">
-                    <p class="part-no">{{ __('site.admin.pelanggan.pesanan') }} terakhir</p>
+                    <p class="part-no">{{ __('site.admin.pelanggan.pesanan') }} — recent</p>
 
                     @if ($pesananRinci->isEmpty())
                         <p class="mt-2 text-sm text-dim">{{ __('site.admin.pelanggan.belum_pernah_memesan') }}</p>
@@ -228,7 +229,7 @@
                                     <a href="{{ route('admin.orders.show', $p->ulid) }}"
                                        class="tech text-accent hover:underline">{{ $p->order_number }}</a>
                                     <span class="text-xs text-dim">{{ $p->created_at?->format('d/m/Y') }}</span>
-                                    <span class="tech">{{ rupiah($p->grand_total) }}</span>
+                                    <span class="tech">{{ dolar($p->grand_total) }}</span>
                                     <span class="rounded-full px-1.5 py-0.5 text-xs
                                                  {{ $p->status->value === 'completed' ? 'bg-ok/12 text-ok' : 'bg-sunken text-muted' }}">
                                         {{ $p->status->label() }}

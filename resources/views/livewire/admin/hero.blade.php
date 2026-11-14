@@ -21,8 +21,8 @@
             <p class="part-no">{{ __('site.admin.hero.eyebrow') }}</p>
             <h1 class="mt-1 font-display text-2xl font-semibold">{{ __('site.admin.hero.judul') }}</h1>
             <p class="mt-1 text-sm text-muted">
-                {{ $slides->count() }} dari maksimum {{ $maksSlide }} slide ·
-                {{ $slides->where('is_active', true)->count() }} tayang
+                {{ $slides->count() }} of a maximum of {{ $maksSlide }} slides ·
+                {{ $slides->where('is_active', true)->count() }} live
             </p>
         </div>
 
@@ -65,7 +65,7 @@
             @php
                 $url      = filled($s->media_path) ? \App\Models\ProductMedia::urlMedia($s->media_path) : null;
                 $urlHp    = filled($s->media_path_mobile) ? \App\Models\ProductMedia::urlMedia($s->media_path_mobile) : null;
-                $ber{{ __('site.admin.hero.jadwal') }} = $s->starts_at || $s->ends_at;
+                $berJadwal = $s->starts_at || $s->ends_at;
             @endphp
 
             <article class="group plate relative flex flex-col overflow-hidden"
@@ -79,15 +79,15 @@
 
                 {{-- Pratinjau 16:9 — ukuran yang cukup untuk menilai gambar. --}}
                 <a href="{{ route('admin.hero.edit', $s->ulid) }}" wire:navigate
-                   class="relative block aspect-{{ __('site.admin.hero.video') }} overflow-hidden bg-sunken"
-                   aria-label="{{ __('site.admin.hero.sunting') }} slide {{ $s->title_id ?: 'tanpa judul' }}">
+                   class="relative block aspect-video overflow-hidden bg-sunken"
+                   aria-label="{{ __('site.admin.hero.sunting') }} slide {{ $s->title_en ?: ($s->title_id ?: 'untitled') }}">
 
                     @if ($url && $s->media_type === 'image')
                         <img src="{{ $url }}" alt=""
                              class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                              style="object-position: {{ $s->posisiFokus() }}"
                              loading="lazy" decoding="async" />
-                    @elseif ($s->media_type === __('site.admin.hero.video'))
+                    @elseif ($s->media_type === 'video')
                         <div class="flex h-full w-full items-center justify-center gap-2 text-dim">
                             <x-ikon name="activity" :size="26" />
                             <span class="tech text-xs">{{ __('site.admin.hero.video') }}</span>
@@ -109,15 +109,15 @@
                          dicari mata saat membuka halaman ini. --}}
                     <div class="pointer-events-none absolute inset-x-2.5 top-2.5 flex items-start justify-between gap-2">
                         <span class="badge {{ $s->is_active ? 'badge-ok' : 'badge-neutral' }} bg-surface/90 backdrop-blur">
-                            {{ $s->is_active ? 'tayang' : 'draf' }}
+                            {{ $s->is_active ? 'live' : 'draft' }}
                         </span>
 
                         <div class="flex flex-col items-end gap-1">
                             <span class="badge badge-neutral bg-surface/90 backdrop-blur">
-                                urutan {{ $s->display_order + 1 }}
+                                order {{ $s->display_order + 1 }}
                             </span>
 
-                            @if ($ber{{ __('site.admin.hero.jadwal') }})
+                            @if ($berJadwal)
                                 <span class="badge badge-steel bg-surface/90 backdrop-blur">{{ __('site.admin.hero.jadwal') }}</span>
                             @endif
                         </div>
@@ -136,7 +136,7 @@
                          pengunjung. --}}
                     <div class="pointer-events-none absolute inset-x-0 bottom-0 p-3">
                         <p class="line-clamp-1 text-sm font-semibold text-white drop-shadow">
-                            {{ $s->title_id ?: '(tanpa judul)' }}
+                            {{ $s->title_en ?: ($s->title_id ?: '(untitled)') }}
                         </p>
                         <p class="mt-0.5 line-clamp-1 text-xs text-white/70">
                             {{ $s->title_en ?: '(no title)' }}
@@ -148,7 +148,7 @@
                 <div class="flex flex-1 flex-col gap-2 p-3">
 
                     <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-                        <span class="tech">{{ $s->media_type === __('site.admin.hero.video') ? __('site.admin.hero.video') : 'gambar' }}</span>
+                        <span class="tech">{{ $s->media_type === 'video' ? __('site.admin.hero.video') : 'image' }}</span>
 
                         @if ($urlHp)
                             <span class="text-dim">·</span>
@@ -161,9 +161,9 @@
                                 @if ($s->starts_at && $s->ends_at)
                                     {{ $s->starts_at->format('d M') }} – {{ $s->ends_at->format('d M Y') }}
                                 @elseif ($s->starts_at)
-                                    mulai {{ $s->starts_at->format('d M Y') }}
+                                    starts {{ $s->starts_at->format('d M Y') }}
                                 @else
-                                    sampai {{ $s->ends_at->format('d M Y') }}
+                                    ends {{ $s->ends_at->format('d M Y') }}
                                 @endif
                             </span>
                         @endif
@@ -188,27 +188,28 @@
                     <div class="mt-auto flex items-center gap-1 border-t border-line-soft pt-2">
 
                         <button type="button" class="btn-icon !h-9 !w-9" wire:click="naik({{ $s->id }})"
-                                @disabled($i === 0) title="{{ __('site.admin.hero.naikkan') }} urutan">
+                                @disabled($i === 0) title="{{ __('site.admin.hero.naikkan') }} order">
                             <x-ikon name="chevron-down" :size="15" class="rotate-180" />
                             <span class="visually-hidden">{{ __('site.admin.hero.naikkan') }}</span>
                         </button>
 
                         <button type="button" class="btn-icon !h-9 !w-9" wire:click="turun({{ $s->id }})"
-                                @disabled($i === $slides->count() - 1) title="{{ __('site.admin.hero.turunkan') }} urutan">
+                                @disabled($i === $slides->count() - 1) title="{{ __('site.admin.hero.turunkan') }} order">
                             <x-ikon name="chevron-down" :size="15" />
                             <span class="visually-hidden">{{ __('site.admin.hero.turunkan') }}</span>
                         </button>
 
                         <button type="button" class="btn-icon !h-9 !w-9" wire:click="ubahAktif({{ $s->id }})"
-                                title="{{ $s->is_active ? 'Nonaktifkan' : 'Tayangkan' }}"
-                                aria-label="{{ $s->is_active ? 'Nonaktifkan slide' : 'Tayangkan slide' }}">
+                                wire:confirm="{{ $s->is_active ? 'Hide this slide from the homepage?' : 'Show this slide on the homepage?' }}"
+                                title="{{ $s->is_active ? 'Hide' : 'Show' }}"
+                                aria-label="{{ $s->is_active ? 'Hide slide' : 'Show slide' }}">
                             {{-- Ikon BERBEDA untuk dua keadaan. Versi lama memakai
                                  'eye' untuk keduanya, sehingga status tidak dapat
                                  dibaca dari ikonnya sama sekali. --}}
                             <x-ikon :name="$s->is_active ? 'eye' : 'eye-off'" :size="16"
                                     class="{{ $s->is_active ? 'text-ok' : '' }}" />
                             <span class="visually-hidden">
-                                {{ $s->is_active ? 'Nonaktifkan' : 'Tayangkan' }}
+                                {{ $s->is_active ? 'Hide' : 'Show' }}
                             </span>
                         </button>
 
@@ -222,7 +223,7 @@
 
                             <button type="button" class="btn-icon !h-9 !w-9 text-danger"
                                     wire:click="hapus({{ $s->id }})"
-                                    wire:confirm="{{ __('site.admin.hero.hapus_slide') }} &quot;{{ $s->title_id }}&quot; beserta berkasnya?"
+                                    wire:confirm="{{ __('site.admin.hero.hapus_slide') }} &quot;{{ $s->title_en ?: $s->title_id }}&quot; and its file?"
                                     title="{{ __('site.admin.hero.hapus_slide') }}" aria-label="{{ __('site.admin.hero.hapus_slide') }}">
                                 <x-ikon name="trash" :size="15" />
                                 <span class="visually-hidden">{{ __('site.admin.hero.hapus') }}</span>
@@ -240,7 +241,7 @@
                 </p>
                 <button type="button" class="btn btn-primary mt-4" wire:click="tambah">
                     <x-ikon name="plus" :size="16" />
-                    {{ __('site.admin.hero.tambah_slide') }} pertama
+                    {{ __('site.admin.hero.tambah_slide') }} — first
                 </button>
             </div>
         @endforelse
@@ -248,8 +249,8 @@
 
     @if ($slides->isNotEmpty())
         <p class="text-xs text-dim">
-            Urutan di sini menentukan urutan tayang di beranda. Slide pertama yang aktif tampil paling awal;
-            seret kartu atau pakai tombol panah untuk menggeser.
+            Order here determines the display order on the homepage. The first active slide shows first;
+            drag a card or use the arrow buttons to move it.
         </p>
     @endif
 </div>

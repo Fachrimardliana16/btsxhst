@@ -67,7 +67,7 @@ class NotifikasiPerangkat extends KomponenAdmin
             ],
         );
 
-        $this->pesan = 'Perangkat ini akan menerima notifikasi.';
+        $this->pesan = 'This device will receive notifications.';
         $this->muatUlang();
     }
 
@@ -99,14 +99,14 @@ class NotifikasiPerangkat extends KomponenAdmin
 
         $hasil = \App\Support\NotifikasiPush::ke(
             $pengguna,
-            'Notifikasi uji',
+            'Test notification',
             __('site.msg.notifikasi.uji_isi'),
             route('admin.dashboard'),
         );
 
         $this->pesan = match (true) {
-            $hasil['push'] > 0 => 'Notifikasi terkirim ke '.$hasil['push'].' perangkat.',
-            $hasil['alasan'] !== null => 'Belum terkirim: '.$hasil['alasan'],
+            $hasil['push'] > 0 => 'Notification sent to '.$hasil['push'].' devices.',
+            $hasil['alasan'] !== null => 'Not delivered: '.$hasil['alasan'],
             default => __('site.msg.notifikasi.belum_terkirim'),
         };
     }
@@ -140,6 +140,6 @@ class NotifikasiPerangkat extends KomponenAdmin
                 ->count(),
             'kunciPublik' => config('services.vapid.public_key'),
             'siap' => \App\Support\NotifikasiPush::siap(),
-        ])->title('Notifikasi perangkat · Panel');
+        ])->title('Devices · Panel');
     }
 }

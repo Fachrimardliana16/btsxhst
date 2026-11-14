@@ -31,10 +31,8 @@ trait MengelolaInformasiDasar
             }
 
             $baris[] = [
-                'label_id' => (string) ($item['label_id'] ?? ''),
-                'nilai_id' => (string) ($item['nilai_id'] ?? ''),
-                'label_en' => (string) ($item['label_en'] ?? ''),
-                'nilai_en' => (string) ($item['nilai_en'] ?? ''),
+                'label_id' => (string) ($item['label_en'] ?: ($item['label_id'] ?? '')),
+                'nilai_id' => (string) ($item['nilai_en'] ?: ($item['nilai_id'] ?? '')),
             ];
         }
 
@@ -43,7 +41,7 @@ trait MengelolaInformasiDasar
 
     public function tambahSpesifikasi(): void
     {
-        $this->spesifikasi[] = ['label_id' => '', 'nilai_id' => '', 'label_en' => '', 'nilai_en' => ''];
+        $this->spesifikasi[] = ['label_id' => '', 'nilai_id' => ''];
         $this->pesanTab = null;
     }
 
@@ -90,8 +88,8 @@ trait MengelolaInformasiDasar
             $baris[] = [
                 'label_id' => $labelId,
                 'nilai_id' => trim((string) ($item['nilai_id'] ?? '')),
-                'label_en' => trim((string) ($item['label_en'] ?? '')),
-                'nilai_en' => trim((string) ($item['nilai_en'] ?? '')),
+                'label_en' => $labelId,
+                'nilai_en' => trim((string) ($item['nilai_id'] ?? '')),
             ];
         }
 

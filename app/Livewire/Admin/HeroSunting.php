@@ -67,19 +67,15 @@ class HeroSunting extends KomponenAdmin
 
         try {
             $this->validate([
-                'form.title_id' => ['required', 'string', 'max:120'],
                 'form.title_en' => ['required', 'string', 'max:120'],
-                'form.subtitle_id' => ['nullable', 'string', 'max:300'],
                 'form.subtitle_en' => ['nullable', 'string', 'max:300'],
                 'form.media_type' => ['required', 'in:image,video'],
-                'form.primary_button_label_id' => ['nullable', 'string', 'max:40'],
                 'form.primary_button_label_en' => ['nullable', 'string', 'max:40'],
                 // URL tombol TIDAK wajib. Slide yang hanya menampilkan gambar
                 // adalah keadaan yang sah, dan tombol tanpa tujuan lebih baik
                 // tidak ada daripada mengarah ke halaman kosong. Yang dijaga
                 // hanya bentuknya bila diisi.
                 'form.primary_button_url' => ['nullable', 'string', 'max:255'],
-                'form.secondary_button_label_id' => ['nullable', 'string', 'max:40'],
                 'form.secondary_button_label_en' => ['nullable', 'string', 'max:40'],
                 'form.secondary_button_url' => ['nullable', 'string', 'max:255'],
                 'form.focal_point_x' => ['required', 'numeric', 'between:0,1'],
@@ -90,10 +86,9 @@ class HeroSunting extends KomponenAdmin
                 'berkasPonsel' => ['nullable', 'image', 'mimes:jpeg,png,webp,avif', 'max:5120'],
                 'berkasVideo' => ['nullable', 'file', 'max:'.(int) config('iksan.hero.video_max_kb')],
             ], [
-                'form.title_id.required' => __('site.msg.hero.judul_id_wajib'),
-                'form.title_en.required' => __('site.msg.hero.judul_en_wajib'),
+                'form.title_en.required' => __('site.msg.hero.judul_id_wajib'),
                 'form.ends_at.after_or_equal' => __('site.msg.hero.tanggal_terbalik'),
-                'berkasVideo.max' => 'Ukuran video melebihi batas :max KB.',
+                'berkasVideo.max' => 'The video exceeds the :max KB limit.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->galat = __('site.msg.hero.ada_isian_salah');
@@ -119,7 +114,7 @@ class HeroSunting extends KomponenAdmin
             if (\App\Models\HeroSlide::urlTombolAman($nilai) === null) {
                 $this->addError(
                     'form.'.$kunci,
-                    'Tulis alamat https://… atau jalur di dalam situs seperti /produk.',
+                    'Enter an https://… address or an in-site path such as /products.',
                 );
                 $this->galat = __('site.msg.hero.ada_isian_salah');
 
@@ -144,16 +139,16 @@ class HeroSunting extends KomponenAdmin
             }
 
             $this->slide->fill([
-                'title_id' => $this->form['title_id'],
-                'title_en' => $this->form['title_en'],
-                'subtitle_id' => $this->form['subtitle_id'] ?: null,
-                'subtitle_en' => $this->form['subtitle_en'] ?: null,
+                'title_id' => $this->form['title_en'] ?: $this->form['title_id'],
+                'title_en' => $this->form['title_en'] ?: $this->form['title_id'],
+                'subtitle_id' => $this->form['subtitle_en'] ?: ($this->form['subtitle_id'] ?: null),
+                'subtitle_en' => $this->form['subtitle_en'] ?: ($this->form['subtitle_id'] ?: null),
                 'media_type' => $this->form['media_type'],
-                'primary_button_label_id' => $this->form['primary_button_label_id'] ?: null,
-                'primary_button_label_en' => $this->form['primary_button_label_en'] ?: null,
+                'primary_button_label_id' => $this->form['primary_button_label_en'] ?: ($this->form['primary_button_label_id'] ?: null),
+                'primary_button_label_en' => $this->form['primary_button_label_en'] ?: ($this->form['primary_button_label_id'] ?: null),
                 'primary_button_url' => trim((string) $this->form['primary_button_url']) ?: null,
-                'secondary_button_label_id' => $this->form['secondary_button_label_id'] ?: null,
-                'secondary_button_label_en' => $this->form['secondary_button_label_en'] ?: null,
+                'secondary_button_label_id' => $this->form['secondary_button_label_en'] ?: ($this->form['secondary_button_label_id'] ?: null),
+                'secondary_button_label_en' => $this->form['secondary_button_label_en'] ?: ($this->form['secondary_button_label_id'] ?: null),
                 'secondary_button_url' => trim((string) $this->form['secondary_button_url']) ?: null,
                 'focal_point_x' => (float) $this->form['focal_point_x'],
                 'focal_point_y' => (float) $this->form['focal_point_y'],
@@ -187,7 +182,7 @@ class HeroSunting extends KomponenAdmin
         $this->slide->refresh();
         $this->isiForm();
 
-        $this->pesanSukses = 'Slide "'.$this->slide->title_id.'" tersimpan.';
+        $this->pesanSukses = 'Slide "'.$this->slide->title_en.'" saved.';
     }
 
     /**
@@ -250,16 +245,16 @@ class HeroSunting extends KomponenAdmin
     private function isiForm(): void
     {
         $this->form = [
-            'title_id' => $this->slide->title_id ?? '',
-            'title_en' => $this->slide->title_en ?? '',
-            'subtitle_id' => $this->slide->subtitle_id ?? '',
-            'subtitle_en' => $this->slide->subtitle_en ?? '',
+            'title_id' => '',
+            'title_en' => $this->slide->title_en ?: ($this->slide->title_id ?? ''),
+            'subtitle_id' => '',
+            'subtitle_en' => $this->slide->subtitle_en ?: ($this->slide->subtitle_id ?? ''),
             'media_type' => $this->slide->media_type,
-            'primary_button_label_id' => $this->slide->primary_button_label_id ?? '',
-            'primary_button_label_en' => $this->slide->primary_button_label_en ?? '',
+            'primary_button_label_id' => '',
+            'primary_button_label_en' => $this->slide->primary_button_label_en ?: ($this->slide->primary_button_label_id ?? ''),
             'primary_button_url' => $this->slide->primary_button_url ?? '',
-            'secondary_button_label_id' => $this->slide->secondary_button_label_id ?? '',
-            'secondary_button_label_en' => $this->slide->secondary_button_label_en ?? '',
+            'secondary_button_label_id' => '',
+            'secondary_button_label_en' => $this->slide->secondary_button_label_en ?: ($this->slide->secondary_button_label_id ?? ''),
             'secondary_button_url' => $this->slide->secondary_button_url ?? '',
             'focal_point_x' => (float) $this->slide->focal_point_x,
             'focal_point_y' => (float) $this->slide->focal_point_y,
@@ -277,9 +272,9 @@ class HeroSunting extends KomponenAdmin
     public function render(): View
     {
         return view('livewire.admin.hero-sunting', [
-            'judul' => 'Sunting Slide',
+            'judul' => 'Edit Slide',
             'videoMaksKb' => (int) config('iksan.hero.video_max_kb'),
             'videoMaksDetik' => (int) config('iksan.hero.video_max_detik'),
-        ])->layout('layouts.admin', ['judul' => 'Sunting Slide', 'bagian' => 'Situs']);
+        ])->layout('layouts.admin', ['judul' => 'Edit Slide', 'bagian' => 'Site']);
     }
 }

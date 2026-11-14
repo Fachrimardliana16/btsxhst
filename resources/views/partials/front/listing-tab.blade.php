@@ -16,6 +16,9 @@
     $kategoriTab = $kategori ?? collect();
 @endphp
 
+{{-- Tanpa produk unggulan tidak ada yang bisa dipamerkan: section hilang
+     seluruhnya, bukan menampilkan kotak "kosong" yang mengundang pertanyaan. --}}
+@if ($unggulan->isNotEmpty())
 <section class="listing-blok relative py-16 lg:py-24 bg-surface" id="listing">
     <div class="container-page">
 
@@ -54,26 +57,20 @@
         @endif
 
         {{-- Grid kartu produk --}}
-        @if ($unggulan->isEmpty())
-            <div class="plate mt-8 p-8 text-center">
-                <p class="font-semibold">{{ __('site.product.empty') }}</p>
-                <p class="mt-1 text-sm text-muted">{{ __('site.product.empty_hint') }}</p>
-            </div>
-        @else
-            <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-                @foreach ($unggulan->take(6) as $produk)
-                    <div data-reveal style="transition-delay: {{ $loop->index * 55 }}ms">
-                        <x-kartu-produk :produk="$produk" />
-                    </div>
-                @endforeach
-            </div>
+        <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+            @foreach ($unggulan->take(6) as $produk)
+                <div data-reveal style="transition-delay: {{ $loop->index * 55 }}ms">
+                    <x-kartu-produk :produk="$produk" />
+                </div>
+            @endforeach
+        </div>
 
-            <div class="mt-8 flex justify-center">
-                <a href="{{ route('front.products.index') }}" class="btn btn-primary">
-                    {{ __('site.home.view_all_products') }}
-                    <x-ikon name="arrow-right" :size="16" />
-                </a>
-            </div>
-        @endif
+        <div class="mt-8 flex justify-center">
+            <a href="{{ route('front.products.index') }}" class="btn btn-primary">
+                {{ __('site.home.view_all_products') }}
+                <x-ikon name="arrow-right" :size="16" />
+            </a>
+        </div>
     </div>
 </section>
+@endif

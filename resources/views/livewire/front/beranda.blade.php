@@ -1,6 +1,8 @@
 @php
     /** @var \App\Support\Pengaturan $toko */
     $slides = $slides ?? collect();
+    $ctaJudul = $toko->teks('cta_judul');
+    $ctaIsi = $toko->teks('cta_isi');
 @endphp
 
 <div class="beranda-home">
@@ -47,6 +49,7 @@
          atasnya berlatar putih penuh dan berakhir tepat di sini; tanpa jeda,
          bidang kuning CTA menempel ke putih itu dan keduanya terbaca sebagai
          satu blok panjang, bukan sebagai panel yang disorot. --}}
+    @if ($ctaJudul !== '' || $ctaIsi !== '')
     <section class="container-page pb-14 pt-10 lg:pb-20 lg:pt-16">
         {{-- Bayangan TIDAK ditulis dengan utility Tailwind di sini: `shadow-xl`
              dan `shadow-black/[0.02]` akan menimpa box-shadow kuning dari
@@ -57,12 +60,16 @@
             <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                 <div class="max-w-xl">
                     <span class="part-no">06 / {{ __('site.home.cta_part') }}</span>
-                    <h2 class="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                        {{ __('site.home.cta_title') }}
-                    </h2>
-                    <p class="mt-3 text-sm leading-relaxed text-muted lg:text-base">
-                        {{ __('site.home.cta_body') }}
-                    </p>
+                    @if ($ctaJudul !== '')
+                        <h2 class="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+                            {{ $ctaJudul }}
+                        </h2>
+                    @endif
+                    @if ($ctaIsi !== '')
+                        <p class="mt-3 text-sm leading-relaxed text-muted lg:text-base">
+                            {{ $ctaIsi }}
+                        </p>
+                    @endif
                 </div>
 
                 <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center lg:flex-col lg:items-end">
@@ -82,6 +89,7 @@
             </div>
         </div>
     </section>
+    @endif
 
     {{-- 07 / FAQ, tepat di bawah CTA. --}}
     @include('partials.front.faq-beranda', ['faq' => $faq])

@@ -54,7 +54,7 @@ class KlienPaypal
         if ($kurang !== []) {
             return [
                 'ok' => false,
-                'pesan' => 'Kredensial belum lengkap: '.implode(' dan ', $kurang).' belum diisi.',
+                'pesan' => 'Credentials incomplete: '.implode(' and ', $kurang).' not set.',
                 'detail' => [],
             ];
         }
@@ -74,7 +74,7 @@ class KlienPaypal
             if ($respons->status() === 401) {
                 return [
                     'ok' => false,
-                    'pesan' => 'PayPal menolak kredensial ini (401). Periksa Client ID dan Client Secret untuk mode '.$this->mode().'.',
+                    'pesan' => 'PayPal rejected these credentials (401). Check the Client ID and Client Secret for '.$this->mode().' mode.',
                     'detail' => ['status' => 401, 'ms' => $ms, 'mode' => $this->mode()],
                 ];
             }
@@ -82,7 +82,7 @@ class KlienPaypal
             if (! $respons->successful()) {
                 return [
                     'ok' => false,
-                    'pesan' => 'PayPal membalas dengan status '.$respons->status().'. Kredensial belum dapat diverifikasi.',
+                    'pesan' => 'PayPal responded with status '.$respons->status().'. Credentials could not be verified.',
                     'detail' => ['status' => $respons->status(), 'ms' => $ms, 'mode' => $this->mode()],
                 ];
             }
@@ -92,7 +92,7 @@ class KlienPaypal
             if ($token === '') {
                 return [
                     'ok' => false,
-                    'pesan' => 'PayPal membalas 200 tanpa access_token. Kredensial belum dapat dipastikan sah.',
+                    'pesan' => 'PayPal responded 200 without an access_token. Credentials cannot be confirmed valid.',
                     'detail' => ['status' => 200, 'ms' => $ms, 'mode' => $this->mode()],
                 ];
             }
@@ -101,7 +101,7 @@ class KlienPaypal
             // keberadaannya dan sisa masa berlakunya.
             return [
                 'ok' => true,
-                'pesan' => 'Koneksi berhasil. Mode '.$this->mode().' menerima kredensial tersimpan.',
+                'pesan' => 'Connection succeeded. '.$this->mode().' mode accepted the stored credentials.',
                 'detail' => [
                     'status' => 200,
                     'ms' => $ms,
@@ -113,7 +113,7 @@ class KlienPaypal
         } catch (Throwable $e) {
             return [
                 'ok' => false,
-                'pesan' => 'Tidak dapat menghubungi PayPal: '.$this->pesanAman($e->getMessage()),
+                'pesan' => 'Cannot reach PayPal: '.$this->pesanAman($e->getMessage()),
                 'detail' => ['mode' => $this->mode()],
             ];
         }

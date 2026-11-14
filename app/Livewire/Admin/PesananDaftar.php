@@ -102,7 +102,7 @@ class PesananDaftar extends KomponenAdmin
 
         try {
             $layanan->pindah($order, StatusPesanan::Paid, auth()->user(), __('site.msg.pesanan.lunas_dari_daftar'));
-            session()->flash('pesan-admin', 'Pesanan '.$order->order_number.' ditandai lunas.');
+            session()->flash('pesan-admin', 'Order '.$order->order_number.' marked as paid.');
         } catch (RuntimeException $e) {
             session()->flash('galat-admin', $e->getMessage());
         }
@@ -177,12 +177,12 @@ class PesananDaftar extends KomponenAdmin
         }
 
         return view('livewire.admin.pesanan-daftar', [
-            'judul' => 'Pesanan',
-            'bagian' => 'Penjualan',
+            'judul' => 'Orders',
+            'bagian' => 'Sales',
             'pesanan' => $halaman,
             'ringkas' => $this->ringkasan(),
             'cocokNama' => $cocokNama->count(),
-        ])->layout('layouts.admin', ['judul' => 'Pesanan', 'bagian' => 'Penjualan']);
+        ])->layout('layouts.admin', ['judul' => 'Orders', 'bagian' => 'Sales']);
     }
 
     /**
@@ -226,7 +226,7 @@ class PesananDaftar extends KomponenAdmin
     /** Nama pembeli, baik dari akun maupun dari checkout tamu. */
     public function pembeli(Order $order): string
     {
-        return $order->namaPenerima() ?: ($order->user?->name ?? 'Pembeli');
+        return $order->namaPenerima() ?: ($order->user?->name ?? 'Customer');
     }
 
     public function kontak(Order $order): ?string

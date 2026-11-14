@@ -10,7 +10,7 @@
     <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
             <p class="part-no">{{ __('site.admin.pengguna_peran.eyebrow') }}</p>
-            <h1 class="mt-1 font-display text-2xl font-semibold">Pengguna &amp; {{ __('site.admin.pengguna_peran.peran') }}</h1>
+            <h1 class="mt-1 font-display text-2xl font-semibold">Users &amp; {{ __('site.admin.pengguna_peran.peran') }}</h1>
             <p class="mt-1 text-sm text-muted">
                 {{ __('site.admin.pengguna_peran.keterangan') }}
             </p>
@@ -34,9 +34,9 @@
     <div class="grid grid-cols-3 gap-3">
         @php
             $kartu = [
-                ['label' => 'Super Admin', 'nilai' => $hitungan[\App\Enums\{{ __('site.admin.pengguna_peran.peran') }}Pengguna::SuperAdmin->value], 'catatan' => 'Kelola akun & kredensial', 'ikon' => 'shield'],
-                ['label' => 'Admin', 'nilai' => $hitungan[\App\Enums\{{ __('site.admin.pengguna_peran.peran') }}Pengguna::Admin->value], 'catatan' => 'Kelola katalog & pesanan', 'ikon' => 'users'],
-                ['label' => 'Pelanggan', 'nilai' => $hitungan[\App\Enums\{{ __('site.admin.pengguna_peran.peran') }}Pengguna::Customer->value], 'catatan' => 'Tidak bisa masuk panel', 'ikon' => 'shopee'],
+                ['label' => 'Super Admin', 'nilai' => $hitungan[\App\Enums\PeranPengguna::SuperAdmin->value], 'catatan' => 'Manage accounts & credentials', 'ikon' => 'shield'],
+                ['label' => 'Admin', 'nilai' => $hitungan[\App\Enums\PeranPengguna::Admin->value], 'catatan' => 'Manage catalog & orders', 'ikon' => 'users'],
+                ['label' => 'Customer', 'nilai' => $hitungan[\App\Enums\PeranPengguna::Customer->value], 'catatan' => 'Cannot access the panel', 'ikon' => 'shopee'],
             ];
         @endphp
 
@@ -123,7 +123,7 @@
 
                             <td class="p-3">
                                 <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[length:var(--t-xs)]
-                                             {{ $u->role === \App\Enums\{{ __('site.admin.pengguna_peran.peran') }}Pengguna::SuperAdmin ? 'bg-brass/12 text-brass' : 'bg-sunken text-muted' }}">
+                                             {{ $u->role === \App\Enums\PeranPengguna::SuperAdmin ? 'bg-brass/12 text-brass' : 'bg-sunken text-muted' }}">
                                     <x-ikon name="shield" :size="12" />
                                     {{ $u->role->label() }}
                                 </span>
@@ -148,10 +148,11 @@
                                     </button>
 
                                     <button type="button" wire:click="ubahBlokir({{ $u->id }})"
+                                            wire:confirm="{{ $u->is_blocked ? 'Unblock' : 'Block' }} {{ $u->name }}?"
                                             class="btn-icon btn-icon-sm hover:text-danger"
-                                            title="{{ $u->is_blocked ? 'Buka blokir' : 'Blokir' }}">
+                                            title="{{ $u->is_blocked ? 'Unblock' : 'Block' }}">
                                         <x-ikon :name="$u->is_blocked ? 'refresh' : 'lock'" :size="15" />
-                                        <span class="visually-hidden">{{ $u->is_blocked ? 'Buka blokir' : 'Blokir' }} {{ $u->name }}</span>
+                                        <span class="visually-hidden">{{ $u->is_blocked ? 'Unblock' : 'Block' }} {{ $u->name }}</span>
                                     </button>
                                 </div>
                             </td>
@@ -177,20 +178,20 @@
         <div class="plate space-y-3 p-4" wire:key="rincian-{{ $dipilihDetail->id }}">
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <p class="part-no">{{ __('site.admin.pengguna_peran.rincian') }} akun</p>
+                    <p class="part-no">{{ __('site.admin.pengguna_peran.rincian') }} — account</p>
                     <h2 class="mt-1 font-display text-lg font-semibold">{{ $dipilihDetail->name }}</h2>
                     <p class="tech text-xs text-dim">{{ $dipilihDetail->email }}</p>
                 </div>
 
                 <button type="button" wire:click="tutup" class="btn-icon btn-icon-sm" title="{{ __('site.admin.pengguna_peran.tutup') }}">
                     <x-ikon name="close" :size="16" />
-                    <span class="visually-hidden">{{ __('site.admin.pengguna_peran.tutup') }} rincian</span>
+                    <span class="visually-hidden">{{ __('site.admin.pengguna_peran.tutup') }} details</span>
                 </button>
             </div>
 
             <dl class="grid gap-3 text-sm sm:grid-cols-3">
                 <div>
-                    <dt class="part-no">{{ __('site.admin.pengguna_peran.peran') }} sekarang</dt>
+                    <dt class="part-no">{{ __('site.admin.pengguna_peran.peran') }} — current</dt>
                     <dd class="mt-1">{{ $dipilihDetail->role->label() }}</dd>
                 </div>
                 <div>
@@ -214,12 +215,13 @@
                     <p class="part-no">{{ __('site.admin.pengguna_peran.ubah_peran') }}</p>
 
                     <div class="mt-2 flex flex-wrap gap-2">
-                        @foreach ([\App\Enums\{{ __('site.admin.pengguna_peran.peran') }}Pengguna::Admin, \App\Enums\{{ __('site.admin.pengguna_peran.peran') }}Pengguna::SuperAdmin] as $peran)
+                        @foreach ([\App\Enums\PeranPengguna::Admin, \App\Enums\PeranPengguna::SuperAdmin] as $peran)
                             <button type="button"
-                                    wire:click="ubah{{ __('site.admin.pengguna_peran.peran') }}({{ $dipilihDetail->id }}, '{{ $peran->value }}')"
+                                    wire:click="ubahPeran({{ $dipilihDetail->id }}, '{{ $peran->value }}')"
+                                    wire:confirm="Change {{ $dipilihDetail->name }}’s role to {{ $peran->label() }}?"
                                     @disabled(auth()->id() === $dipilihDetail->id || $dipilihDetail->role === $peran)
                                     class="btn btn-outline btn-sm disabled:opacity-40">
-                                Jadikan {{ $peran->label() }}
+                                Make {{ $peran->label() }}
                             </button>
                         @endforeach
                     </div>

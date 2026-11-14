@@ -12,14 +12,14 @@
             <div class="mt-2 flex flex-wrap items-center gap-2">
                 <h1 class="font-display text-2xl font-semibold">{{ $order->order_number }}</h1>
                 <span class="badge badge-{{ $order->status->nada() }}">{{ $order->status->label() }}</span>
-                <span class="badge {{ $order->payment_status === \App\Enums\Status{{ __('site.admin.pesanan_detail.pembayaran') }}::Paid ? 'badge-ok' : 'badge-warn' }}">
+                <span class="badge {{ $order->payment_status === \App\Enums\StatusPembayaran::Paid ? 'badge-ok' : 'badge-warn' }}">
                     {{ $order->payment_status->label() }}
                 </span>
             </div>
 
             <p class="mt-1 text-sm text-muted">
-                Dibuat {{ $order->created_at->format('d M Y H:i') }}
-                @if ($order->paid_at) · dibayar {{ $order->paid_at->format('d M Y H:i') }} @endif
+                Created {{ $order->created_at->format('d M Y H:i') }}
+                @if ($order->paid_at) · paid {{ $order->paid_at->format('d M Y H:i') }} @endif
             </p>
         </div>
 
@@ -42,9 +42,9 @@
                  mengaku belum menerima apa pun. --}}
             <div class="flex items-center gap-2">
                 <select wire:model="kejadianKirimUlang" class="field py-1.5 text-sm" aria-label="{{ __('site.admin.pesanan_detail.jenis_notifikasi') }}">
-                    <option value="dibuat">{{ __('site.admin.pesanan_detail.judul') }} diterima</option>
-                    <option value="dibayar">{{ __('site.admin.pesanan_detail.pembayaran') }} diterima</option>
-                    <option value="dikirim">{{ __('site.admin.pesanan_detail.judul') }} dikirim</option>
+                    <option value="dibuat">Order received</option>
+                    <option value="dibayar">Payment received</option>
+                    <option value="dikirim">Order shipped</option>
                 </select>
                 <button type="button" class="btn btn-outline"
                         wire:click="kirimUlangNotifikasi"
@@ -90,17 +90,17 @@
                                 @php $varian = $item->variant; @endphp
                                 @if ($varian)
                                     <p class="mt-1 text-xs {{ $varian->stokTersedia() < $item->quantity ? 'text-danger' : 'text-muted' }}">
-                                        Stok tersedia sekarang: {{ $varian->stokTersedia() }}
+                                        Stock available now: {{ $varian->stokTersedia() }}
                                         @if ($varian->stokTersedia() < $item->quantity)
-                                            — kurang dari jumlah dipesan
+                                            — less than the quantity ordered
                                         @endif
                                     </p>
                                 @endif
                             </div>
 
                             <div class="flex-none text-right">
-                                <p class="tech text-sm">{{ $item->quantity }} × {{ rupiah($item->unit_price) }}</p>
-                                <p class="tech mt-0.5 font-medium">{{ rupiah($item->subtotal) }}</p>
+                                <p class="tech text-sm">{{ $item->quantity }} × {{ dolar($item->unit_price) }}</p>
+                                <p class="tech mt-0.5 font-medium">{{ dolar($item->subtotal) }}</p>
                             </div>
                         </li>
                     @endforeach
@@ -109,34 +109,34 @@
                 <dl class="space-y-1.5 border-t border-line-soft p-4 text-sm">
                     <div class="flex justify-between">
                         <dt class="text-muted">{{ __('site.admin.pesanan_detail.subtotal') }}</dt>
-                        <dd class="tech">{{ rupiah($order->subtotal) }}</dd>
+                        <dd class="tech">{{ dolar($order->subtotal) }}</dd>
                     </div>
 
                     @if ((float) $order->discount_amount > 0)
                         <div class="flex justify-between">
                             <dt class="text-muted">
-                                Diskon
+                                Discount
                                 @if ($order->coupon) <span class="tech text-xs">({{ $order->coupon->code }})</span> @endif
                             </dt>
-                            <dd class="tech text-ok">−{{ rupiah($order->discount_amount) }}</dd>
+                            <dd class="tech text-ok">−{{ dolar($order->discount_amount) }}</dd>
                         </div>
                     @endif
 
                     <div class="flex justify-between">
                         <dt class="text-muted">{{ __('site.admin.pesanan_detail.ongkos_kirim') }}</dt>
-                        <dd class="tech">{{ rupiah($order->shipping_cost) }}</dd>
+                        <dd class="tech">{{ dolar($order->shipping_cost) }}</dd>
                     </div>
 
                     @if ((float) $order->tax_amount > 0)
                         <div class="flex justify-between">
                             <dt class="text-muted">{{ __('site.admin.pesanan_detail.pajak') }}</dt>
-                            <dd class="tech">{{ rupiah($order->tax_amount) }}</dd>
+                            <dd class="tech">{{ dolar($order->tax_amount) }}</dd>
                         </div>
                     @endif
 
                     <div class="flex justify-between border-t border-line-soft pt-2 text-base">
                         <dt class="font-semibold">{{ __('site.admin.pesanan_detail.total') }}</dt>
-                        <dd class="tech font-semibold">{{ rupiah($order->grand_total) }}</dd>
+                        <dd class="tech font-semibold">{{ dolar($order->grand_total) }}</dd>
                     </div>
                 </dl>
             </div>
@@ -147,7 +147,7 @@
 
                 @if ($tujuanSah === [])
                     <p class="mt-3 text-sm text-muted">
-                        {{ __('site.admin.pesanan_detail.judul') }} ini sudah pada status akhir. Tidak ada perpindahan yang tersedia.
+                        {{ __('site.admin.pesanan_detail.judul') }} is already in a final state. No transitions available.
                     </p>
                 @else
                     <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -176,8 +176,8 @@
                     </button>
 
                     <p class="mt-2 text-xs text-dim">
-                        Menandai selesai mengurangi stok fisik. Membatalkan melepas stok yang
-                        tertahan dan mengembalikannya ke penjualan.
+                        Marking an order completed reduces physical stock. Cancelling it releases
+                        reserved stock back to sale.
                     </p>
                 @endif
             </div>
@@ -248,11 +248,11 @@
                     </label>
 
                     <button type="button" class="btn btn-outline w-full"
-                            wire:click="simpan{{ __('site.admin.pesanan_detail.pengiriman') }}"
-                            wire:loading.attr="disabled" wire:target="simpan{{ __('site.admin.pesanan_detail.pengiriman') }}">
+                            wire:click="simpanPengiriman"
+                            wire:loading.attr="disabled" wire:target="simpanPengiriman">
                         <x-ikon name="check" :size="16" />
-                        <span wire:loading.remove wire:target="simpan{{ __('site.admin.pesanan_detail.pengiriman') }}">{{ __('site.admin.pesanan_detail.simpan_pengiriman') }}</span>
-                        <span wire:loading wire:target="simpan{{ __('site.admin.pesanan_detail.pengiriman') }}">{{ __('site.admin.pesanan_detail.menyimpan') }}</span>
+                        <span wire:loading.remove wire:target="simpanPengiriman">{{ __('site.admin.pesanan_detail.simpan_pengiriman') }}</span>
+                        <span wire:loading wire:target="simpanPengiriman">{{ __('site.admin.pesanan_detail.menyimpan') }}</span>
                     </button>
                 </div>
             </div>
@@ -306,7 +306,7 @@
 
                 @forelse ($order->payments as $bayar)
                     <div class="mt-2 border-t border-line-soft pt-2 text-xs">
-                        <p class="tech">{{ rupiah($bayar->amount) }}</p>
+                        <p class="tech">{{ dolar($bayar->amount) }}</p>
                         {{-- Tabel payments tidak punya kolom status sendiri;
                              yang ada provider_status dari PayPal dan verified_at
                              yang diisi admin saat memverifikasi transfer. --}}
@@ -314,9 +314,9 @@
                             {{ $bayar->provider }}
                             @if ($bayar->provider_status) · {{ $bayar->provider_status }} @endif
                             @if ($bayar->verified_at)
-                                · diverifikasi {{ $bayar->verified_at->format('d M Y') }}
+                                · verified {{ $bayar->verified_at->format('d M Y') }}
                             @else
-                                · belum diverifikasi
+                                · not verified
                             @endif
                         </p>
                         @if ($bayar->provider_transaction_id)
@@ -327,7 +327,7 @@
                              bertanda tangan 15 menit. Berkasnya di disk privat
                              karena memuat nama pengirim dan nomor rekening. --}}
                         @if ($bayar->proof_path)
-                            <a href="{{ app(\App\Services\{{ __('site.admin.pesanan_detail.pembayaran') }}\{{ __('site.admin.pesanan_detail.pembayaran') }}Manual::class)->urlBukti($bayar) }}"
+                            <a href="{{ app(\App\Services\Pembayaran\PembayaranManual::class)->urlBukti($bayar) }}"
                                target="_blank" rel="noopener"
                                class="mt-1 inline-flex items-center gap-1 text-accent hover:underline">
                                 <x-ikon name="eye" :size="12" />
@@ -345,26 +345,26 @@
                         {{-- provider ber-cast ke enum Metode{{ __('site.admin.pesanan_detail.pembayaran') }}, sehingga
                              perbandingan dengan string selalu salah dan tombol
                              verifikasi tidak pernah muncul. --}}
-                        @if ($bayar->provider === \App\Enums\Metode{{ __('site.admin.pesanan_detail.pembayaran') }}::Manual && ! $bayar->terverifikasi() && $bayar->provider_status !== 'ditolak')
+                        @if ($bayar->provider === \App\Enums\MetodePembayaran::Manual && ! $bayar->terverifikasi() && $bayar->provider_status !== 'ditolak')
                             <div class="mt-2 flex flex-wrap items-center gap-2">
-                                <button type="button" wire:click="verifikasi{{ __('site.admin.pesanan_detail.pembayaran') }}({{ $bayar->id }})"
-                                        wire:confirm="Verifikasi pembayaran ini dan tandai pesanan lunas?"
+                                <button type="button" wire:click="verifikasiPembayaran({{ $bayar->id }})"
+                                        wire:confirm="Verify this payment and mark the order as paid?"
                                         class="btn btn-primary btn-sm">
                                     <x-ikon name="check" :size="13" />
                                     {{ __('site.admin.pesanan_detail.verifikasi_lunas') }}
                                 </button>
 
-                                <button type="button" wire:click="tolak{{ __('site.admin.pesanan_detail.pembayaran') }}({{ $bayar->id }})"
+                                <button type="button" wire:click="tolakPembayaran({{ $bayar->id }})"
                                         class="btn btn-outline btn-sm">
                                     {{ __('site.admin.pesanan_detail.tolak') }}
                                 </button>
                             </div>
 
                             <div class="mt-2">
-                                <input type="text" wire:model="alasan{{ __('site.admin.pesanan_detail.tolak') }}" class="field py-1.5 text-[length:var(--t-xs)]"
+                                <input type="text" wire:model="alasanTolak" class="field py-1.5 text-[length:var(--t-xs)]"
                                        placeholder="{{ __('site.admin.pesanan_detail.alasan_penolakan') }}"
                                        aria-label="{{ __('site.admin.pesanan_detail.alasan_penolakan_bukti') }}">
-                                @error('alasan{{ __('site.admin.pesanan_detail.tolak') }}') <p class="field-error">{{ $message }}</p> @enderror
+                                @error('alasanTolak') <p class="field-error">{{ $message }}</p> @enderror
                             </div>
                         @endif
                     </div>

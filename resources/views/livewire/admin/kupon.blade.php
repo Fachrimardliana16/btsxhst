@@ -11,15 +11,15 @@
             <p class="part-no">{{ __('site.admin.kupon.eyebrow') }}</p>
             <h1 class="mt-1 font-display text-2xl font-semibold">{{ __('site.admin.kupon.judul') }}</h1>
             <p class="mt-1 text-sm text-muted">
-                {{ number_format($jumlah['semua'], 0, ',', '.') }} kupon ·
-                {{ number_format($jumlah[__('site.admin.kupon.berjalan')], 0, ',', '.') }} sedang berlaku
+                {{ number_format($jumlah['semua']) }} coupons ·
+                {{ number_format($jumlah['berjalan']) }} active
                 @if ($jumlah['habis'] > 0) · <span class="text-warn">{{ $jumlah['habis'] }} {{ __('site.admin.kupon.kuota_habis') }}</span> @endif
             </p>
         </div>
 
         <button type="button" wire:click="bukaForm" class="btn btn-primary">
             <x-ikon name="plus" :size="16" />
-            {{ __('site.admin.kupon.judul') }} baru
+            {{ __('site.admin.kupon.baru') }}
         </button>
     </div>
 
@@ -38,7 +38,7 @@
                    placeholder="{{ __('site.admin.kupon.cari_placeholder') }}" aria-label="{{ __('site.admin.kupon.cari') }}">
         </div>
 
-        @foreach (['semua' => 'Semua', __('site.admin.kupon.berjalan') => 'Berjalan', 'habis' => 'Kuota habis', __('site.admin.kupon.kedaluwarsa') => 'Kedaluwarsa'] as $nilai => $label)
+        @foreach (['semua' => 'All', 'aktif' => 'Active', 'berjalan' => 'Running', 'habis' => 'Quota used up', 'kedaluwarsa' => 'Expired'] as $nilai => $label)
             <button type="button" wire:click="aturKeadaan('{{ $nilai }}')"
                     class="btn {{ $keadaan === $nilai ? 'btn-primary' : 'btn-outline' }} btn-sm">{{ $label }}</button>
         @endforeach
@@ -72,47 +72,47 @@
                                 @php
                                     $kadaluarsa = $k->ends_at !== null && $k->ends_at->isPast();
                                     $habis = $k->quota !== null && $k->used_count >= $k->quota;
-                                    $belum{{ __('site.admin.kupon.mulai') }} = $k->starts_at !== null && $k->starts_at->isFuture();
+                                    $belumMulai = $k->starts_at !== null && $k->starts_at->isFuture();
                                 @endphp
 
                                 <tr class="border-b border-line-soft last:border-0 hover:bg-sunken">
                                     <td class="p-3">
                                         <code class="tech font-medium">{{ $k->code }}</code>
                                         @if ($k->type->value === 'free_shipping')
-                                            <span class="ml-1 rounded-full bg-brass/12 px-1.5 py-0.5 text-xs text-brass">ongkir</span>
+                                            <span class="ml-1 rounded-full bg-brass/12 px-1.5 py-0.5 text-xs text-brass">shipping</span>
                                         @endif
                                     </td>
 
                                     <td class="p-3">
                                         @if ($k->type->value === 'percent')
-                                            <span class="tech">{{ rtrim(rtrim(number_format((float) $k->value, 2, ',', '.'), '0'), ',') }}%</span>
+                                            <span class="tech">{{ rtrim(rtrim(number_format((float) $k->value, 2, '.', ''), '0'), '.') }}%</span>
                                             @if ($k->max_discount)
-                                                <span class="block text-xs text-dim">maks {{ rupiah($k->max_discount) }}</span>
+                                                <span class="block text-xs text-dim">cap {{ dolar(\App\Support\HargaDolar::dariRupiah($k->max_discount)) }}</span>
                                             @endif
                                         @elseif ($k->type->value === 'fixed')
-                                            <span class="tech">{{ rupiah($k->value) }}</span>
+                                            <span class="tech">{{ dolar(\App\Support\HargaDolar::dariRupiah($k->value)) }}</span>
                                         @else
                                             <span class="text-muted">{{ __('site.admin.kupon.gratis_ongkir') }}</span>
                                         @endif
                                     </td>
 
                                     <td class="tech p-3 text-right">
-                                        {{ $k->min_spend ? rupiah($k->min_spend) : '—' }}
+                                        {{ $k->min_spend ? dolar(\App\Support\HargaDolar::dariRupiah($k->min_spend)) : '—' }}
                                     </td>
 
                                     <td class="p-3 text-right">
                                         <span class="tech {{ $habis ? 'text-warn' : '' }}">{{ $k->used_count }}</span>
                                         <span class="text-xs text-dim">/ {{ $k->quota ?? '∞' }}</span>
                                         @if ($k->orders_count > 0)
-                                            <span class="block text-xs text-dim">{{ $k->orders_count }} pesanan</span>
+                                            <span class="block text-xs text-dim">{{ $k->orders_count }} orders</span>
                                         @endif
                                     </td>
 
                                     <td class="p-3 text-xs text-muted">
                                         @if ($k->starts_at || $k->ends_at)
-                                            {{ $k->starts_at?->format('d/m/y') ?? '—' }}
-                                            <span class="text-dim">sampai</span>
-                                            {{ $k->ends_at?->format('d/m/y') ?? '—' }}
+                                            {{ $k->starts_at?->format('M j, Y') ?? '—' }}
+                                            <span class="text-dim">to</span>
+                                            {{ $k->ends_at?->format('M j, Y') ?? '—' }}
                                         @else
                                             <span class="text-dim">{{ __('site.admin.kupon.tanpa_batas') }}</span>
                                         @endif
@@ -132,7 +132,7 @@
                                             <span class="rounded-full bg-danger/12 px-2 py-0.5 text-xs text-danger">{{ __('site.admin.kupon.kedaluwarsa') }}</span>
                                         @elseif ($habis)
                                             <span class="rounded-full bg-warn/12 px-2 py-0.5 text-xs text-warn">{{ __('site.admin.kupon.kuota_habis') }}</span>
-                                        @elseif ($belum{{ __('site.admin.kupon.mulai') }})
+                                        @elseif ($belumMulai)
                                             <span class="rounded-full bg-sunken px-2 py-0.5 text-xs text-muted">{{ __('site.admin.kupon.belum_mulai') }}</span>
                                         @elseif ($k->is_active)
                                             <span class="rounded-full bg-ok/12 px-2 py-0.5 text-xs text-ok">{{ __('site.admin.kupon.berjalan') }}</span>
@@ -143,10 +143,11 @@
 
                                     <td class="p-3">
                                         <div class="flex items-center justify-end gap-1">
-                                            <button type="button" wire:click="ubah{{ __('site.admin.kupon.aktif') }}({{ $k->id }})"
-                                                    class="btn-icon btn-icon-sm" title="{{ $k->is_active ? 'Nonaktifkan' : __('site.admin.kupon.aktif') . 'kan' }}">
+                                            <button type="button" wire:click="ubahAktif({{ $k->id }})"
+                                                    wire:confirm="{{ $k->is_active ? 'Deactivate' : 'Activate' }} coupon {{ $k->code }}?"
+                                                    class="btn-icon btn-icon-sm" title="{{ $k->is_active ? 'Deactivate' : 'Activate' }}">
                                                 <x-ikon name="{{ $k->is_active ? 'check' : 'close' }}" :size="15" />
-                                                <span class="visually-hidden">{{ $k->is_active ? 'Nonaktifkan' : __('site.admin.kupon.aktif') . 'kan' }}</span>
+                                                <span class="visually-hidden">{{ $k->is_active ? 'Deactivate' : 'Activate' }}</span>
                                             </button>
                                             <button type="button" wire:click="sunting({{ $k->id }})"
                                                     class="btn-icon btn-icon-sm" title="{{ __('site.admin.kupon.sunting') }}">
@@ -154,7 +155,7 @@
                                                 <span class="visually-hidden">{{ __('site.admin.kupon.sunting') }}</span>
                                             </button>
                                             <button type="button" wire:click="hapus({{ $k->id }})"
-                                                    wire:confirm="{{ __('site.admin.kupon.hapus') }} kupon {{ $k->code }}?"
+                                                    wire:confirm="{{ __('site.admin.kupon.hapus') }} coupon {{ $k->code }}?"
                                                     class="btn-icon btn-icon-sm hover:text-danger" title="{{ __('site.admin.kupon.hapus') }}">
                                                 <x-ikon name="trash" :size="15" />
                                                 <span class="visually-hidden">{{ __('site.admin.kupon.hapus') }}</span>
@@ -177,9 +178,9 @@
             <div class="plate h-fit p-4 lg:sticky lg:top-20">
                 <div class="flex items-start justify-between gap-2">
                     <div>
-                        <p class="part-no">{{ $suntingId ? __('site.admin.kupon.sunting') : 'Baru' }}</p>
+                        <p class="part-no">{{ $suntingId ? __('site.admin.kupon.sunting') : 'New' }}</p>
                         <h2 class="font-display text-lg font-semibold">
-                            {{ $suntingId ? 'Ubah kupon' : 'Tambah kupon' }}
+                            {{ $suntingId ? 'Edit coupon' : 'Add coupon' }}
                         </h2>
                     </div>
                     <button type="button" wire:click="tutupForm" class="btn-icon btn-icon-sm" title="{{ __('site.admin.kupon.tutup') }}">
@@ -209,31 +210,31 @@
                     @if ($type !== 'free_shipping')
                         <div>
                             <label for="value" class="part-no">
-                                {{ $type === 'percent' ? 'Persen (%)' : 'Nominal (Rp)' }} <span class="text-danger">*</span>
+                                {{ $type === 'percent' ? 'Percentage (%)' : 'Amount (USD)' }} <span class="text-danger">*</span>
                             </label>
-                            <input id="value" type="text" inputmode="numeric" wire:model.live.debounce.400ms="value"
-                                   class="field tech mt-1" aria-invalid="{{ $errors->has('value') ? 'true' : 'false' }}">
-                            @error('value') <p class="field-error">{{ $message }}</p> @enderror
+                            <input id="value" type="text" inputmode="decimal" wire:model.live.debounce.400ms="value_usd"
+                                   class="field tech mt-1" aria-invalid="{{ $errors->has('value_usd') ? 'true' : 'false' }}">
+                            @error('value_usd') <p class="field-error">{{ $message }}</p> @enderror
                         </div>
                     @endif
 
                     @if ($type === 'percent')
                         <div>
                             <label for="max_discount" class="part-no">{{ __('site.admin.kupon.batas_potongan') }}</label>
-                            <input id="max_discount" type="text" inputmode="numeric"
-                                   wire:model.live.debounce.400ms="max_discount" class="field tech mt-1">
+                            <input id="max_discount" type="text" inputmode="decimal"
+                                   wire:model.live.debounce.400ms="max_discount_usd" class="field tech mt-1">
                             <p class="mt-1 text-xs text-dim">
-                                {{ __('site.admin.kupon.potongan_persen') }} {{ __('site.admin.kupon.tanpa_batas') }} dapat memotong seluruh nilai belanja. Isi batasnya.
+                                {{ __('site.admin.kupon.persentase_hint') }}
                             </p>
-                            @error('max_discount') <p class="field-error">{{ $message }}</p> @enderror
+                            @error('max_discount_usd') <p class="field-error">{{ $message }}</p> @enderror
                         </div>
                     @endif
 
                     <div>
                         <label for="min_spend" class="part-no">{{ __('site.admin.kupon.minimum_belanja') }}</label>
-                        <input id="min_spend" type="text" inputmode="numeric" wire:model="min_spend" class="field tech mt-1">
+                        <input id="min_spend" type="text" inputmode="decimal" wire:model="min_spend_usd" class="field tech mt-1">
                         <p class="mt-1 text-xs text-dim">{{ __('site.admin.kupon.kosong_minimum') }}</p>
-                        @error('min_spend') <p class="field-error">{{ $message }}</p> @enderror
+                        @error('min_spend_usd') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -278,7 +279,7 @@
                             <input id="kol_slug" type="text" wire:model.blur="kol_slug" class="field tech mt-1"
                                    placeholder="budi-santoso" aria-invalid="{{ $errors->has('kol_slug') ? 'true' : 'false' }}">
                             <p class="mt-1 text-xs text-dim">
-                                Dibentuk otomatis dari nama bila dikosongkan. Huruf kecil, angka, tanda hubung.
+                                Generated from the name when left blank. Lowercase letters, numbers, hyphens.
                             </p>
                             @error('kol_slug') <p class="field-error">{{ $message }}</p> @enderror
                         </div>
@@ -309,16 +310,16 @@
                     <div class="rounded-lg bg-sunken p-3 text-sm">
                         <p class="part-no">{{ __('site.admin.kupon.pratinjau') }}</p>
                         <p class="mt-1 text-muted">
-                            Belanja {{ rupiah($pratinjau['belanja']) }} + ongkir {{ rupiah($pratinjau['ongkir']) }}
+                            Spend {{ dolar($pratinjau['belanja']) }} + shipping {{ dolar($pratinjau['ongkir']) }}
                         </p>
                         <p class="tech mt-1">
-                            {{ __('site.admin.kupon.potongan') }}: <span class="text-accent">{{ rupiah($pratinjau['potongan']) }}</span>
+                            {{ __('site.admin.kupon.potongan') }}: <span class="text-accent">{{ dolar($pratinjau['potongan']) }}</span>
                         </p>
                     </div>
 
                     <div class="flex items-center gap-2">
                         <button type="submit" class="btn btn-primary flex-1" wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="simpan">{{ $suntingId ? 'Simpan' : 'Tambah' }}</span>
+                            <span wire:loading.remove wire:target="simpan">{{ $suntingId ? 'Save' : 'Add' }}</span>
                             <span wire:loading wire:target="simpan">{{ __('site.admin.kupon.menyimpan') }}</span>
                         </button>
                         <button type="button" wire:click="tutupForm" class="btn btn-outline">{{ __('site.admin.kupon.batal') }}</button>

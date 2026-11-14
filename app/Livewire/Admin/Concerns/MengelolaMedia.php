@@ -32,7 +32,7 @@ trait MengelolaMedia
         $pengunggah = app(PengunggahMediaProduk::class);
 
         if ($this->produkId === null) {
-            $this->addError('berkasBaru', 'Simpan informasi dasar dulu sebelum mengunggah gambar.');
+            $this->addError('berkasBaru', 'Save the basic information before uploading images.');
 
             return;
         }
@@ -45,9 +45,9 @@ trait MengelolaMedia
             'berkasBaru' => ['array', 'max:20'],
             'berkasBaru.*' => ['file', 'max:5120'],
         ], [
-            'berkasBaru.max' => 'Maksimum 20 berkas sekaligus. Ulangi untuk sisanya.',
-            'berkasBaru.*.max' => 'Setiap berkas maksimum 5 MB.',
-            'berkasBaru.*.file' => 'Berkas tidak dapat dibaca.',
+            'berkasBaru.max' => 'At most 20 files at once. Repeat for the rest.',
+            'berkasBaru.*.max' => 'Each file must be at most 5 MB.',
+            'berkasBaru.*.file' => 'The file cannot be read.',
         ]);
 
         $produk = Product::query()->findOrFail($this->produkId);
@@ -57,7 +57,7 @@ trait MengelolaMedia
         $this->berkasBaru = [];
         $this->ditolak = $hasil['ditolak'];
 
-        $this->pesan = $hasil['antre'].' berkas masuk antrean pemrosesan.';
+        $this->pesan = $hasil['antre'].' file(s) queued for processing.';
         $this->pesanTab = 'media';
 
         // Berkas selesai diproses oleh pekerja antrean, bukan di sini. Muat
@@ -80,7 +80,7 @@ trait MengelolaMedia
         $this->rapikanMedia();
         $this->muatUlangUrutanMedia();
 
-        $this->pesan = 'Gambar dihapus.';
+        $this->pesan = 'Image deleted.';
         $this->pesanTab = 'media';
 
         CacheKatalog::tandaiProduk(Product::query()->find($this->produkId), 'media dihapus');
@@ -97,7 +97,7 @@ trait MengelolaMedia
                 ->update(['is_primary' => true]);
         });
 
-        $this->pesan = 'Gambar utama diperbarui.';
+        $this->pesan = 'Primary image updated.';
         $this->pesanTab = 'media';
 
         CacheKatalog::tandaiProduk(Product::query()->find($this->produkId), 'gambar utama berubah');
@@ -144,7 +144,7 @@ trait MengelolaMedia
         $this->urutanMedia = $bersih;
         $this->simpanUrutanMedia();
 
-        $this->pesan = 'Urutan gambar disimpan.';
+        $this->pesan = 'Image order saved.';
         $this->pesanTab = 'media';
     }
 
@@ -162,14 +162,15 @@ trait MengelolaMedia
 
     public function simpanAlt(int $id, string $teks, string $bahasa): void
     {
-        $kolom = $bahasa === 'en' ? 'alt_text_en' : 'alt_text_id';
-
         ProductMedia::query()
             ->where('product_id', $this->produkId)
             ->whereKey($id)
-            ->update([$kolom => $teks === '' ? null : $teks]);
+            ->update([
+                'alt_text_id' => $teks === '' ? null : $teks,
+                'alt_text_en' => $teks === '' ? null : $teks,
+            ]);
 
-        $this->pesan = 'Teks alternatif disimpan.';
+        $this->pesan = 'Alt text saved.';
         $this->pesanTab = 'media';
     }
 

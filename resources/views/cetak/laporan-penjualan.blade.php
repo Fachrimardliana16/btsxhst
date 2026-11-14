@@ -95,12 +95,12 @@
     </div>
 
     <div class="judul-dokumen">
-        <p class="judul">LAPORAN PENJUALAN</p>
+        <p class="judul">SALES REPORT</p>
         <p class="mono" style="font-size:12px;margin-top:4px">
             {{ $mulai->format('d M Y') }} – {{ $sampai->format('d M Y') }}
         </p>
         <p class="kecil" style="margin-top:4px">
-            Dikeluarkan {{ now()->format('d M Y H:i') }}
+            Issued {{ now()->format('d M Y H:i') }}
         </p>
     </div>
 </div>
@@ -109,35 +109,35 @@
 
 <div class="angka">
     <div>
-        <p class="label">Pesanan</p>
+        <p class="label">Orders</p>
         <p class="nilai">{{ number_format($ringkas['jumlah'], 0, ',', '.') }}</p>
     </div>
     <div>
-        <p class="label">Selesai</p>
+        <p class="label">Completed</p>
         <p class="nilai">{{ number_format($ringkas['selesai'], 0, ',', '.') }}</p>
     </div>
     <div>
-        <p class="label">Dibatalkan</p>
+        <p class="label">Cancelled</p>
         <p class="nilai">{{ number_format($ringkas['batal'], 0, ',', '.') }}</p>
     </div>
     <div>
-        <p class="label">Pendapatan</p>
-        <p class="nilai">{{ rupiah($ringkas['pendapatan']) }}</p>
+        <p class="label">Revenue</p>
+        <p class="nilai">{{ dolar($ringkas['pendapatan']) }}</p>
     </div>
     <div>
-        <p class="label">Belum masuk</p>
-        <p class="nilai">{{ rupiah($ringkas['nilaiBelumMasuk']) }}</p>
+        <p class="label">Not received</p>
+        <p class="nilai">{{ dolar($ringkas['nilaiBelumMasuk']) }}</p>
     </div>
 </div>
 
 <table>
     <thead>
         <tr>
-            <th>Nomor</th>
-            <th>Tanggal</th>
-            <th>Pembeli</th>
+            <th>Number</th>
+            <th>Date</th>
+            <th>Buyer</th>
             <th>Status</th>
-            <th class="kanan">Barang</th>
+            <th class="kanan">Items</th>
             <th class="kanan">Total</th>
         </tr>
     </thead>
@@ -149,28 +149,28 @@
                 <td>{{ \Illuminate\Support\Str::limit($o->namaPenerima() ?: $o->user?->name ?: '—', 28) }}</td>
                 <td>{{ $o->status->label() }} · {{ $o->payment_status->label() }}</td>
                 <td class="kanan">{{ $o->jumlahItem() }}</td>
-                <td class="kanan">{{ number_format((float) $o->grand_total, 0, ',', '.') }}</td>
+                <td class="kanan">{{ dolar($o->grand_total) }}</td>
             </tr>
         @empty
             <tr>
                 <td colspan="6" style="padding:16px 5px;text-align:center;color:#6b6b70">
-                    Tidak ada pesanan pada rentang ini.
+                    No orders in this range.
                 </td>
             </tr>
         @endforelse
 
         @if ($pesanan->isNotEmpty())
             <tr class="total-baris">
-                <td colspan="5">Total pendapatan (lunas + diproses + dikirim + selesai)</td>
-                <td class="kanan">{{ rupiah($ringkas['pendapatan']) }}</td>
+                <td colspan="5">Total revenue (paid + processing + shipped + completed)</td>
+                <td class="kanan">{{ dolar($ringkas['pendapatan']) }}</td>
             </tr>
         @endif
     </tbody>
 </table>
 
 <p class="catatan">
-    Rata-rata nilai pesanan {{ rupiah($ringkas['rataRata']) }}.
-    Pesanan yang dibatalkan tidak dihitung sebagai pendapatan.
+    Average order value {{ dolar($ringkas['rataRata']) }}.
+    Cancelled orders are not counted as revenue.
 </p>
 
 </body>

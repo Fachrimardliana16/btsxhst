@@ -91,6 +91,12 @@ class HargaDolar
         return $kurs > 0 ? $kurs : self::KURS_CADANGAN;
     }
 
+    /** Nominal rupiah untuk input harga dalam dolar di panel. */
+    public static function keRupiah(float|int|string|null $usd): float
+    {
+        return round((float) $usd * self::kurs(), 2);
+    }
+
     /** Format dolar: "$1,250.00" — koma ribuan, titik desimal. */
     public static function format(float|int|string|null $nominal): string
     {

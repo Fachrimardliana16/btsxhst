@@ -73,9 +73,7 @@
                 </picture>
             </div>
         @empty
-            <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0a2540] to-[#041220]">
-                <span class="font-display text-4xl font-extrabold uppercase tracking-widest text-white/30">BITESExhaust</span>
-            </div>
+            <div class="h-full w-full bg-gradient-to-br from-[#0a2540] to-[#041220]"></div>
         @endforelse
 
         {{-- Overlay gradient dramatis: gelap di atas (agar navbar terbaca), gelap di bawah, aksen biru/kuning lembut --}}
@@ -108,24 +106,11 @@
     {{-- ══ Teks & Konten di Dalam Gambar (Center Overlay) ══ --}}
     <div class="container-page relative z-10 my-auto flex max-w-4xl flex-col items-center px-6 text-center">
         @if ($slides->isEmpty())
-            <span class="inline-flex items-center gap-2 rounded-full border border-promo/40 bg-promo/15 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-promo backdrop-blur-sm">
-                High Performance Exhaust
-            </span>
-
-            <h1 class="mt-5 font-display text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-white drop-shadow-lg sm:text-6xl lg:text-7xl">
-                {{ $toko->teks('site_tagline', __('site.brand.tagline')) }}
+            {{-- Belum ada slide yang diisi admin: jangan tampilkan teks toko
+                 yang belum tentu benar. Cukup satu penanda jujur. --}}
+            <h1 class="font-display text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-white drop-shadow-lg sm:text-6xl lg:text-7xl">
+                {{ __('site.home.coming_soon') }}
             </h1>
-
-            <p class="mt-5 max-w-2xl text-base text-white/85 drop-shadow sm:text-lg lg:text-xl">
-                {{ $toko->teks('site_description') }}
-            </p>
-
-            <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
-                <a href="{{ route('front.products.index') }}" class="btn btn-primary btn-lg min-h-[48px] px-8 text-sm font-bold uppercase tracking-wider shadow-lg shadow-accent/40">
-                    {{ __('site.home.view_all_products') }}
-                    <x-ikon name="arrow-right" :size="16" />
-                </a>
-            </div>
         @else
             @foreach ($slides as $idx => $slide)
                 <div x-show="i === {{ $idx }}"

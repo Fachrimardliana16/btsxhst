@@ -83,12 +83,12 @@ class PenggunaPeran extends KomponenAdmin
             && Gate::forUser($u)->allows($kemampuan, User::class);
 
         return [
-            ['tindakan' => 'Kelola produk, kategori, hero, FAQ', 'admin' => $izin($admin, 'kelola'), 'super' => $izin($super, 'kelola')],
+            ['tindakan' => 'Manage products, categories, hero, FAQ', 'admin' => $izin($admin, 'kelola'), 'super' => $izin($super, 'kelola')],
             ['tindakan' => __('site.msg.pengguna.proses_pesanan'), 'admin' => $izin($admin, 'kelola'), 'super' => $izin($super, 'kelola')],
-            ['tindakan' => 'Jawab pesan pelanggan', 'admin' => $izin($admin, 'kelola'), 'super' => $izin($super, 'kelola')],
-            ['tindakan' => 'Ubah pengaturan situs & kredensial pembayaran', 'admin' => $izin($admin, 'aturSitus'), 'super' => $izin($super, 'aturSitus')],
-            ['tindakan' => 'Buka blokir alamat IP', 'admin' => $izin($admin, 'bukaBlokir'), 'super' => $izin($super, 'bukaBlokir')],
-            ['tindakan' => 'Ubah peran & kelola akun panel', 'admin' => $izin($admin, 'kelolaAkun'), 'super' => $izin($super, 'kelolaAkun')],
+            ['tindakan' => 'Reply to customer messages', 'admin' => $izin($admin, 'kelola'), 'super' => $izin($super, 'kelola')],
+            ['tindakan' => 'Change site settings & payment credentials', 'admin' => $izin($admin, 'aturSitus'), 'super' => $izin($super, 'aturSitus')],
+            ['tindakan' => 'Unblock IP addresses', 'admin' => $izin($admin, 'bukaBlokir'), 'super' => $izin($super, 'bukaBlokir')],
+            ['tindakan' => 'Change roles & manage panel accounts', 'admin' => $izin($admin, 'kelolaAkun'), 'super' => $izin($super, 'kelolaAkun')],
         ];
     }
 
@@ -165,7 +165,7 @@ class PenggunaPeran extends KomponenAdmin
             'ke' => $tujuan->value,
         ], $saya->id, $pengguna);
 
-        $this->pesan = 'Peran diubah menjadi '.$tujuan->label().'.';
+        $this->pesan = 'Role changed to '.$tujuan->label().'.';
     }
 
     public function ubahBlokir(int $id): void
@@ -208,14 +208,14 @@ class PenggunaPeran extends KomponenAdmin
             $pengguna,
         );
 
-        $this->pesan = $pengguna->is_blocked ? __('site.msg.pelanggan.diblokir') : 'Blokir akun dibuka.';
+        $this->pesan = $pengguna->is_blocked ? __('site.msg.pelanggan.diblokir') : 'Account unblocked.';
     }
 
     public function render(): View
     {
         return view('livewire.admin.pengguna-peran', [
-            'judul' => 'Pengguna & Peran',
-            'bagian' => 'Akses',
+            'judul' => 'Users & Roles',
+            'bagian' => 'Access',
             'akun' => $this->akunPanel(),
             'hitungan' => $this->hitungan(),
             'matriks' => $this->matriks(),

@@ -105,8 +105,8 @@ class KolPerforma extends KomponenAdmin
     public function render(): View
     {
         return view('livewire.admin.kol-performa', [
-            'judul' => 'Performa KOL',
-            'bagian' => 'Penjualan',
+            'judul' => 'KOL Performance',
+            'bagian' => 'Sales',
             'daftar' => $this->daftarKol(),
             'ringkas' => $this->ringkasan(),
         ]);

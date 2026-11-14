@@ -22,9 +22,14 @@
             } catch (e) {}
         })();
     </script>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- Halaman galat harus tetap tampil walau aset belum dibangun. Tanpa
+         penjagaan ini, @vite melempar "Vite manifest not found" dan menutupi
+         galat asli yang hendak ditampilkan. --}}
+    @if (is_file(public_path('build/manifest.json')) || is_file(public_path('hot')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
 </head>
-<body class="flex min-h-screen flex-col items-center justify-center bg-bg px-4 text-ink">
+<body class="situs-depan flex min-h-screen flex-col items-center justify-center bg-bg px-4 text-ink">
 
     <div class="w-full max-w-lg">
         <div class="flex items-center gap-3">

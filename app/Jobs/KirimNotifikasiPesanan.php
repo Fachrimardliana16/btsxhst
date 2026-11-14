@@ -176,7 +176,7 @@ class KirimNotifikasiPesanan implements ShouldQueue
             '',
             'Nomor pesanan: '.$pesanan->order_number,
             'Status: '.$pesanan->status->label(),
-            'Total: '.rupiah($pesanan->grand_total),
+            'Total: '.dolar($pesanan->grand_total),
         ];
 
         if ($untukSurel && $pesanan->items->isNotEmpty()) {
@@ -188,7 +188,7 @@ class KirimNotifikasiPesanan implements ShouldQueue
                     '- %s × %d = %s',
                     $item->product_name,
                     $item->quantity,
-                    rupiah($item->subtotal),
+                    dolar($item->subtotal),
                 );
             }
         }

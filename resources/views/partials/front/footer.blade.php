@@ -50,9 +50,11 @@
         <div class="grid grid-cols-1 gap-y-7 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr] lg:gap-10">
 
             <div>
-                <p class="font-display text-2xl font-semibold">
-                    {{ $toko->teks('site_name', __('site.brand.fallback_name')) }}
-                </p>
+                <img src="/brand/logo-terang.png"
+                     alt="{{ $toko->teks('site_name', __('site.brand.fallback_name')) }}"
+                     width="1200" height="138"
+                     class="h-6 w-auto max-w-full object-contain">
+                <p class="visually-hidden">{{ $toko->teks('site_name', __('site.brand.fallback_name')) }}</p>
                 <p class="mt-3 max-w-xs text-sm text-[#a5a5a8]">
                     {{ $toko->teks('site_tagline', __('site.brand.tagline')) }}
                 </p>

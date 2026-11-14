@@ -15,7 +15,7 @@
         <p class="part-no">{{ __('site.admin.cadangan.eyebrow') }}</p>
         <h1 class="mt-1 font-display text-2xl font-semibold">{{ __('site.admin.cadangan.judul') }}</h1>
         <p class="mt-1 text-sm text-muted">
-            Salinan penuh berkas basis data. Menyimpan {{ $simpan }} salinan terbaru, dibuat otomatis setiap hari pukul 02.00.
+            Full database copy. Keeps the {{ $simpan }} most recent copies, created automatically every day at 02:00.
         </p>
     </div>
 
@@ -57,7 +57,7 @@
                 @if ($terbaru)
                     {{ \Illuminate\Support\Carbon::createFromTimestamp($terbaru['waktu'])->diffForHumans() }}
                 @else
-                    belum ada
+                    not yet
                 @endif
             </p>
         </div>
@@ -116,10 +116,10 @@
     <div class="plate border-l-2 border-l-warn p-4 text-sm">
         <p class="font-medium">{{ __('site.admin.cadangan.harian_0200') }}</p>
         <p class="mt-1 text-muted">
-            Laravel tidak menjalankan tugas terjadwal sendiri. Dibutuhkan satu entri cron di server
-            (<code class="tech">* * * * * php artisan schedule:run</code>) atau proses
-            <code class="tech">php artisan schedule:work</code> yang berjalan terus.
-            Kalau tidak ada, yang berlaku hanya tombol di atas — cadangan otomatis tidak pernah terjadi.
+            Laravel does not run scheduled tasks by itself. One cron entry on the server
+            (<code class="tech">* * * * * php artisan schedule:run</code>) or a long-running
+            <code class="tech">php artisan schedule:work</code> process is required.
+            Without it, only the button above works — automatic backups never happen.
         </p>
     </div>
 
@@ -127,14 +127,14 @@
     <div class="plate p-4 text-sm">
         <p class="font-medium">{{ __('site.admin.cadangan.taut_unduh_15') }}</p>
         <p class="mt-1 text-muted">
-            Berkas cadangan memuat seluruh basis data — pesanan, alamat pengiriman, nomor telepon,
-            dan surel pelanggan. Tautannya karena itu bertanda tangan dan kedaluwarsa sendiri,
-            tidak ada alamat permanen yang bisa ditebak atau disalin ke tempat lain.
-            Tombol yang sudah lewat 15 menit tinggal dimuat ulang halamannya.
+            A backup file contains the entire database — orders, shipping addresses, phone numbers,
+            and customer emails. Its link is therefore signed and expires on its own;
+            there is no permanent address that can be guessed or copied elsewhere.
+            Buttons older than 15 minutes just need the page reloaded.
         </p>
         <p class="mt-2 text-muted">
-            Cadangan di server ini masih di disk yang sama dengan basis datanya. Menyimpannya di
-            tempat lain — komputer sendiri, atau penyimpanan luar — tetap perlu dilakukan.
+            Backups on this server still live on the same disk as the database. Copying them
+            somewhere else — your own computer, or external storage — is still necessary.
         </p>
     </div>
 
@@ -147,7 +147,7 @@
 
         @if ($cadangan === [])
             <div class="p-6 text-center text-sm text-muted">
-                Belum ada cadangan. Tekan <span class="text-ink">{{ __('site.admin.cadangan.cadangkan_sekarang') }}</span> untuk membuat yang pertama.
+                No backups yet. Press <span class="text-ink">{{ __('site.admin.cadangan.cadangkan_sekarang') }}</span> to create the first one.
             </div>
         @else
             <div class="divide-y divide-line-soft">
@@ -165,7 +165,7 @@
                             @if ($c['sah'])
                                 <span class="badge badge-ok">{{ __('site.admin.cadangan.dapat_dipulihkan') }}</span>
 
-                                @php($tautan = $this->url{{ __('site.admin.cadangan.unduh') }}($c['nama']))
+                                @php($tautan = $this->urlUnduh($c['nama']))
                                 @if ($tautan !== null)
                                     {{-- Taut bertanda tangan berumur 15 menit: berkas
                                          ini seluruh basis data, bukan aset biasa. --}}
@@ -175,7 +175,7 @@
                                     </a>
                                 @endif
                             @else
-                                <span class="badge badge-neutral">tidak {{ __('site.admin.cadangan.dapat_dipulihkan') }}</span>
+                                <span class="badge badge-neutral">{{ __('site.admin.cadangan.tidak_dapat_dipulihkan') }}</span>
                             @endif
                         </div>
                     </div>

@@ -184,9 +184,9 @@ class LaporanPenjualan
             fwrite($keluaran, "\xEF\xBB\xBF");
 
             fputcsv($keluaran, [
-                'Nomor', 'Tanggal', 'Status', 'Pembayaran', 'Metode',
-                'Pembeli', 'Kontak', 'Kota', 'Jumlah barang', 'Subtotal',
-                'Diskon', 'Ongkir', 'Pajak', 'Total', 'Resi',
+                'Number', 'Date', 'Status', 'Payment', 'Method',
+                'Buyer', 'Contact', 'City', 'Item count', 'Subtotal',
+                'Discount', 'Shipping', 'Tax', 'Total', 'Tracking',
             ]);
 
             foreach ($pesanan as $o) {

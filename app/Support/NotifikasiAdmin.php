@@ -320,7 +320,7 @@ class NotifikasiAdmin
             'jumlah' => $jumlah,
             'teks' => $jumlah.' pesanan siap dikirim',
             'rinci' => $terbaru
-                ? 'Terakhir: '.$terbaru->order_number.' · '.rupiah($terbaru->grand_total)
+                ? 'Last: '.$terbaru->order_number.' · '.dolar($terbaru->grand_total)
                 : '',
             'rute' => route('admin.orders.index', ['status' => 'paid']),
         ]];

@@ -83,7 +83,7 @@ class KeranjangTerbuka extends KomponenAdmin
 
         $this->dispatch('notifikasi-diperbarui');
 
-        session()->flash('pesan-admin', $jumlah.' keranjang lama dibuang.');
+        session()->flash('pesan-admin', $jumlah.' old carts removed.');
     }
 
     public function render(): View
@@ -106,10 +106,10 @@ class KeranjangTerbuka extends KomponenAdmin
 
         return view('livewire.admin.keranjang-terbuka', [
             __('site.admin.keranjang_terbuka.judul'),
-            'bagian' => 'Penjualan',
+            'bagian' => 'Sales',
             'keranjang' => $keranjang,
             'ringkas' => $this->ringkasan(),
-        ])->layout('layouts.admin', [__('site.admin.keranjang_terbuka.judul'), 'bagian' => 'Penjualan']);
+        ])->layout('layouts.admin', [__('site.admin.keranjang_terbuka.judul'), 'bagian' => 'Sales']);
     }
 
     /**

@@ -41,7 +41,7 @@
         @else
             <div class="mt-6 flex h-40 items-end gap-[3px]">
                 @foreach ($seri as $titik)
-                    <div class="group relative flex-1" title="{{ $titik['label'] }} · {{ $titik['jumlah'] }} {{ __('site.admin.dashboard.pesanan') }} · {{ rupiah($titik['nilai']) }}">
+                    <div class="group relative flex-1" title="{{ $titik['label'] }} · {{ $titik['jumlah'] }} {{ __('site.admin.dashboard.pesanan') }} · {{ dolar($titik['nilai']) }}">
                         <div class="w-full bg-accent"
                              style="height: {{ max(2, (int) round(($titik['nilai'] / $maksNilai) * 150)) }}px"
                              aria-hidden="true"></div>
@@ -102,7 +102,7 @@
                                     </td>
                                     <td class="max-w-[12rem] truncate">{{ $o->namaPenerima() }}</td>
                                     <td><x-lencana :nada="$o->status->nada()" :teks="$o->status->label()" /></td>
-                                    <td class="tech !text-right">{{ rupiah($o->grand_total) }}</td>
+                                    <td class="tech !text-right">{{ dolar($o->grand_total) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -119,7 +119,7 @@
                             </div>
                             <div class="flex items-center justify-between gap-2">
                                 <span class="truncate text-sm text-muted">{{ $o->namaPenerima() }}</span>
-                                <span class="tech flex-none text-sm">{{ rupiah($o->grand_total) }}</span>
+                                <span class="tech flex-none text-sm">{{ dolar($o->grand_total) }}</span>
                             </div>
                         </li>
                     @endforeach
@@ -146,7 +146,7 @@
                                 <span class="block truncate text-sm font-medium">{{ $t->nama }}</span>
                                 <span class="tech block text-xs text-dim">{{ $t->terjual }} {{ __('site.admin.dashboard.terjual') }}</span>
                             </span>
-                            <span class="tech flex-none text-sm">{{ rupiah($t->nilai) }}</span>
+                            <span class="tech flex-none text-sm">{{ dolar($t->nilai) }}</span>
                         </li>
                     @endforeach
                 </ul>

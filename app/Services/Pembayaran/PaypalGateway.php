@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Services\StatusPesananService;
 use App\Support\CatatanAktivitas;
+use App\Support\HargaDolar;
 use App\Support\KomponenPengaturan;
 use App\Support\Pengaturan;
 use Illuminate\Http\Request;
@@ -66,7 +67,7 @@ class PaypalGateway
                 'reference_id' => (string) $pesanan->order_number,
                 // Nominal dari basis data, bukan dari permintaan.
                 'amount' => [
-                    'currency_code' => strtoupper((string) ($pesanan->currency ?: 'IDR')),
+                    'currency_code' => strtoupper((string) ($pesanan->currency ?: HargaDolar::MATA)),
                     'value' => number_format((float) $pesanan->grand_total, 2, '.', ''),
                 ],
                 'description' => mb_substr('Pesanan '.$pesanan->order_number, 0, 127),
@@ -140,7 +141,7 @@ class PaypalGateway
             $pesanan,
             $transaksiId,
             (float) $respons->json('purchase_units.0.payments.captures.0.amount.value', $pesanan->grand_total),
-            strtoupper((string) $respons->json('purchase_units.0.payments.captures.0.amount.currency_code', $pesanan->currency ?: 'IDR')),
+            strtoupper((string) $respons->json('purchase_units.0.payments.captures.0.amount.currency_code', $pesanan->currency ?: HargaDolar::MATA)),
             ['sumber' => 'capture', 'status_paypal' => $status],
         );
     }
@@ -264,7 +265,7 @@ class PaypalGateway
         $pesanan = $this->cariPesanan($nomorPesanan, $sumber);
 
         if ($pesanan === null) {
-            return ['diabaikan' => true, 'alasan' => 'Pesanan untuk peristiwa ini tidak ditemukan.'];
+            return ['diabaikan' => true, 'alasan' => 'No order matches this event.'];
         }
 
         if ($transaksiId === '') {
@@ -286,7 +287,7 @@ class PaypalGateway
             $pesanan,
             $transaksiId,
             (float) ($sumber['amount']['value'] ?? $pesanan->grand_total),
-            strtoupper((string) ($sumber['amount']['currency_code'] ?? ($pesanan->currency ?: 'IDR'))),
+            strtoupper((string) ($sumber['amount']['currency_code'] ?? ($pesanan->currency ?: HargaDolar::MATA))),
             ['sumber' => 'webhook', 'jenis' => $jenis],
         );
 

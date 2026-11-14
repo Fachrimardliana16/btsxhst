@@ -131,7 +131,7 @@ html[data-typing] .nav-bawah {
 }
 
 .nav-bawah__slot:focus-visible {
-    outline: 2px solid var(--c-accent, #0062ad);
+    outline: 2px solid var(--c-text, #151719);
     outline-offset: 2px;
 }
 
@@ -164,13 +164,14 @@ html[data-typing] .nav-bawah {
     max-width: 100%;
 }
 
-/* Slot aktif */
+/* Slot aktif. Teks dan ikon hitam supaya terbaca di atas kaca putih;
+   kuning hanya menjadi penanda, bukan warna teks. */
 .nav-bawah__slot.is-aktif {
-    color: var(--c-accent, #0062ad);
+    color: var(--c-text, #151719);
 }
 
 .nav-bawah__slot.is-aktif .nav-bawah__ikon {
-    background: color-mix(in srgb, var(--c-accent, #0062ad) 14%, transparent);
+    background: color-mix(in srgb, var(--c-accent, #fec51e) 22%, transparent);
     transform: translateY(-1px) scale(1.04);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
@@ -186,8 +187,8 @@ html[data-typing] .nav-bawah {
     width: 4px;
     height: 4px;
     border-radius: 9999px;
-    background: var(--c-accent, #0062ad);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent, #0062ad) 16%, transparent);
+    background: var(--c-accent, #fec51e);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent, #fec51e) 20%, transparent);
 }
 
 /* Tidak ada kaca yang bisa di-blur di peramban lama atau saat pengunjung

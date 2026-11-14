@@ -122,15 +122,13 @@
                 <div class="mt-4 space-y-3">
                     <div>
                         <label for="bukti" class="part-no">Berkas bukti <span class="text-danger">*</span></label>
-                        <input id="bukti" type="file" wire:model="bukti"
-                               accept="image/jpeg,image/png,image/webp,application/pdf"
-                               class="field mt-1 py-2 file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-fg"
-                               aria-invalid="{{ $errors->has('bukti') ? 'true' : 'false' }}">
+                        <x-file-upload model="bukti" id="bukti"
+                                       accept="image/jpeg,image/png,image/webp,application/pdf"
+                                       title="Pilih berkas bukti atau seret ke sini"
+                                       hint="JPG, PNG, WebP, atau PDF · maksimum 5 MB"
+                                       loading="Mengunggah berkas…"
+                                       class="mt-1" />
                         @error('bukti') <p class="field-error">{{ $message }}</p> @enderror
-
-                        <p wire:loading wire:target="bukti" class="tech mt-1 text-xs text-accent">
-                            Mengunggah berkas…
-                        </p>
                     </div>
 
                     <div>

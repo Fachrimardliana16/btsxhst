@@ -171,6 +171,55 @@
     --shadow-3: 0 16px 40px rgb(17 24 39 / 0.12), 0 0 0 1px rgb(17 24 39 / 0.06);
 }
 
+/* ═══ TEMA GELAP (panel admin) ══════════════════════════════════════════
+
+   Hanya panel admin yang memakai tema gelap; sisi depan selalu terang lewat
+   atribut `data-theme="light"` di layout-nya. Tombol tema di navbar admin
+   dulu mengubah atribut dan localStorage, tetapi tidak ada satu pun token
+   gelap, sehingga tampilan tetap terang — tombolnya terasa mati.
+
+   Yang di-override hanyalah token warna dan bayangan. Skala radius, tipografi,
+   dan spasi tetap sama supaya tata letak tidak bergeser saat tema berganti.
+
+   Kontras: teks utama #e6edf7 di atas #0a1220 = 15.8:1; teks redup #a9b8cc =
+   8.9:1; aksen #4da3e8 di atas latar = 6.6:1. */
+
+[data-theme='dark'] {
+    color-scheme: dark;
+
+    --c-bg: #0a1220;
+    --c-surface: #111c2e;
+    --c-surface-sunken: #0d1626;
+
+    --c-text: #e6edf7;
+    --c-text-muted: #a9b8cc;
+    --c-text-dim: #8394aa;
+
+    --c-line: #2b3b52;
+    --c-line-soft: #1e2b3d;
+
+    --c-accent: #4da3e8;
+    --c-accent-hover: #7bbdf0;
+    --c-accent-fg: #07121e;
+
+    --c-brass: #86b6da;
+
+    --c-ok: #4ec284;
+    --c-warn: #e0a63a;
+    --c-danger: #ff7b72;
+
+    --c-sorot-dasar: #332910;
+    --c-sorot-garis: #8a6d1a;
+    --c-sorot-aksen: #facc15;
+
+    --carbon-weave: rgba(255, 255, 255, 0.04);
+    --metal-sheen: rgba(255, 255, 255, 0.08);
+
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.04);
+    --shadow-2: 0 4px 14px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(255 255 255 / 0.05);
+    --shadow-3: 0 16px 40px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
 @theme inline {
     --color-bg: var(--c-bg);
     --color-surface: var(--c-surface);
@@ -1105,6 +1154,100 @@
         color: var(--c-danger);
     }
 
+    /* Input berkas.
+     *
+     * `<input type="file">` bawaan peramban nyaris tidak terlihat: hanya teks
+     * kecil dengan tombol abu-abu, dan pada tema gelap tombolnya menyatu
+     * dengan latar. Dropzone ini selalu tampak seperti tempat menjatuhkan
+     * berkas — kotak putus-putus, ikon, dan kalimat perintah.
+     *
+     * Input aslinya disembunyikan secara visual, bukan `display: none`, supaya
+     * tetap dapat difokuskan dan dibuka dari papan ketik. Seluruh kotak adalah
+     * <label>, jadi klik di mana pun membuka dialog pemilih berkas.
+     */
+    .upload {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        width: 100%;
+        min-height: 118px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        background: var(--c-surface-sunken);
+        border: 1.5px dashed var(--c-line);
+        border-radius: var(--r-sedang);
+        color: var(--c-text-muted);
+        transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+    .upload:hover,
+    .upload:focus-within {
+        border-color: var(--c-accent);
+        background: color-mix(in srgb, var(--c-accent) 7%, var(--c-surface-sunken));
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-accent) 12%, transparent);
+    }
+    .upload.is-dragover {
+        border-color: var(--c-accent);
+        border-style: solid;
+        background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface-sunken));
+    }
+    .upload > input[type='file'] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+    }
+    .upload-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--r-pil);
+        background: var(--c-surface);
+        border: 1px solid var(--c-line-soft);
+        color: var(--c-accent);
+    }
+    .upload-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--c-text);
+    }
+    .upload-hint {
+        max-width: 42ch;
+        font-size: 0.75rem;
+        line-height: 1.45;
+        color: var(--c-text-dim);
+    }
+    .upload-name {
+        margin-top: 0.15rem;
+        font-family: var(--font-sans);
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--c-accent);
+        overflow-wrap: anywhere;
+    }
+    .upload-loading {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--c-accent);
+    }
+
+    /* Logo gambar di panel: artwork gelap untuk tema terang, artwork terang
+       untuk tema gelap. Tanpa pasangan ini salah satu tema menampilkan logo
+       yang menyatu dengan latarnya. */
+    .logo-tema-terang { display: none; }
+    [data-theme='dark'] .logo-tema-gelap { display: none; }
+    [data-theme='dark'] .logo-tema-terang { display: block; }
+
     /* Label teknis */
     .tech {
         font-family: var(--font-sans);
@@ -1272,6 +1415,12 @@
 
 @utility safe-bottom {
     padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Hanya jarak aman perangkat, tanpa tinggi bilah. Dipakai bar navigasi bawah
+   yang tingginya sudah ditentukan sendiri. */
+@utility pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* ── Tinggi bilah tetap ─────────────────────────────────────────────
@@ -1457,4 +1606,64 @@ html:not(.js) [data-reveal] {
     .promo-ticker__teks {
         animation: none;
     }
+}
+
+/* ═══ PALET TOKO — PUTIH / HITAM / KUNING MEREK ═════════════════════════
+   Kuning diambil langsung dari artwork logo (#FEC51E). Blok ini hanya
+   berlaku di badan halaman toko (`.situs-depan`); panel admin tetap memakai
+   aksen biru agar tindakan administratif tidak terbaca sebagai aksi jual.
+
+   Kuning sebagai LATAR selalu berpasangan dengan teks hitam — teks kuning
+   di atas putih hanya sekitar 1,9:1 dan tidak terbaca. Karena itu label,
+   tautan, dan ikon yang sebelumnya biru di atas permukaan terang diubah
+   menjadi hitam; kuning disimpan untuk isian tombol dan penanda. */
+.situs-depan {
+    --c-accent: #fec51e;
+    --c-accent-hover: #e5ae00;
+    --c-accent-fg: #151719;
+    --c-accent-on-dark: #fec51e;
+    --c-brass: #fec51e;
+    --c-promo: #fec51e;
+}
+
+/* Cincin fokus dua warna: hitam terbaca di latar putih, kuning di latar
+   gelap. Satu cincin saja tidak cukup karena halaman memuat keduanya. */
+.situs-depan :focus-visible {
+    outline: 2px solid var(--c-text);
+    box-shadow: 0 0 0 5px var(--c-accent);
+}
+
+.situs-depan .text-accent,
+.situs-depan .hover\:text-accent:hover {
+    color: var(--c-text);
+}
+
+/* Isian kuning membawa teks hitam, termasuk saat view lama menulis
+   `text-white` sebelum palet ini berlaku. */
+.situs-depan .bg-accent.text-white {
+    color: var(--c-accent-fg);
+}
+
+.situs-depan .btn-outline:hover {
+    border-color: var(--c-text);
+    color: var(--c-text);
+    background: color-mix(in srgb, var(--c-accent) 22%, transparent);
+}
+
+/* Label bagian di permukaan terang. Footer dan galeri tetap memakai kuning
+   karena latarnya gelap; aturan khusus keduanya berada di berkas masing-
+   masing dan menang atas aturan umum ini. */
+.situs-depan .part-no {
+    color: var(--c-text);
+}
+
+.situs-depan footer .part-no {
+    color: var(--c-accent-on-dark);
+}
+
+.situs-depan .hero-split__eyebrow,
+.situs-depan .listing-blok__semua,
+.situs-depan .hero-split__fitur-ikon,
+.situs-depan .nav-bawah__slot.is-aktif {
+    color: var(--c-text);
 }

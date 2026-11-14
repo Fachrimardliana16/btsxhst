@@ -11,7 +11,7 @@ enum MetodePembayaran: string
     {
         return match ($this) {
             self::Paypal => 'PayPal',
-            self::Manual => 'Transfer Manual',
+            self::Manual => 'Manual Transfer',
         };
     }
 

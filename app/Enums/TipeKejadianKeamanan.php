@@ -17,15 +17,15 @@ enum TipeKejadianKeamanan: string
     public function label(): string
     {
         return match ($this) {
-            self::LoginGagal => 'Login gagal',
-            self::LoginBerhasil => 'Login berhasil',
-            self::BruteForceDiblokir => 'Brute force diblokir',
-            self::IpDiblokir => 'IP diblokir',
-            self::AksesTidakSah => 'Akses tidak sah',
-            self::BatasLaju => 'Batas laju terlampaui',
-            self::DuaFaktorGagal => 'Verifikasi 2FA gagal',
-            self::UnggahanDitolak => 'Unggahan ditolak',
-            self::AksiAdmin => 'Aksi admin',
+            self::LoginGagal => 'Login failed',
+            self::LoginBerhasil => 'Login succeeded',
+            self::BruteForceDiblokir => 'Brute force blocked',
+            self::IpDiblokir => 'IP blocked',
+            self::AksesTidakSah => 'Unauthorized access',
+            self::BatasLaju => 'Rate limit exceeded',
+            self::DuaFaktorGagal => '2FA verification failed',
+            self::UnggahanDitolak => 'Upload rejected',
+            self::AksiAdmin => 'Admin action',
         };
     }
 

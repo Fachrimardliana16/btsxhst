@@ -96,7 +96,7 @@ class LoncengNotifikasi extends KomponenAdmin
 
         NotifikasiPanelMuncul::dispatch(
             $jumlah,
-            $pintar !== '' ? $pintar : 'Ada hal baru yang perlu perhatian.',
+            $pintar !== '' ? $pintar : 'Something new needs your attention.',
             route('admin.dashboard'),
         );
 

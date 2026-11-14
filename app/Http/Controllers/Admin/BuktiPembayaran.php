@@ -28,11 +28,11 @@ class BuktiPembayaran
         // bersifat pribadi.
         abort_unless(auth()->check() && auth()->user()->role->bisaMasukPanel(), 403);
 
-        abort_if(blank($payment->proof_path), 404, 'Bukti tidak ada untuk pembayaran ini.');
+        abort_if(blank($payment->proof_path), 404, 'No proof uploaded for this payment.');
 
         $disk = \Illuminate\Support\Facades\Storage::disk('local');
 
-        abort_unless($disk->exists($payment->proof_path), 404, 'Berkas bukti tidak ditemukan di penyimpanan.');
+        abort_unless($disk->exists($payment->proof_path), 404, 'The proof file is missing from storage.');
 
         $jalur = $disk->path($payment->proof_path);
         $mime = @mime_content_type($jalur) ?: 'application/octet-stream';

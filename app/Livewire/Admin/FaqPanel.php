@@ -74,10 +74,10 @@ class FaqPanel extends KomponenAdmin
 
         $this->suntingId = $faq->id;
         $this->kelompok = (string) $faq->group_key;
-        $this->pertanyaan_id = (string) $faq->question_id;
-        $this->pertanyaan_en = (string) $faq->question_en;
-        $this->jawaban_id = (string) $faq->answer_id;
-        $this->jawaban_en = (string) $faq->answer_en;
+        $this->pertanyaan_id = (string) ($faq->question_en ?: $faq->question_id);
+        $this->pertanyaan_en = '';
+        $this->jawaban_id = (string) ($faq->answer_en ?: $faq->answer_id);
+        $this->jawaban_en = '';
         $this->aktif = (bool) $faq->is_active;
         $this->diBeranda = (bool) $faq->tampil_di_beranda;
         $this->formTerbuka = true;
@@ -91,14 +91,12 @@ class FaqPanel extends KomponenAdmin
         $bersih = $this->validate([
             'kelompok' => ['required', 'string', 'in:'.implode(',', array_keys(Faq::KELOMPOK))],
             'pertanyaan_id' => ['required', 'string', 'min:5', 'max:300'],
-            'pertanyaan_en' => ['nullable', 'string', 'max:300'],
             'jawaban_id' => ['required', 'string', 'min:10', 'max:5000'],
-            'jawaban_en' => ['nullable', 'string', 'max:5000'],
             'aktif' => ['boolean'],
             'diBeranda' => ['boolean'],
         ], [
             'pertanyaan_id.required' => __('site.msg.faq.pertanyaan_id_wajib'),
-            'pertanyaan_id.min' => 'Pertanyaan minimal lima huruf.',
+            'pertanyaan_id.min' => 'The question must be at least five characters.',
             'jawaban_id.required' => __('site.msg.faq.jawaban_id_wajib'),
             'jawaban_id.min' => __('site.msg.faq.jawaban_terlalu_pendek'),
             'kelompok.in' => __('site.msg.faq.kelompok_tidak_dikenal'),
@@ -108,9 +106,9 @@ class FaqPanel extends KomponenAdmin
             $atribut = [
                 'group_key' => $bersih['kelompok'],
                 'question_id' => $bersih['pertanyaan_id'],
-                'question_en' => $bersih['pertanyaan_en'] ?: null,
+                'question_en' => $bersih['pertanyaan_id'],
                 'answer_id' => $bersih['jawaban_id'],
-                'answer_en' => $bersih['jawaban_en'] ?: null,
+                'answer_en' => $bersih['jawaban_id'],
                 'is_active' => $bersih['aktif'],
                 'tampil_di_beranda' => $bersih['diBeranda'],
             ];
@@ -147,7 +145,7 @@ class FaqPanel extends KomponenAdmin
         $faq = Faq::query()->findOrFail($id);
         $faq->update(['is_active' => ! $faq->is_active]);
 
-        $this->pesan = $faq->is_active ? 'FAQ diaktifkan.' : __('site.msg.faq.dinonaktifkan');
+        $this->pesan = $faq->is_active ? 'FAQ activated.' : __('site.msg.faq.dinonaktifkan');
 
         // Beranda menampilkan FAQ lewat cache berversi katalog. Tanpa baris
         // ini, FAQ yang baru disimpan admin TIDAK muncul di beranda sampai
@@ -162,8 +160,8 @@ class FaqPanel extends KomponenAdmin
         $faq->update(['tampil_di_beranda' => ! $faq->tampil_di_beranda]);
 
         $this->pesan = $faq->tampil_di_beranda
-            ? 'FAQ tampil di beranda.'
-            : 'FAQ hanya tampil di halaman FAQ.';
+            ? 'FAQ shown on the homepage.'
+            : 'FAQ shown on the FAQ page only.';
 
         // Beranda menampilkan FAQ lewat cache berversi katalog. Tanpa baris
         // ini, FAQ yang baru disimpan admin TIDAK muncul di beranda sampai
@@ -211,7 +209,7 @@ class FaqPanel extends KomponenAdmin
         // juga — bukan hanya saat isi pertanyaannya disunting.
         CacheKatalog::tandaiBerubah('urutan faq diubah');
 
-        $this->pesan = 'Urutan diperbarui.';
+        $this->pesan = 'Order updated.';
     }
 
     public function hapus(int $id): void

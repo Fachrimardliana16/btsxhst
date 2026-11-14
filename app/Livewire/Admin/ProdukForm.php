@@ -9,6 +9,7 @@ use App\Models\ProductMedia;
 use App\Models\ProductVariant;
 use App\Support\CacheKatalog;
 use App\Support\CatatanAktivitas;
+use App\Support\HargaDolar;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -70,6 +71,9 @@ class ProdukForm extends KomponenAdmin
     public string $description_en = '';
 
     public string $base_price = '';
+
+    /** Harga yang diisi admin, dalam dolar. Kolom rupiah tetap dihitung untuk data lama. */
+    public string $base_price_usd = '';
 
     public string $weight_gram = '1000';
 
@@ -144,14 +148,16 @@ class ProdukForm extends KomponenAdmin
         $this->produkId = $produk->id;
         $this->category_id = $produk->category_id;
         $this->sku = (string) $produk->sku;
-        $this->title_id = (string) $produk->title_id;
-        $this->title_en = (string) $produk->title_en;
+        $this->title_id = (string) ($produk->title_en ?: $produk->title_id);
+        $this->title_en = '';
         $this->slug = (string) $produk->slug;
-        $this->excerpt_id = (string) $produk->excerpt_id;
-        $this->excerpt_en = (string) $produk->excerpt_en;
-        $this->description_id = (string) $produk->description_id;
-        $this->description_en = (string) $produk->description_en;
+        $this->excerpt_id = (string) ($produk->excerpt_en ?: $produk->excerpt_id);
+        $this->excerpt_en = '';
+        $this->description_id = (string) ($produk->description_en ?: $produk->description_id);
+        $this->description_en = '';
         $this->base_price = (string) $produk->base_price;
+        $this->base_price_usd = (string) ($produk->base_price_usd
+            ?? HargaDolar::dariRupiah($produk->base_price));
         $this->weight_gram = (string) $produk->weight_gram;
         $this->is_featured = (bool) $produk->is_featured;
         $this->is_published = (bool) $produk->is_published;
@@ -160,9 +166,11 @@ class ProdukForm extends KomponenAdmin
 
         $this->varian = $produk->variants->map(fn (ProductVariant $v) => [
             'id' => $v->id,
-            'nama_id' => (string) $v->variant_name_id,
-            'nama_en' => (string) $v->variant_name_en,
+            'nama_id' => (string) ($v->variant_name_en ?: $v->variant_name_id),
+            'nama_en' => '',
             'selisih' => (string) $v->price_adjustment,
+            'selisih_usd' => (string) ($v->price_adjustment_usd
+                ?? HargaDolar::dariRupiah($v->price_adjustment)),
             'stok' => (int) $v->stock_quantity,
             'ditahan' => (int) $v->reserved_quantity,
             'berat' => $v->weight_gram === null ? '' : (string) $v->weight_gram,
@@ -192,6 +200,7 @@ class ProdukForm extends KomponenAdmin
             'nama_id' => '',
             'nama_en' => '',
             'selisih' => '0',
+        'selisih_usd' => '0',
             'stok' => 0,
             'ditahan' => 0,
             'berat' => '',
@@ -246,55 +255,68 @@ class ProdukForm extends KomponenAdmin
                 Rule::unique('products', 'sku')->ignore($this->produkId),
             ],
             'title_id' => ['required', 'string', 'min:3', 'max:180'],
-            'title_en' => ['nullable', 'string', 'max:180'],
             'slug' => [
                 'required', 'string', 'max:200', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
                 Rule::unique('products', 'slug')->ignore($this->produkId),
             ],
             'excerpt_id' => ['nullable', 'string', 'max:300'],
-            'excerpt_en' => ['nullable', 'string', 'max:300'],
             'description_id' => ['nullable', 'string', 'max:20000'],
-            'description_en' => ['nullable', 'string', 'max:20000'],
-            'base_price' => ['required', 'numeric', 'min:0', 'max:999999999'],
+            'base_price' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'base_price_usd' => ['nullable', 'numeric', 'min:0', 'max:999999'],
             'weight_gram' => ['required', 'integer', 'min:1', 'max:300000'],
             'is_featured' => ['boolean'],
             'is_published' => ['boolean'],
             'spesifikasi' => ['array', 'max:12'],
             'spesifikasi.*.label_id' => ['nullable', 'string', 'max:60'],
             'spesifikasi.*.nilai_id' => ['nullable', 'string', 'max:180'],
-            'spesifikasi.*.label_en' => ['nullable', 'string', 'max:60'],
-            'spesifikasi.*.nilai_en' => ['nullable', 'string', 'max:180'],
         ], [
-            'category_id.required' => 'Pilih kategori produk.',
+            'category_id.required' => 'Choose a product category.',
             'category_id.exists' => __('site.msg.produk.kategori_tidak_ditemukan'),
             'sku.required' => __('site.msg.produk.sku_wajib'),
             'sku.regex' => __('site.msg.produk.sku_format'),
             'sku.unique' => __('site.msg.produk.sku_dipakai'),
             'title_id.required' => __('site.msg.produk.nama_id_wajib'),
-            'title_id.min' => 'Nama produk minimal tiga huruf.',
+            'title_id.min' => 'The product name must be at least three characters.',
             'slug.regex' => __('site.msg.kategori.slug_format'),
             'slug.unique' => __('site.msg.produk.slug_dipakai'),
             'base_price.required' => __('site.msg.produk.harga_wajib'),
             'base_price.numeric' => __('site.msg.produk.harga_angka'),
+            'base_price_usd.numeric' => __('site.msg.produk.harga_angka'),
             'weight_gram.required' => __('site.msg2.produk.berat_wajib'),
         ]);
+
+        // Admin mengisi harga dalam dolar. Kolom rupiah tetap diisi agar
+        // perhitungan lama dan data yang sudah ada tidak kehilangan acuan.
+        if (blank($this->base_price_usd) && blank($bersih['base_price'])) {
+            $this->addError('base_price_usd', 'Enter the product price in USD.');
+
+            return;
+        }
+
+        $hargaUsd = filled($this->base_price_usd)
+            ? (float) $this->base_price_usd
+            : (float) (HargaDolar::dariRupiah((float) $bersih['base_price']) ?? 0);
+        $hargaRupiah = filled($this->base_price_usd)
+            ? HargaDolar::keRupiah($hargaUsd)
+            : (float) $bersih['base_price'];
 
         // Dibersihkan sebelum transaksi: baris tanpa label tidak ikut disimpan,
         // dan hasil bersihnya dipakai baik untuk produk baru maupun yang diubah.
         $spesifikasi = $this->spesifikasiBersih();
 
-        DB::transaction(function () use ($bersih, $spesifikasi): void {
+        DB::transaction(function () use ($bersih, $spesifikasi, $hargaRupiah, $hargaUsd): void {
             $data = [
                 'category_id' => $bersih['category_id'],
                 'sku' => $bersih['sku'],
                 'title_id' => $bersih['title_id'],
-                'title_en' => $bersih['title_en'] ?: null,
+                'title_en' => $bersih['title_id'],
                 'slug' => $bersih['slug'],
                 'excerpt_id' => $bersih['excerpt_id'] ?: null,
-                'excerpt_en' => $bersih['excerpt_en'] ?: null,
+                'excerpt_en' => $bersih['excerpt_id'] ?: null,
                 'description_id' => $bersih['description_id'] ?: null,
-                'description_en' => $bersih['description_en'] ?: null,
-                'base_price' => $bersih['base_price'],
+                'description_en' => $bersih['description_id'] ?: null,
+                'base_price' => $hargaRupiah,
+                'base_price_usd' => $hargaUsd,
                 'weight_gram' => (int) $bersih['weight_gram'],
                 'is_featured' => $bersih['is_featured'],
                 'is_published' => $bersih['is_published'],
@@ -320,9 +342,10 @@ class ProdukForm extends KomponenAdmin
                 // gagal saat checkout — dan itu baru ketahuan oleh pembeli.
                 $varian = $produk->variants()->create([
                     'sku_variant' => $produk->sku.'-V1',
-                    'variant_name_id' => 'Standar',
+                    'variant_name_id' => 'Standard',
                     'variant_name_en' => 'Standard',
                     'price_adjustment' => 0,
+                    'price_adjustment_usd' => 0,
                     'stock_quantity' => 0,
                     'display_order' => 1,
                     'is_active' => true,
@@ -355,7 +378,7 @@ class ProdukForm extends KomponenAdmin
             }
         });
 
-        $this->pesan = 'Informasi dasar tersimpan.';
+        $this->pesan = 'Basic information saved.';
         $this->pesanTab = 'info';
 
         // Setelah tab pertama tersimpan, lanjutkan ke varian: produk tanpa
@@ -366,7 +389,7 @@ class ProdukForm extends KomponenAdmin
     public function periksaAntrean(): void
     {
         $this->muatUlangUrutanMedia();
-        $this->pesan = 'Daftar gambar diperbarui.';
+        $this->pesan = 'Image list refreshed.';
         $this->pesanTab = 'media';
     }
 
@@ -381,7 +404,7 @@ class ProdukForm extends KomponenAdmin
     public function ubahTerbit(): void
     {
         if ($this->produkId === null) {
-            $this->addError('umum', 'Simpan informasi dasar dulu.');
+            $this->addError('umum', 'Save the basic information first.');
 
             return;
         }
@@ -409,7 +432,7 @@ class ProdukForm extends KomponenAdmin
 
         CacheKatalog::tandaiProduk($produk, $jadi ? 'produk diterbitkan' : 'produk ditarik');
 
-        $this->pesan = $jadi ? 'Produk diterbitkan.' : __('site.msg2.produk.ditarik_singkat');
+        $this->pesan = $jadi ? 'Product published.' : __('site.msg2.produk.ditarik_singkat');
         $this->pesanTab = null;
     }
 
@@ -463,8 +486,8 @@ class ProdukForm extends KomponenAdmin
             'media' => $media,
             'sedangDiproses' => $sedangDiproses,
         ])->layout('layouts.admin', [
-            'judul' => $produk === null ? 'Produk Baru' : 'Sunting '.$produk->title_id,
-            'bagian' => 'Katalog',
+            'judul' => $produk === null ? 'New Product' : 'Edit '.$produk->title_id,
+            'bagian' => 'Catalog',
         ]);
     }
 }

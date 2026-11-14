@@ -209,6 +209,9 @@
         </script>
     @endif
 
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" href="/ikon-pwa-192.png">
+
     @if (filled($toko->teks('site_favicon')))
         <link rel="icon" href="{{ \App\Models\ProductMedia::urlMedia($toko->teks('site_favicon')) }}">
     @endif
@@ -238,7 +241,7 @@
     --}}
     @livewireStyles
 </head>
-<body class="min-h-screen bg-bg text-ink antialiased">
+<body class="situs-depan min-h-screen bg-bg text-ink antialiased">
 
     <a href="#konten-utama"
        class="visually-hidden focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-surface focus:px-4 focus:py-2 focus:text-ink">

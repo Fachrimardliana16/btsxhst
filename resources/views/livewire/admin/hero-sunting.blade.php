@@ -24,15 +24,15 @@
     {{-- ── Kepala ──────────────────────────────────────────────────── --}}
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="min-w-0">
-            <p class="part-no">Beranda · hero · urutan {{ $slide->display_order + 1 }}</p>
+            <p class="part-no">Homepage · hero · order {{ $slide->display_order + 1 }}</p>
             <h1 class="mt-1 font-display text-2xl font-semibold">
-                {{ $slide->title_id ?: '(tanpa judul)' }}
+                {{ $slide->title_en ?: ($slide->title_id ?: '(untitled)') }}
             </h1>
             <p class="mt-1 text-sm text-muted">
                 {{ $slide->media_type === 'video' ? __('site.admin.hero_sunting.video') : __('site.admin.hero_sunting.gambar') }} ·
-                {{ $slide->is_active ? 'aktif' : 'nonaktif' }}
+                {{ $slide->is_active ? 'active' : 'inactive' }}
                 @if ($slide->starts_at || $slide->ends_at)
-                    · berjadwal
+                    · scheduled
                 @endif
             </p>
         </div>
@@ -64,40 +64,20 @@
         {{-- ══ Kolom kiri: isian ══════════════════════════════════════ --}}
         <div class="space-y-5">
 
-            {{-- Dua bahasa --}}
+            {{-- Slide copy --}}
             <div class="plate space-y-4 p-4">
-                <div class="grid gap-4 lg:grid-cols-2">
-                    <div class="space-y-3">
-                        <p class="part-no">{{ __('site.admin.hero_sunting.bahasa_indonesia') }}</p>
+                <div class="space-y-3">
+                    <label class="block">
+                        <span class="text-sm">{{ __('site.admin.hero_sunting.judul') }} <span class="text-danger">*</span></span>
+                        <input type="text" wire:model="form.title_en" class="field mt-1" maxlength="120" />
+                        @error('form.title_en') <span class="field-error">{{ $message }}</span> @enderror
+                    </label>
 
-                        <label class="block">
-                            <span class="text-sm">{{ __('site.admin.hero_sunting.judul') }} <span class="text-danger">*</span></span>
-                            <input type="text" wire:model="form.title_id" class="field mt-1" maxlength="120" />
-                            @error('form.title_id') <span class="field-error">{{ $message }}</span> @enderror
-                        </label>
-
-                        <label class="block">
-                            <span class="text-sm">{{ __('site.admin.hero_sunting.subjudul') }}</span>
-                            <textarea wire:model="form.subtitle_id" rows="2" class="field mt-1" maxlength="300"></textarea>
-                            @error('form.subtitle_id') <span class="field-error">{{ $message }}</span> @enderror
-                        </label>
-                    </div>
-
-                    <div class="space-y-3">
-                        <p class="part-no">{{ __('site.admin.hero_sunting.english') }}</p>
-
-                        <label class="block">
-                            <span class="text-sm">Title <span class="text-danger">*</span></span>
-                            <input type="text" wire:model="form.title_en" class="field mt-1" maxlength="120" />
-                            @error('form.title_en') <span class="field-error">{{ $message }}</span> @enderror
-                        </label>
-
-                        <label class="block">
-                            <span class="text-sm">Subtitle</span>
-                            <textarea wire:model="form.subtitle_en" rows="2" class="field mt-1" maxlength="300"></textarea>
-                            @error('form.subtitle_en') <span class="field-error">{{ $message }}</span> @enderror
-                        </label>
-                    </div>
+                    <label class="block">
+                        <span class="text-sm">{{ __('site.admin.hero_sunting.subjudul') }}</span>
+                        <textarea wire:model="form.subtitle_en" rows="2" class="field mt-1" maxlength="300"></textarea>
+                        @error('form.subtitle_en') <span class="field-error">{{ $message }}</span> @enderror
+                    </label>
                 </div>
             </div>
 
@@ -106,8 +86,8 @@
                 <div>
                     <h2 class="font-display text-lg font-semibold">{{ __('site.admin.hero_sunting.tombol') }}</h2>
                     <p class="mt-0.5 text-xs text-dim">
-                        Keduanya opsional. Slide tanpa tombol tetap tampil — isi label saja bila belum tahu tujuannya,
-                        dan tombolnya tidak dirender sampai URL-nya diisi.
+                        Both are optional. A slide without buttons still shows — fill in the label alone if the destination is not decided yet,
+                        and the button is not rendered until its URL is filled in.
                     </p>
                 </div>
 
@@ -115,8 +95,8 @@
                     <div class="space-y-3">
                         <label class="block">
                             <span class="part-no">{{ __('site.admin.hero_sunting.label_utama_id') }}</span>
-                            <input type="text" wire:model="form.primary_button_label_id" class="field mt-1" maxlength="40" />
-                            @error('form.primary_button_label_id') <span class="field-error">{{ $message }}</span> @enderror
+                            <input type="text" wire:model="form.primary_button_label_en" class="field mt-1" maxlength="40" />
+                            @error('form.primary_button_label_en') <span class="field-error">{{ $message }}</span> @enderror
                         </label>
 
                         <label class="block">
@@ -131,8 +111,8 @@
                     <div class="space-y-3">
                         <label class="block">
                             <span class="part-no">{{ __('site.admin.hero_sunting.label_kedua_id') }}</span>
-                            <input type="text" wire:model="form.secondary_button_label_id" class="field mt-1" maxlength="40" />
-                            @error('form.secondary_button_label_id') <span class="field-error">{{ $message }}</span> @enderror
+                            <input type="text" wire:model="form.secondary_button_label_en" class="field mt-1" maxlength="40" />
+                            @error('form.secondary_button_label_en') <span class="field-error">{{ $message }}</span> @enderror
                         </label>
 
                         <label class="block">
@@ -143,18 +123,6 @@
                             @error('form.secondary_button_url') <span class="field-error">{{ $message }}</span> @enderror
                         </label>
                     </div>
-                </div>
-
-                <div class="grid gap-4 lg:grid-cols-2">
-                    <label class="block">
-                        <span class="part-no">{{ __('site.admin.hero_sunting.label_utama_en') }}</span>
-                        <input type="text" wire:model="form.primary_button_label_en" class="field mt-1" maxlength="40" />
-                    </label>
-
-                    <label class="block">
-                        <span class="part-no">{{ __('site.admin.hero_sunting.label_kedua_en') }}</span>
-                        <input type="text" wire:model="form.secondary_button_label_en" class="field mt-1" maxlength="40" />
-                    </label>
                 </div>
             </div>
 
@@ -172,50 +140,53 @@
 
                 @if ($form['media_type'] === 'image')
                     <div class="grid gap-4 lg:grid-cols-2">
-                        <label class="block">
-                            <span class="part-no">{{ __('site.admin.hero_sunting.gambar') }} desktop</span>
-                            <input type="file" wire:model="berkas{{ __('site.admin.hero_sunting.gambar') }}"
-                                   accept="image/jpeg,image/png,image/webp,image/avif" class="mt-2 w-full text-sm" />
-                            <span class="mt-1 block text-xs text-dim">
+                        <div class="block">
+                            <span class="part-no">Desktop image</span>
+                            <x-file-upload model="berkasGambar" crop="hero-desktop"
+                                           accept="image/jpeg,image/png,image/webp,image/avif"
+                                           title="Choose a desktop image or drop it here"
+                                           class="mt-2">
                                 @if (filled($slide->media_path))
-                                    Sudah ada. Unggah hanya bila ingin mengganti.
+                                    Already set. Upload only if you want to replace it.
                                 @else
-                                    Wajib untuk slide baru.
+                                    Required for a new slide.
                                 @endif
-                            </span>
-                            @error('berkas{{ __('site.admin.hero_sunting.gambar') }}') <span class="field-error">{{ $message }}</span> @enderror
-                        </label>
+                            </x-file-upload>
+                            @error('berkasGambar') <span class="field-error">{{ $message }}</span> @enderror
+                        </div>
 
                         <div class="block">
-                            <span class="part-no">{{ __('site.admin.hero_sunting.gambar') }} ponsel (opsional)</span>
-                            <input type="file" wire:model="berkas{{ __('site.admin.hero_sunting.ponsel') }}"
-                                   accept="image/jpeg,image/png,image/webp,image/avif" class="mt-2 w-full text-sm" />
-                            <span class="mt-1 block text-xs text-dim">
+                            <span class="part-no">Mobile image (optional)</span>
+                            <x-file-upload model="berkasPonsel" crop="hero-mobile"
+                                           accept="image/jpeg,image/png,image/webp,image/avif"
+                                           title="Choose a mobile image or drop it here"
+                                           class="mt-2">
                                 @if (filled($slide->media_path_mobile))
-                                    Sudah ada gambar ponsel sendiri. Bila dihapus, slide memakai gambar desktop.
+                                    A dedicated mobile image is set. If removed, the slide uses the desktop image.
                                 @else
-                                    Kosongkan bila tidak perlu — slide memakai gambar desktop.
+                                    Leave empty if not needed — the slide uses the desktop image.
                                 @endif
-                            </span>
-                            @error('berkas{{ __('site.admin.hero_sunting.ponsel') }}') <span class="field-error">{{ $message }}</span> @enderror
+                            </x-file-upload>
+                            @error('berkasPonsel') <span class="field-error">{{ $message }}</span> @enderror
 
                             @if (filled($slide->media_path_mobile))
                                 <label class="mt-2 flex items-center gap-2 text-xs text-danger">
-                                    <input type="checkbox" wire:model="hapus{{ __('site.admin.hero_sunting.ponsel') }}" class="h-3.5 w-3.5" />
+                                    <input type="checkbox" wire:model="hapusPonsel" class="h-3.5 w-3.5" />
                                     {{ __('site.admin.hero_sunting.buang_gambar_ponsel') }}
                                 </label>
                             @endif
                         </div>
                     </div>
                 @else
-                    <label class="block">
-                        <span class="part-no">{{ __('site.admin.hero_sunting.media') }} video</span>
-                        <input type="file" wire:model="berkas{{ __('site.admin.hero_sunting.video') }}" accept="video/mp4" class="mt-2 w-full text-sm" />
-                        <span class="mt-1 block text-xs text-dim">
-                            MP4, maksimum {{ round($videoMaksKb / 1024, 1) }} MB dan {{ $videoMaksDetik }} detik.
-                        </span>
-                        @error('berkas{{ __('site.admin.hero_sunting.video') }}') <span class="field-error">{{ $message }}</span> @enderror
-                    </label>
+                    <div class="block">
+                        <span class="part-no">Video</span>
+                        <x-file-upload model="berkasVideo" accept="video/mp4"
+                                       title="Choose an MP4 video or drop it here"
+                                       class="mt-2">
+                            MP4, maximum {{ round($videoMaksKb / 1024, 1) }} MB and {{ $videoMaksDetik }} seconds.
+                        </x-file-upload>
+                        @error('berkasVideo') <span class="field-error">{{ $message }}</span> @enderror
+                    </div>
                 @endif
             </div>
 
@@ -281,12 +252,12 @@
                     <div class="flex gap-1">
                         <button type="button"
                                 class="btn {{ $pratinjau === 'ponsel' ? 'btn-primary' : 'btn-ghost' }} btn-sm"
-                                wire:click="ubah{{ __('site.admin.hero_sunting.pratinjau') }}('ponsel')">
+                                wire:click="ubahPratinjau('ponsel')">
                             <x-ikon name="phone" :size="15" /> {{ __('site.admin.hero_sunting.ponsel') }}
                         </button>
                         <button type="button"
                                 class="btn {{ $pratinjau === 'desktop' ? 'btn-primary' : 'btn-ghost' }} btn-sm"
-                                wire:click="ubah{{ __('site.admin.hero_sunting.pratinjau') }}('desktop')">
+                                wire:click="ubahPratinjau('desktop')">
                             <x-ikon name="grid" :size="15" /> {{ __('site.admin.hero_sunting.desktop') }}
                         </button>
                     </div>
@@ -296,18 +267,18 @@
                     // {{ __('site.admin.hero_sunting.gambar') }} ponsel hanya dipakai bila ADA. Kalau kosong, slide
                     // memakai gambar desktop — dan pratinjau menampilkan hal
                     // yang sama dengan yang dilihat pengunjung.
-                    $berkas{{ __('site.admin.hero_sunting.pratinjau') }} = $slide->media_type === 'video'
+                    $berkasPratinjau = $slide->media_type === 'video'
                         ? ($slide->poster_path ?: $slide->media_path)
                         : ($pratinjau === 'ponsel' ? ($slide->media_path_mobile ?: $slide->media_path) : $slide->media_path);
-                    $url{{ __('site.admin.hero_sunting.pratinjau') }} = $this->urlMedia($berkas{{ __('site.admin.hero_sunting.pratinjau') }});
-                    $pakai{{ __('site.admin.hero_sunting.ponsel') }} = $pratinjau === 'ponsel' && filled($slide->media_path_mobile);
+                    $urlPratinjau = $this->urlMedia($berkasPratinjau);
+                    $pakaiPonsel = $pratinjau === 'ponsel' && filled($slide->media_path_mobile);
                 @endphp
 
                 <div class="mx-auto overflow-hidden border border-line-soft bg-sunken
                             {{ $pratinjau === 'ponsel' ? 'w-[280px] rounded-[24px]' : 'w-full rounded-[var(--r-kecil)]' }}">
                     <div class="relative {{ $pratinjau === 'ponsel' ? 'aspect-[9/16]' : 'aspect-[21/9]' }} bg-carbon">
-                        @if ($url{{ __('site.admin.hero_sunting.pratinjau') }})
-                            <img src="{{ $url{{ __('site.admin.hero_sunting.pratinjau') }} }}" alt=""
+                        @if ($urlPratinjau)
+                            <img src="{{ $urlPratinjau }}" alt=""
                                  class="absolute inset-0 h-full w-full object-cover"
                                  style="object-position: {{ round($form['focal_point_x'] * 100, 1) }}% {{ round($form['focal_point_y'] * 100, 1) }}%" />
                         @else
@@ -320,20 +291,20 @@
 
                         <div class="absolute inset-x-0 bottom-0 p-4">
                             <p class="font-display text-lg font-semibold text-white drop-shadow">
-                                {{ $form['title_id'] ?: '(judul Indonesia)' }}
+                                {{ $form['title_en'] ?: '(slide title)' }}
                             </p>
                             <p class="mt-1 line-clamp-2 text-xs text-white/80">
-                                {{ $form['subtitle_id'] ?: '(subjudul)' }}
+                                {{ $form['subtitle_en'] ?: '(subtitle)' }}
                             </p>
 
                             {{-- {{ __('site.admin.hero_sunting.tombol') }} hanya tampil bila URL-nya terisi — sama
                                  dengan perilaku di sisi depan. --}}
                             <div class="mt-3 flex flex-wrap gap-2">
-                                @if ($form['primary_button_label_id'] && trim((string) $form['primary_button_url']) !== '')
-                                    <span class="badge" style="color:#fff">{{ $form['primary_button_label_id'] }}</span>
+                                @if ($form['primary_button_label_en'] && trim((string) $form['primary_button_url']) !== '')
+                                    <span class="badge" style="color:#fff">{{ $form['primary_button_label_en'] }}</span>
                                 @endif
-                                @if ($form['secondary_button_label_id'] && trim((string) $form['secondary_button_url']) !== '')
-                                    <span class="badge" style="color:#fff">{{ $form['secondary_button_label_id'] }}</span>
+                                @if ($form['secondary_button_label_en'] && trim((string) $form['secondary_button_url']) !== '')
+                                    <span class="badge" style="color:#fff">{{ $form['secondary_button_label_en'] }}</span>
                                 @endif
                             </div>
                         </div>
@@ -341,14 +312,14 @@
                 </div>
 
                 <p class="text-center text-xs text-dim">
-                    @if (! $url{{ __('site.admin.hero_sunting.pratinjau') }})
-                        Belum ada berkas — tampilan bawaan dipakai.
-                    @elseif ($pakai{{ __('site.admin.hero_sunting.ponsel') }})
-                        Memakai gambar ponsel khusus.
+                    @if (! $urlPratinjau)
+                        No file yet — the default layout is used.
+                    @elseif ($pakaiPonsel)
+                        Using the dedicated mobile image.
                     @elseif ($pratinjau === 'ponsel')
-                        Tidak ada gambar ponsel — memakai gambar desktop.
+                        No mobile image — using the desktop image.
                     @else
-                        Memakai gambar desktop.
+                        Using the desktop image.
                     @endif
                 </p>
             </div>

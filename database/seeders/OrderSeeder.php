@@ -108,7 +108,7 @@ class OrderSeeder extends Seeder
                 'tax_amount' => $pajak,
                 'shipping_cost' => $ongkir,
                 'grand_total' => $total,
-                'currency' => 'IDR',
+                'currency' => 'USD',
                 'coupon_id' => $diskon > 0 ? $kupon?->id : null,
                 'shipping_address_snapshot' => $alamat,
                 'shipping_courier' => $status === StatusPesanan::Shipped || $status === StatusPesanan::Completed
@@ -275,7 +275,7 @@ class OrderSeeder extends Seeder
                 default => 'PENDING',
             },
             'amount' => $pesanan->grand_total,
-            'currency' => 'IDR',
+            'currency' => 'USD',
             'proof_path' => $pesanan->payment_method === MetodePembayaran::Manual
                 ? null : null,
             'payload_json' => ['sumber' => 'seeder', 'nomor_pesanan' => $pesanan->order_number],

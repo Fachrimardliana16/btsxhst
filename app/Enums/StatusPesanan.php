@@ -14,12 +14,12 @@ enum StatusPesanan: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending => 'Menunggu Bayar',
-            self::Paid => 'Dibayar',
-            self::Processing => 'Diproses',
-            self::Shipped => 'Dikirim',
-            self::Completed => 'Selesai',
-            self::Cancelled => 'Dibatalkan',
+            self::Pending => 'Awaiting Payment',
+            self::Paid => 'Paid',
+            self::Processing => 'Processing',
+            self::Shipped => 'Shipped',
+            self::Completed => 'Completed',
+            self::Cancelled => 'Cancelled',
         };
     }
 

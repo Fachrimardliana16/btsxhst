@@ -63,7 +63,7 @@ class CadanganPanel extends KomponenAdmin
                 // keberhasilan yang bisa dipercaya.
             }
 
-            $this->pesan = $keluaran !== '' ? $keluaran : 'Cadangan selesai dibuat.';
+            $this->pesan = $keluaran !== '' ? $keluaran : 'Backup created.';
 
             if (str_contains($keluaran, 'gagal') || str_contains($keluaran, 'dibatalkan')) {
                 $this->galat = $keluaran;

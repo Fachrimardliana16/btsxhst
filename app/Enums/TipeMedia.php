@@ -12,10 +12,10 @@ enum TipeMedia: string
     public function label(): string
     {
         return match ($this) {
-            self::Gambar => 'Gambar',
+            self::Gambar => 'Image',
             self::Video => 'Video',
-            self::Audio => 'Suara',
-            self::Model3d => 'Model 3D',
+            self::Audio => 'Audio',
+            self::Model3d => '3D Model',
         };
     }
 

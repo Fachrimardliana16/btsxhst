@@ -11,9 +11,9 @@ enum TipeKupon: string
     public function label(): string
     {
         return match ($this) {
-            self::Persen => 'Persentase',
-            self::Nominal => 'Potongan Nominal',
-            self::GratisOngkir => 'Gratis Ongkir',
+            self::Persen => 'Percentage',
+            self::Nominal => 'Fixed Amount',
+            self::GratisOngkir => 'Free Shipping',
         };
     }
 

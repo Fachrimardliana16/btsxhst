@@ -66,18 +66,18 @@
         [
             'kelompok' => __('site.admin.nav.penjualan'),
             'butir' => [
-                ['rute' => 'admin.orders.index', 'pola' => 'admin.orders.*', 'ikon' => 'receipt', 'label' => __('site.admin.nav.pesanan'), 'bawah' => true, 'super' => false],
+                ['rute' => 'admin.orders.index', 'pola' => 'admin.orders.*', 'ikon' => 'receipt', 'label' => 'Order', 'bawah' => true, 'super' => false],
                 ['rute' => 'admin.carts.index', 'pola' => 'admin.carts.*', 'ikon' => 'cart', 'label' => __('site.admin.nav.keranjang'), 'bawah' => false, 'super' => false],
                 ['rute' => 'admin.customers.index', 'pola' => 'admin.customers.*', 'ikon' => 'users', 'label' => __('site.admin.nav.pelanggan'), 'bawah' => false, 'super' => false],
-                ['rute' => 'admin.coupons.index', 'pola' => 'admin.coupons.*', 'ikon' => 'tag', 'label' => __('site.admin.nav.kupon'), 'bawah' => true, 'super' => false],
-                ['rute' => 'admin.kol.index', 'pola' => 'admin.kol.*', 'ikon' => 'share', 'label' => 'Performa KOL', 'bawah' => true, 'super' => false],
+                ['rute' => 'admin.coupons.index', 'pola' => 'admin.coupons.*', 'ikon' => 'tag', 'label' => __('site.admin.nav.kupon'), 'bawah' => false, 'super' => false],
+                ['rute' => 'admin.kol.index', 'pola' => 'admin.kol.*', 'ikon' => 'chart', 'label' => __('site.admin.nav.kol'), 'bawah' => false, 'super' => false],
             ],
         ],
         [
             'kelompok' => __('site.admin.nav.katalog'),
             'butir' => [
                 ['rute' => 'admin.products.index', 'pola' => 'admin.products.*', 'ikon' => 'box', 'label' => __('site.admin.nav.produk'), 'bawah' => true, 'super' => false],
-                ['rute' => 'admin.categories.index', 'pola' => 'admin.categories.*', 'ikon' => 'tag', 'label' => __('site.admin.nav.kategori'), 'bawah' => false, 'super' => false],
+                ['rute' => 'admin.categories.index', 'pola' => 'admin.categories.*', 'ikon' => 'tag', 'label' => 'Category', 'bawah' => true, 'super' => false],
             ],
         ],
         [
@@ -98,7 +98,7 @@
                 // Admin biasa boleh mengerjakan pesanan dan produk, bukan
                 // menaikkan peran orang lain.
                 ['rute' => 'admin.users.index', 'pola' => 'admin.users.*', 'ikon' => 'shield', 'label' => __('site.admin.nav.pengguna'), 'bawah' => false, 'super' => true],
-                ['rute' => 'admin.settings.index', 'pola' => 'admin.settings.*', 'ikon' => 'sliders', 'label' => __('site.admin.nav.pengaturan'), 'bawah' => false, 'super' => true],
+                ['rute' => 'admin.settings.index', 'pola' => 'admin.settings.*', 'ikon' => 'sliders', 'label' => 'Setting', 'bawah' => true, 'super' => true],
                 ['rute' => 'admin.security.index', 'pola' => 'admin.security.*', 'ikon' => 'shield', 'label' => __('site.admin.nav.keamanan'), 'bawah' => false, 'super' => true],
                 ['rute' => 'admin.backup.index', 'pola' => 'admin.backup.*', 'ikon' => 'download', 'label' => __('site.admin.nav.cadangan'), 'bawah' => false, 'super' => true],
             ],
@@ -119,13 +119,26 @@
         return $g;
     })->filter(fn (array $g): bool => $g['butir'] !== [])->all();
 
-    // Bar bawah hanya memuat lima yang paling sering dipakai.
-    $bawah = array_values(array_filter(
-        array_merge(...array_map(fn (array $g): array => $g['butir'], $menu)),
-        fn (array $m): bool => $m['bawah'],
-    ));
+    // Bar bawah hanya memuat lima yang paling sering dipakai, dalam urutan
+    // tetap. Urutannya ditulis eksplisit supaya tidak bergantung pada urutan
+    // kelompok di sidebar.
+    $butirMenu = array_merge(...array_map(fn (array $g): array => $g['butir'], $menu));
 
-    $bawah = array_slice($bawah, 0, 5);
+    $bawah = [];
+
+    foreach ([
+        'admin.dashboard',
+        'admin.orders.index',
+        'admin.categories.index',
+        'admin.products.index',
+        'admin.settings.index',
+    ] as $ruteBawah) {
+        $butir = array_values(array_filter($butirMenu, fn (array $m): bool => $m['rute'] === $ruteBawah));
+
+        if ($butir !== []) {
+            $bawah[] = $butir[0];
+        }
+    }
 
     $aktif = fn (string $pola) => request()->routeIs($pola);
 
@@ -170,12 +183,20 @@
     <aside class="fixed inset-y-0 left-0 z-40 hidden border-r border-line-soft bg-surface lg:flex lg:flex-col"
            :class="ringkas ? 'w-[72px]' : 'w-[260px]'">
 
-        <div class="flex h-16 flex-none items-center gap-2 border-b border-line-soft px-3">
+        <div class="flex h-16 flex-none items-center justify-center gap-2 border-b border-line-soft px-5">
             <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-2" wire:navigate>
-                <span class="torque-stripe flex-none" aria-hidden="true"><i></i><i></i><i></i></span>
-                <span x-show="!ringkas" class="truncate font-display text-lg font-semibold">
-                    {{ $toko->teks('site_name') }}
-                </span>
+                <img x-show="!ringkas" x-cloak src="/brand/logo-gelap.png"
+                     alt="{{ $toko->teks('site_name') }}"
+                     class="logo-tema-gelap h-5 w-auto max-w-[180px] object-contain">
+                <img x-show="!ringkas" x-cloak src="/brand/logo-terang.png"
+                     alt="{{ $toko->teks('site_name') }}"
+                     class="logo-tema-terang h-5 w-auto max-w-[180px] object-contain">
+                <img x-show="ringkas" x-cloak src="/brand/mark-gelap.png"
+                     alt="{{ $toko->teks('site_name') }}"
+                     class="logo-tema-gelap h-8 w-8 flex-none object-contain">
+                <img x-show="ringkas" x-cloak src="/brand/mark-terang.png"
+                     alt="{{ $toko->teks('site_name') }}"
+                     class="logo-tema-terang h-8 w-8 flex-none object-contain">
             </a>
         </div>
 
@@ -311,10 +332,12 @@
              x-transition:leave="transition-transform duration-150"
              x-transition:leave-end="-translate-x-full">
 
-            <div class="flex h-16 flex-none items-center justify-between border-b border-line-soft px-3">
+            <div class="flex h-16 flex-none items-center justify-between border-b border-line-soft px-5">
                 <div class="flex items-center gap-2">
-                    <span class="torque-stripe" aria-hidden="true"><i></i><i></i><i></i></span>
-                    <span class="font-display text-lg font-semibold">{{ $toko->teks('site_name') }}</span>
+                    <img src="/brand/logo-gelap.png" alt="{{ $toko->teks('site_name') }}"
+                         class="logo-tema-gelap h-5 w-auto max-w-[170px] object-contain">
+                    <img src="/brand/logo-terang.png" alt="{{ $toko->teks('site_name') }}"
+                         class="logo-tema-terang h-5 w-auto max-w-[170px] object-contain">
                 </div>
                 <button type="button" class="btn-icon" @click="drawer = false">
                     <x-ikon name="close" />
@@ -526,26 +549,28 @@
     </main>
 
     {{-- ── Bar navigasi bawah: tablet dan mobile ─────────────────── --}}
-    <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-line-soft bg-surface lg:hidden"
-         style="padding-bottom: env(safe-area-inset-bottom, 0px)"
-         aria-label="Navigasi panel">
-        <div class="grid grid-cols-5">
+    <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-line-soft bg-surface/95 pb-safe backdrop-blur lg:hidden"
+         aria-label="Admin navigation">
+        <div class="grid {{ count($bawah) === 5 ? 'grid-cols-5' : 'grid-cols-4' }}">
             @foreach ($bawah as $item)
                 @continue(! \Illuminate\Support\Facades\Route::has($item['rute']))
+                @php($aktifBawah = $aktif($item['pola']))
                 <a href="{{ route($item['rute']) }}" wire:navigate
-                   class="relative flex min-h-[60px] flex-col items-center justify-center gap-1
-                          {{ $aktif($item['pola']) ? 'text-accent' : 'text-muted' }}">
-                    <x-ikon :name="$item['ikon']" :size="22" />
-                    <span class="text-[length:var(--t-xs)] font-medium leading-none">{{ $item['label'] }}</span>
-
-                    @if ($aktif($item['pola']))
-                        <span class="absolute inset-x-6 top-0 h-0.5 bg-accent" aria-hidden="true"></span>
-                    @endif
+                   @if ($aktifBawah) aria-current="page" @endif
+                   class="flex min-h-[60px] flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium leading-none transition-colors
+                          {{ $aktifBawah ? 'text-accent' : 'text-muted hover:text-ink' }}">
+                    <span class="grid h-7 min-w-12 place-items-center rounded-full transition-colors
+                                 {{ $aktifBawah ? 'bg-accent/10' : '' }}">
+                        <x-ikon :name="$item['ikon']" class="h-5 w-5 flex-none" />
+                    </span>
+                    <span class="whitespace-nowrap {{ $aktifBawah ? 'font-semibold' : '' }}">{{ $item['label'] }}</span>
                 </a>
             @endforeach
         </div>
     </nav>
 </div>
+
+@include('partials.admin.pemotong-gambar')
 
     @livewireScripts
 </body>

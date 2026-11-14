@@ -143,13 +143,14 @@ class DataTerstruktur
                 ];
 
                 // Logo: mesin pencari menampilkannya di panel pengetahuan, dan
-                // hanya menerima URL absolut.
-                $logo = $p->teks('site_logo_light', '');
+                // hanya menerima URL absolut. Bila panel belum diisi, logo
+                // merek bawaan dipakai supaya data terstruktur tidak kosong.
+                $logo = $p->teks('site_logo_light', '') ?: $p->teks('site_logo_dark', '');
 
-                if (filled($logo)) {
-                    $data['logo'] = str_starts_with($logo, 'http') ? $logo : url($logo);
-                    $data['image'] = $data['logo'];
-                }
+                $data['logo'] = str_starts_with($logo, 'http')
+                    ? $logo
+                    : url(\App\Models\ProductMedia::urlMedia($logo) ?: '/brand/logo-gelap.png');
+                $data['image'] = $data['logo'];
 
                 $telepon = $p->teks('phone_number', '');
 

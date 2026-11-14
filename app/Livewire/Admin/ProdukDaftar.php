@@ -227,7 +227,7 @@ class ProdukDaftar extends KomponenAdmin
         CacheKatalog::tandaiBerubah($terbit ? 'produk massal diterbitkan' : 'produk massal ditarik');
 
         $this->pesan = $terbit
-            ? $berhasil.' produk diterbitkan.'
+            ? $berhasil.' products published.'
             : $berhasil.' products removed from the catalog.';
 
         $this->terpilih = [];
@@ -244,7 +244,7 @@ class ProdukDaftar extends KomponenAdmin
         CacheKatalog::tandaiBerubah('unggulan massal diubah');
 
         $this->pesan = $unggulan
-            ? $berhasil.' produk ditandai unggulan.'
+            ? $berhasil.' products marked as featured.'
             : $berhasil.' products are no longer featured.';
 
         $this->terpilih = [];
@@ -275,7 +275,7 @@ class ProdukDaftar extends KomponenAdmin
 
         CacheKatalog::tandaiBerubah('produk massal dipindah kategori');
 
-        $this->pesan = $berhasil.' produk dipindahkan ke kategori baru.';
+        $this->pesan = $berhasil.' products moved to the new category.';
         $this->terpilih = [];
         $this->catatan = [];
     }
@@ -296,7 +296,7 @@ class ProdukDaftar extends KomponenAdmin
             $pernahDipesan = DB::table('order_items')->where('product_id', $produk->id)->exists();
 
             if ($pernahDipesan) {
-                $this->catatan[] = $produk->title_id.' dilewati: sudah pernah dipesan. Tarik saja dari katalog.';
+                $this->catatan[] = $produk->title_id.' skipped: it has already been ordered. Remove it from the catalog instead.';
 
                 continue;
             }
@@ -351,7 +351,7 @@ class ProdukDaftar extends KomponenAdmin
         CatatanAktivitas::catat('produk.dihapus', ['sku' => $produk->sku]);
         CacheKatalog::tandaiBerubah('produk dihapus');
 
-        $this->pesan = 'Produk "'.$produk->title_id.'" dihapus.';
+        $this->pesan = 'Product "'.$produk->title_id.'" deleted.';
     }
 
     /** Menyalin produk beserta variannya sebagai draf baru. */
@@ -421,7 +421,7 @@ class ProdukDaftar extends KomponenAdmin
             return $baru;
         });
 
-        $this->pesan = 'Produk disalin sebagai draf "'.$produk->title_id.'". Images are not copied.';
+        $this->pesan = 'Product copied as draft "'.$produk->title_id.'". Images are not copied.';
     }
 
     public function ubahTerbitSatu(int $id): void
@@ -429,7 +429,7 @@ class ProdukDaftar extends KomponenAdmin
         $produk = Product::query()->withCount('variants')->findOrFail($id);
 
         if (! $produk->is_published && $produk->variants_count === 0) {
-            $this->addError('umum', $produk->title_id.' belum punya varian, jadi belum bisa diterbitkan.');
+            $this->addError('umum', $produk->title_id.' has no variants yet, so it cannot be published.');
 
             return;
         }
@@ -443,7 +443,7 @@ class ProdukDaftar extends KomponenAdmin
 
         CacheKatalog::tandaiProduk($produk, $jadi ? 'produk diterbitkan' : 'produk ditarik');
 
-        $this->pesan = $jadi ? 'Produk diterbitkan.' : __('site.msg2.produk.ditarik_singkat');
+        $this->pesan = $jadi ? 'Product published.' : __('site.msg2.produk.ditarik_singkat');
     }
 
     // ── Kueri ───────────────────────────────────────────────────────
@@ -509,6 +509,6 @@ class ProdukDaftar extends KomponenAdmin
                     ->whereRaw('COALESCE((select sum(stock_quantity - reserved_quantity) from product_variants where product_variants.product_id = products.id and is_active = 1), 0) <= 0')
                     ->count(),
             ],
-        ])->layout('layouts.admin', ['judul' => 'Produk', 'bagian' => 'Katalog']);
+        ])->layout('layouts.admin', ['judul' => 'Products', 'bagian' => 'Catalog']);
     }
 }

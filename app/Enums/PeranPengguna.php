@@ -11,7 +11,7 @@ enum PeranPengguna: string
     public function label(): string
     {
         return match ($this) {
-            self::Customer => 'Pelanggan',
+            self::Customer => 'Customer',
             self::Admin => 'Admin',
             self::SuperAdmin => 'Super Admin',
         };

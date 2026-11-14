@@ -35,7 +35,7 @@
                     <input type="date" x-model="dari" class="field !min-h-[36px] !w-auto py-1 text-[length:var(--t-xs)]">
                 </label>
                 <label class="flex items-center gap-1.5 text-xs text-muted">
-                    <span>s/d</span>
+                    <span>to</span>
                     <input type="date" x-model="ke" class="field !min-h-[36px] !w-auto py-1 text-[length:var(--t-xs)]">
                 </label>
 
@@ -62,10 +62,10 @@
     {{-- ── Angka kerja hari ini ────────────────────────────────────── --}}
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
         @foreach ([
-            ['label' => 'Perlu dikirim', 'nilai' => number_format($ringkas['perluDikirim'], 0, ',', '.'), 'ikon' => 'box', 'rute' => route('admin.orders.index', ['status' => 'paid'])],
-            ['label' => 'Belum dibayar', 'nilai' => number_format($ringkas['belumBayar'], 0, ',', '.'), 'ikon' => 'clock', 'rute' => route('admin.orders.index', ['status' => 'pending'])],
-            ['label' => 'Uang belum masuk', 'nilai' => rupiah($ringkas['nilaiBelumMasuk']), 'ikon' => 'chart', 'rute' => route('admin.orders.index', ['bayar' => 'unpaid'])],
-            ['label' => 'Selesai bulan ini', 'nilai' => number_format($ringkas['selesaiBulanIni'], 0, ',', '.'), 'ikon' => 'check', 'rute' => route('admin.orders.index', ['status' => 'completed'])],
+            ['label' => 'To ship', 'nilai' => number_format($ringkas['perluDikirim'], 0, ',', '.'), 'ikon' => 'box', 'rute' => route('admin.orders.index', ['status' => 'paid'])],
+            ['label' => 'Unpaid', 'nilai' => number_format($ringkas['belumBayar'], 0, ',', '.'), 'ikon' => 'clock', 'rute' => route('admin.orders.index', ['status' => 'pending'])],
+            ['label' => 'Money not in yet', 'nilai' => dolar($ringkas['nilaiBelumMasuk']), 'ikon' => 'chart', 'rute' => route('admin.orders.index', ['bayar' => 'unpaid'])],
+            ['label' => 'Completed this month', 'nilai' => number_format($ringkas['selesaiBulanIni'], 0, ',', '.'), 'ikon' => 'check', 'rute' => route('admin.orders.index', ['status' => 'completed'])],
         ] as $k)
             <a href="{{ $k['rute'] }}" class="plate plate-interaktif p-4">
                 <div class="flex items-center justify-between">
@@ -81,7 +81,7 @@
     <div class="-mx-3 overflow-x-auto px-3 lg:mx-0 lg:px-0">
         <div class="flex min-w-max gap-1 border-b border-line-soft">
             @php
-                $tabStatus = ['semua' => 'Semua'] + collect(\App\Enums\Status{{ __('site.admin.pesanan_daftar.judul') }}::cases())
+                $tabStatus = ['semua' => 'All'] + collect(\App\Enums\StatusPesanan::cases())
                     ->mapWithKeys(fn ($s) => [$s->value => $s->label()])
                     ->all();
             @endphp
@@ -124,7 +124,7 @@
             <button type="button" @click="bukaBayar = !bukaBayar; bukaUrut = false"
                     class="btn btn-outline" aria-haspopup="true" :aria-expanded="bukaBayar">
                 <x-ikon name="card" :size="16" />
-                {{ \App\Enums\StatusPembayaran::tryFrom($bayar)?->label() ?? 'Semua pembayaran' }}
+                {{ \App\Enums\StatusPembayaran::tryFrom($bayar)?->label() ?? 'All payments' }}
                 <x-ikon name="chevron-down" :size="14" class="text-dim" />
             </button>
 
@@ -132,7 +132,7 @@
                  class="plate absolute right-0 z-20 mt-1 w-52 overflow-hidden p-1 shadow-lg">
                 <button type="button" wire:click="$set('bayar', 'semua')" @click="bukaBayar = false"
                         class="flex w-full items-center justify-between gap-2 rounded-[var(--r-kecil)] px-3 py-2 text-left text-sm hover:bg-sunken">
-                    Semua pembayaran
+                    All payments
                     @if ($bayar === 'semua') <x-ikon name="check" :size="15" class="text-accent" /> @endif
                 </button>
                 @foreach (\App\Enums\StatusPembayaran::cases() as $s)
@@ -151,17 +151,17 @@
                     class="btn btn-outline" aria-haspopup="true" :aria-expanded="bukaUrut">
                 <x-ikon name="sliders" :size="16" />
                 {{ match ($urut) {
-                    'terlama' => 'Terlama',
-                    'terbesar' => 'Nilai terbesar',
-                    'kedaluwarsa' => 'Hampir batal',
-                    default => 'Terbaru',
+                    'terlama' => 'Oldest',
+                    'terbesar' => 'Highest value',
+                    'kedaluwarsa' => 'About to expire',
+                    default => 'Newest',
                 } }}
                 <x-ikon name="chevron-down" :size="14" class="text-dim" />
             </button>
 
             <div x-show="bukaUrut" x-cloak @click.outside="bukaUrut = false"
                  class="plate absolute right-0 z-20 mt-1 w-52 overflow-hidden p-1 shadow-lg">
-                @foreach (['terbaru' => 'Terbaru', 'terlama' => 'Terlama', 'terbesar' => 'Nilai terbesar', 'kedaluwarsa' => 'Hampir batal'] as $nilai => $label)
+                @foreach (['terbaru' => 'Newest', 'terlama' => 'Oldest', 'terbesar' => 'Highest value', 'kedaluwarsa' => 'About to expire'] as $nilai => $label)
                     <button type="button" wire:click="$set('urut', '{{ $nilai }}')" @click="bukaUrut = false"
                             class="flex w-full items-center justify-between gap-2 rounded-[var(--r-kecil)] px-3 py-2 text-left text-sm hover:bg-sunken">
                         {{ $label }}
@@ -193,7 +193,7 @@
 
             <button type="button" id="tombol-cetak-banyak" class="btn btn-primary" disabled>
                 <x-ikon name="printer" :size="16" />
-                {{ __('site.admin.pesanan_daftar.cetak_resi') }} terpilih
+                {{ __('site.admin.pesanan_daftar.cetak_resi') }} selected
             </button>
         </div>
     </div>
@@ -207,7 +207,7 @@
 
                 {{-- Lapisan tautan: seluruh kartu membuka detail. --}}
                 <a href="{{ route('admin.orders.show', $o->ulid) }}" wire:navigate
-                   class="absolute inset-0 z-0" aria-label="Buka pesanan {{ $o->order_number }}"></a>
+                   class="absolute inset-0 z-0" aria-label="Open order {{ $o->order_number }}"></a>
 
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="min-w-0">
@@ -224,22 +224,22 @@
 
                             @if ($sisa !== null)
                                 <span class="badge {{ $sisa <= 6 ? 'badge-danger' : 'badge-neutral' }}">
-                                    {{ $sisa <= 0 ? 'lewat batas' : $sisa.' jam lagi' }}
+                                    {{ $sisa <= 0 ? 'past due' : $sisa.' hours left' }}
                                 </span>
                             @endif
                         </div>
 
                         <p class="mt-1.5 truncate text-sm font-medium">{{ $this->pembeli($o) }}</p>
                         <p class="truncate text-xs text-muted">
-                            {{ $this->kontak($o) ?? 'tanpa kontak' }}
-                            · {{ $o->jumlahItem() }} barang
+                            {{ $this->kontak($o) ?? 'no contact' }}
+                            · {{ $o->jumlahItem() }} items
                             · {{ $o->created_at->format('d M Y H:i') }}
                         </p>
                     </div>
 
                     <div class="flex-none text-right">
-                        <p class="tech text-lg font-medium">{{ rupiah($o->grand_total) }}</p>
-                        <p class="part-no">{{ $o->payment_method?->label() ?? 'belum {{ __('site.admin.pesanan_daftar.dipilih') }}' }}</p>
+                        <p class="tech text-lg font-medium">{{ dolar($o->grand_total) }}</p>
+                        <p class="part-no">{{ $o->payment_method?->label() ?? __('site.admin.pesanan_daftar.belum_dipilih') }}</p>
                     </div>
                 </div>
 
@@ -253,14 +253,14 @@
                     @endforeach
 
                     @if ($o->items->count() > 3)
-                        <li class="text-dim">+{{ $o->items->count() - 3 }} lainnya</li>
+                        <li class="text-dim">+{{ $o->items->count() - 3 }} more</li>
                     @endif
                 </ul>
 
                 {{-- Tindakan cepat, di atas lapisan tautan.
 
                      Di ponsel tombolnya tersusun sebagai ikon yang ditekan ke
-                     kanan, bukan bilah yang berpindah baris: "{{ __('site.admin.pesanan_daftar.tandai_{{ __('site.admin.pesanan_daftar.lunas') }}') }}"
+                     kanan, bukan bilah yang berpindah baris: "{{ __('site.admin.pesanan_daftar.tandai_lunas') }}"
                      yang panjang memakan lebar penuh dan mendorong {{ __('site.admin.pesanan_daftar.detail') }}
                      serta {{ __('site.admin.pesanan_daftar.cetak_resi') }} ke baris berikutnya, sehingga tiga
                      tombol terlihat seperti tiga baris — padahal cuma satu
@@ -283,14 +283,15 @@
                                data-cetak-resi value="{{ $o->ulid }}">
                         <span class="hidden sm:inline">{{ __('site.admin.pesanan_daftar.pilih_cetak') }}</span>
                     </label>
-                    @if ($o->status === \App\Enums\Status{{ __('site.admin.pesanan_daftar.judul') }}::Pending)
+                    @if ($o->status === \App\Enums\StatusPesanan::Pending)
                         <button type="button" class="btn btn-primary sm:!px-4"
                                 wire:click="tandaiDibayar({{ $o->id }})"
+                                wire:confirm="Mark order {{ $o->order_number }} as paid?"
                                 wire:loading.attr="disabled" wire:target="tandaiDibayar({{ $o->id }})"
-                                title="{{ __('site.admin.pesanan_daftar.tandai_{{ __('site.admin.pesanan_daftar.lunas') }}') }}">
+                                title="{{ __('site.admin.pesanan_daftar.tandai_lunas') }}">
                             <x-ikon name="check" :size="16" />
-                            <span class="hidden sm:inline">{{ __('site.admin.pesanan_daftar.tandai_{{ __('site.admin.pesanan_daftar.lunas') }}') }}</span>
-                            <span class="sr-only sm:hidden">{{ __('site.admin.pesanan_daftar.tandai_{{ __('site.admin.pesanan_daftar.lunas') }}') }}</span>
+                            <span class="hidden sm:inline">{{ __('site.admin.pesanan_daftar.tandai_lunas') }}</span>
+                            <span class="sr-only sm:hidden">{{ __('site.admin.pesanan_daftar.tandai_lunas') }}</span>
                         </button>
                     @endif
 

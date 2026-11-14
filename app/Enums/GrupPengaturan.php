@@ -5,6 +5,7 @@ namespace App\Enums;
 enum GrupPengaturan: string
 {
     case Identitas = 'identity';
+    case Konten = 'konten';
     case Kontak = 'contact';
     case Sosial = 'social';
     case Pembayaran = 'payment';
@@ -15,13 +16,14 @@ enum GrupPengaturan: string
     public function label(): string
     {
         return match ($this) {
-            self::Identitas => 'Identitas Situs',
-            self::Kontak => 'Kontak dan Lokasi',
-            self::Sosial => 'Media Sosial',
-            self::Pembayaran => 'Pembayaran',
+            self::Identitas => 'Site Identity',
+            self::Konten => 'Page Content',
+            self::Kontak => 'Contact & Location',
+            self::Sosial => 'Social Media',
+            self::Pembayaran => 'Payment',
             self::Email => 'Email (SMTP)',
-            self::Notifikasi => 'Notifikasi',
-            self::Lanjutan => 'Lanjutan',
+            self::Notifikasi => 'Notifications',
+            self::Lanjutan => 'Advanced',
         };
     }
 
@@ -29,6 +31,7 @@ enum GrupPengaturan: string
     {
         return match ($this) {
             self::Identitas => 'badge',
+            self::Konten => 'info',
             self::Kontak => 'phone',
             self::Sosial => 'share',
             self::Pembayaran => 'card',

@@ -11,14 +11,14 @@
             <p class="part-no">{{ __('site.admin.keamanan.eyebrow') }}</p>
             <h1 class="mt-1 font-display text-2xl font-semibold">{{ __('site.admin.keamanan.judul') }}</h1>
             <p class="mt-1 text-sm text-muted">
-                {{ number_format($ringkas['total'], 0, ',', '.') }} kejadian dalam {{ $hari }} hari terakhir.
-                Alamat disimpan sebagai sidik jari, bukan alamat asli.
+                {{ number_format($ringkas['total']) }} events in the last {{ $hari }} days.
+                Addresses are stored as fingerprints, not as the original address.
             </p>
         </div>
 
         @if ($percobaanTerkunci > 0)
             <div class="plate border-l-2 border-warn px-3 py-2 text-[length:var(--t-sm)]" role="status">
-                <span class="tech text-warn">{{ $percobaanTerkunci }}</span> alamat sedang terkunci sementara
+                <span class="tech text-warn">{{ $percobaanTerkunci }}</span> {{ __('site.admin.keamanan.terkunci_sementara') }}
             </div>
         @endif
     </div>
@@ -35,9 +35,9 @@
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
         @foreach ([
             ['label' => __('site.admin.keamanan.kejadian'), 'nilai' => $ringkas['total'], 'ikon' => 'activity'],
-            ['label' => 'Gagal masuk', 'nilai' => $ringkas['gagalMasuk'], 'ikon' => 'lock'],
-            ['label' => __('site.admin.keamanan.blokir') . ' {{ __('site.admin.keamanan.aktif') }}', 'nilai' => $ringkas['blokirAktif'], 'ikon' => 'shield'],
-            ['label' => 'Akses tidak sah', 'nilai' => $ringkas['aksesTidakSah'], 'ikon' => 'alert'],
+            ['label' => 'Failed sign-ins', 'nilai' => $ringkas['gagalMasuk'], 'ikon' => 'lock'],
+            ['label' => __('site.admin.keamanan.blokir').' '.__('site.admin.keamanan.aktif'), 'nilai' => $ringkas['blokirAktif'], 'ikon' => 'shield'],
+            ['label' => 'Unauthorized access', 'nilai' => $ringkas['aksesTidakSah'], 'ikon' => 'alert'],
         ] as $k)
             <div class="plate p-4">
                 <div class="flex items-center justify-between">
@@ -52,8 +52,8 @@
     {{-- Grafik {{ __('site.admin.keamanan.jam_24') }} --}}
     <div class="plate p-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
-            <p class="text-sm font-medium">{{ __('site.admin.keamanan.kejadian') }} per jam, {{ __('site.admin.keamanan.jam_24') }} terakhir</p>
-            <p class="part-no">puncak {{ $puncakGrafik }}</p>
+            <p class="text-sm font-medium">{{ __('site.admin.keamanan.kejadian_per_jam') }}</p>
+            <p class="part-no">peak {{ $puncakGrafik }}</p>
         </div>
 
         <div class="mt-3 flex h-24 items-end gap-0.5" role="img"
@@ -62,7 +62,7 @@
                 @php $tinggi = $g['jumlah'] === 0 ? 2 : max(6, (int) round($g['jumlah'] / $puncakGrafik * 100)); @endphp
                 <div class="flex-1 rounded-t-sm {{ $g['jumlah'] > 0 ? 'bg-accent' : 'bg-line-soft' }}"
                      style="height: {{ $tinggi }}%"
-                     title="{{ $g['jam'] }}:00 — {{ $g['jumlah'] }} kejadian"></div>
+                     title="{{ $g['jam'] }}:00 — {{ $g['jumlah'] }} events"></div>
             @endforeach
         </div>
 
@@ -78,7 +78,7 @@
             <div>
                 <p class="text-sm font-medium">{{ __('site.admin.keamanan.alamat_diblokir') }}</p>
                 <p class="text-xs text-dim">
-                    Cari baris pada tabel kejadian di bawah, {{ __('site.admin.keamanan.salin') }} sidik jarinya, lalu tempel untuk memblokir.
+                    {{ __('site.admin.keamanan.cara_blokir') }}
                 </p>
             </div>
 
@@ -94,10 +94,10 @@
                 <input type="text" id="hash-blokir" class="field tech min-w-[240px] flex-1 text-xs"
                        placeholder="{{ __('site.admin.keamanan.sidik_jari_placeholder') }}"
                        x-data
-                       x-on:input="$wire.set('hash{{ __('site.admin.keamanan.blokir') }}', $event.target.value)"
-                       aria-label="{{ __('site.admin.keamanan.sidik_jari') }} alamat untuk diblokir">
+                       x-on:input="$wire.set('hashBlokir', $event.target.value)"
+                       aria-label="{{ __('site.admin.keamanan.sidik_jari_input') }}">
                 <select class="field w-auto text-xs" x-data
-                        x-on:change="$wire.set('jam{{ __('site.admin.keamanan.blokir') }}', $event.target.value)"
+                        x-on:change="$wire.set('jamBlokir', $event.target.value)"
                         aria-label="{{ __('site.admin.keamanan.lama_blokir') }}">
                     <option value="1">{{ __('site.admin.keamanan.jam_1') }}</option>
                     <option value="24" selected>{{ __('site.admin.keamanan.jam_24') }}</option>
@@ -138,16 +138,16 @@
                                     {{ $b['sampai']?->translatedFormat('d M Y, H:i') }}
                                 </td>
                                 <td class="p-3">
-                                    @if ($b[__('site.admin.keamanan.aktif')])
+                                    @if ($b['aktif'])
                                         <span class="rounded-full bg-danger/12 px-2 py-0.5 text-xs text-danger">{{ __('site.admin.keamanan.aktif') }}</span>
                                     @else
                                         <span class="rounded-full bg-sunken px-2 py-0.5 text-xs text-muted">{{ __('site.admin.keamanan.kedaluwarsa') }}</span>
                                     @endif
                                 </td>
                                 <td class="p-3 text-right">
-                                    @if ($b[__('site.admin.keamanan.aktif')])
-                                        <button type="button" wire:click="buka{{ __('site.admin.keamanan.blokir') }}('{{ $b['hash'] }}')"
-                                                wire:confirm="{{ __('site.admin.keamanan.buka_blokir') }} alamat ini?"
+                                    @if ($b['aktif'])
+                                        <button type="button" wire:click="bukaBlokir('{{ $b['hash'] }}')"
+                                                wire:confirm="Unblock this address?"
                                                 class="btn btn-outline btn-sm">{{ __('site.admin.keamanan.buka_blokir') }}</button>
                                     @endif
                                 </td>
@@ -162,7 +162,7 @@
     {{-- Saringan --}}
     <div class="plate flex flex-wrap items-center gap-2 p-3">
         <span class="part-no">{{ __('site.admin.keamanan.rentang') }}</span>
-        @foreach (['1' => __('site.admin.keamanan.jam_24'), '7' => __('site.admin.keamanan.hari_7'), '30' => '30 hari', '90' => '90 hari'] as $nilai => $label)
+        @foreach (['1' => __('site.admin.keamanan.jam_24'), '7' => __('site.admin.keamanan.hari_7'), '30' => '30 days', '90' => '90 days'] as $nilai => $label)
             <button type="button" wire:click="aturHari('{{ $nilai }}')"
                     class="btn {{ $hari === $nilai ? 'btn-primary' : 'btn-outline' }} btn-sm">{{ $label }}</button>
         @endforeach
@@ -222,11 +222,11 @@
                                     <span class="inline-flex items-center gap-1.5">
                                         <span class="h-1.5 w-1.5 rounded-full
                                             {{ match ($log->event_type) {
-                                                \App\Enums\Tipe{{ __('site.admin.keamanan.kejadian') }}{{ __('site.admin.keamanan.judul') }}::LoginGagal,
-                                                \App\Enums\Tipe{{ __('site.admin.keamanan.kejadian') }}{{ __('site.admin.keamanan.judul') }}::BruteForceDiblokir,
-                                                \App\Enums\Tipe{{ __('site.admin.keamanan.kejadian') }}{{ __('site.admin.keamanan.judul') }}::AksesTidakSah,
-                                                \App\Enums\Tipe{{ __('site.admin.keamanan.kejadian') }}{{ __('site.admin.keamanan.judul') }}::DuaFaktorGagal => 'bg-danger',
-                                                \App\Enums\Tipe{{ __('site.admin.keamanan.kejadian') }}{{ __('site.admin.keamanan.judul') }}::LoginBerhasil => 'bg-ok',
+                                                \App\Enums\TipeKejadianKeamanan::LoginGagal,
+                                                \App\Enums\TipeKejadianKeamanan::BruteForceDiblokir,
+                                                \App\Enums\TipeKejadianKeamanan::AksesTidakSah,
+                                                \App\Enums\TipeKejadianKeamanan::DuaFaktorGagal => 'bg-danger',
+                                                \App\Enums\TipeKejadianKeamanan::LoginBerhasil => 'bg-ok',
                                                 default => 'bg-warn',
                                             } }}"></span>
                                         {{ $log->event_type->label() }}
@@ -242,7 +242,7 @@
                                     </code>
                                     <button type="button"
                                             x-data
-                                            x-on:click="navigator.clipboard.writeText('{{ $log->ip_hash }}').then(() => $el.textContent = 'ter{{ __('site.admin.keamanan.salin') }}').catch(() => $el.textContent = 'gagal')"
+                                            x-on:click="navigator.clipboard.writeText('{{ $log->ip_hash }}').then(() => $el.textContent = 'copied').catch(() => $el.textContent = 'failed')"
                                             class="ml-1 text-[length:var(--t-xs)] text-accent hover:underline">{{ __('site.admin.keamanan.salin') }}</button>
                                 </td>
 
@@ -253,7 +253,7 @@
                                 <td class="p-3 text-xs text-muted">
                                     {{ $log->payload_summary ?: '—' }}
                                     @if ($log->user)
-                                        <span class="block text-dim">oleh {{ $log->user->name }}</span>
+                                        <span class="block text-dim">by {{ $log->user->name }}</span>
                                     @endif
                                 </td>
                             </tr>
@@ -262,15 +262,21 @@
                 </table>
             </div>
 
-            @if ($daftar->hasPages())
-                <div class="border-t border-line-soft p-3">{{ $daftar->links() }}</div>
-            @endif
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft p-3">
+                <p class="tech text-xs text-dim">
+                    Showing {{ $daftar->firstItem() }}–{{ $daftar->lastItem() }} of {{ $daftar->total() }} events
+                </p>
+
+                @if ($daftar->hasPages())
+                    {{ $daftar->links() }}
+                @endif
+            </div>
         @endif
     </div>
 
     <p class="text-xs text-dim">
-        100 kejadian terakhir ditampilkan per halaman. Alamat IP tidak tersimpan dalam bentuk asli:
-        yang ada hanya HMAC-nya, sehingga tidak dapat dibalik menjadi alamat. Membuka blokir tetap
-        bekerja karena memakai sidik jari yang sama.
+        25 events are shown per page. IP addresses are not stored in raw form:
+        only their HMAC is kept, so they cannot be reversed into an address. Unblocking still
+        works because it uses the same fingerprint.
     </p>
 </div>

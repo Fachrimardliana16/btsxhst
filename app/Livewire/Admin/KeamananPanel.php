@@ -106,12 +106,12 @@ class KeamananPanel extends KomponenAdmin
 
         Keamanan::catat(
             TipeKejadianKeamanan::AksiAdmin,
-            ringkasan: 'Blokir dibuka manual oleh '.auth()->user()?->name.': '.substr($hash, 0, 12),
+            ringkasan: 'Block lifted manually by '.auth()->user()?->name.': '.substr($hash, 0, 12),
         );
 
         CatatanAktivitas::catat('keamanan.blokir-dibuka', ['ip_hash' => substr($hash, 0, 16)]);
 
-        $this->pesan = 'Blokir dibuka. Alamat itu dapat masuk kembali.';
+        $this->pesan = 'Block lifted. That address can sign in again.';
     }
 
     /**
@@ -141,7 +141,7 @@ class KeamananPanel extends KomponenAdmin
 
         Keamanan::catat(
             TipeKejadianKeamanan::IpDiblokir,
-            ringkasan: 'Blokir manual '.$jam.' jam oleh '.auth()->user()?->name,
+            ringkasan: 'Manual block for '.$jam.' hours by '.auth()->user()?->name,
         );
 
         CatatanAktivitas::catat('keamanan.blokir-dipasang', [
@@ -149,7 +149,7 @@ class KeamananPanel extends KomponenAdmin
             'jam' => $jam,
         ]);
 
-        $this->pesan = 'Alamat diblokir selama '.$jam.' jam.';
+        $this->pesan = 'Address blocked for '.$jam.' hours.';
     }
 
     public function bersihkanPercobaanGagal(): void
@@ -162,7 +162,7 @@ class KeamananPanel extends KomponenAdmin
 
         CatatanAktivitas::catat('keamanan.percobaan-dibersihkan', ['jumlah' => $jumlah]);
 
-        $this->pesan = $jumlah.' catatan percobaan masuk dibersihkan.';
+        $this->pesan = $jumlah.' failed sign-in records cleared.';
     }
 
     /** Jumlah kejadian per jam, untuk grafik batang sederhana. */
@@ -200,7 +200,8 @@ class KeamananPanel extends KomponenAdmin
             ->when($this->tipe !== 'semua', fn ($q) => $q->where('event_type', $this->tipe))
             ->where('created_at', '>=', $sejak)
             ->orderByDesc('id')
-            ->paginate(50);
+            ->paginate(25)
+            ->withQueryString();
 
         $blokir = BlockedIp::query()
             ->orderByDesc('blocked_until')
@@ -240,6 +241,6 @@ class KeamananPanel extends KomponenAdmin
                 'blokirAktif' => $blokir->where('aktif', true)->count(),
                 'aksesTidakSah' => (int) ($perJenis[TipeKejadianKeamanan::AksesTidakSah->value] ?? 0),
             ],
-        ])->layout('layouts.admin', ['judul' => 'Keamanan', 'bagian' => 'Situs']);
+        ])->layout('layouts.admin', ['judul' => 'Security', 'bagian' => 'Site']);
     }
 }

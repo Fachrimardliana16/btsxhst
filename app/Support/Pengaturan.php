@@ -93,6 +93,18 @@ class Pengaturan
 
     public function teks(string $kunci, string $bawaan = ''): string
     {
+        // Judul halaman dan nama toko dipakai di setiap komponen tanpa nilai
+        // cadangan. Bila tabel pengaturan belum terisi — instalasi baru, basis
+        // data uji — judulnya jatuh ke " · " yang kosong. Cadangan dari berkas
+        // terjemahan menjaga judul tetap terbaca.
+        if ($bawaan === '') {
+            $bawaan = match ($kunci) {
+                'site_name' => __('site.brand.fallback_name'),
+                'site_tagline' => __('site.brand.tagline'),
+                default => '',
+            };
+        }
+
         return (string) $this->ambil($kunci, $bawaan);
     }
 

@@ -13,9 +13,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <title>Sedang pemeliharaan · {{ \App\Support\Pengaturan::instance()->teks('site_name', 'Bites Exhaust') }}</title>
-    @vite(['resources/css/app.css'])
+    @if (is_file(public_path('build/manifest.json')) || is_file(public_path('hot')))
+        @vite(['resources/css/app.css'])
+    @endif
 </head>
-<body class="min-h-screen bg-bg text-ink antialiased">
+<body class="situs-depan min-h-screen bg-bg text-ink antialiased">
     <main class="flex min-h-screen items-center justify-center px-4 py-12">
         <div class="plate w-full max-w-md p-8 text-center" role="status" aria-live="polite">
             <span class="part-no">503</span>

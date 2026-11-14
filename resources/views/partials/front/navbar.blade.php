@@ -1,7 +1,15 @@
 @php
     /** @var \App\Support\Pengaturan $toko */
-    $logo = $toko->teks('site_logo_light');
-    $logoTerang = $toko->teks('site_logo_dark');
+    // Dua wujud logo untuk dua latar navbar: `light` adalah artwork gelap
+    // untuk bilah putih, `dark` adalah artwork terang untuk di atas hero.
+    // Bila panel belum diisi, berkas merek bawaan di public/brand dipakai.
+    $logoPanelGelap = $toko->teks('site_logo_light');
+    $logoPanelTerang = $toko->teks('site_logo_dark');
+
+    $urlLogoGelap = \App\Models\ProductMedia::urlMedia($logoPanelGelap ?: $logoPanelTerang)
+        ?: '/brand/logo-gelap.png';
+    $urlLogoTerang = \App\Models\ProductMedia::urlMedia($logoPanelTerang ?: $logoPanelGelap)
+        ?: '/brand/logo-terang.png';
 
     // Beranda memakai bilah yang sama dengan halaman lain, hanya transparan
     // saat masih di atas hero (lihat .navbar-hero di resources/css/navbar.css).
@@ -81,20 +89,19 @@
                 <span class="visually-hidden">{{ __('site.nav.open_menu') }}</span>
             </button>
 
-            <a href="{{ route('front.home') }}" class="navbar-logo flex min-w-0 items-center gap-1.5">
-            @if ($logo || $logoTerang)
-                <img src="{{ \App\Models\ProductMedia::urlMedia($logo ?: $logoTerang) }}"
-                     alt="{{ $toko->teks('site_name') }}"
-                     width="140" height="40" class="h-7 w-auto max-w-full object-contain lg:h-9">
-            @else
-                {{-- Brand: huruf display dengan jarak huruf lebar — kesan presisi tanpa
-                     harus memakai logo gambar. `uppercase` hanya di sini, bukan di
-                     seluruh situs, supaya tidak terasa berteriak. --}}
-                <span class="navbar-merek font-display font-extrabold uppercase leading-none flex min-w-0 items-center gap-1.5" style="--brand-fs-dasar: 24px; font-size: var(--brand-fs, var(--brand-fs-dasar)); letter-spacing: calc(var(--brand-fs, 24px) * 0.15);">
-                    <span class="truncate">{{ $toko->teks('site_name', __('site.brand.fallback_name')) }}</span><span class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent inline-block"></span>
-                </span>
-            @endif
-        </a>
+            <a href="{{ route('front.home') }}" class="navbar-logo flex min-w-0 items-center">
+                {{-- Dua berkas ditumpuk; CSS memilih yang terbaca pada latar
+                     yang sedang aktif. Hero memakai artwork terang, bilah
+                     kaca putih memakai artwork gelap. --}}
+                <img src="{{ $urlLogoTerang }}"
+                     alt="{{ $toko->teks('site_name', __('site.brand.fallback_name')) }}"
+                     width="1200" height="138"
+                     class="navbar-logo__img navbar-logo__terang h-4 w-auto max-w-[52vw] object-contain sm:h-5 lg:h-6">
+                <img src="{{ $urlLogoGelap }}"
+                     alt="{{ $toko->teks('site_name', __('site.brand.fallback_name')) }}"
+                     width="1200" height="138"
+                     class="navbar-logo__img navbar-logo__gelap h-4 w-auto max-w-[52vw] object-contain sm:h-5 lg:h-6">
+            </a>
         </div>
 
         {{-- Menu utama.

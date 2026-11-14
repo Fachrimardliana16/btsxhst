@@ -96,11 +96,19 @@ class PengaturanSitus extends KomponenAdmin
 
         $this->bersihkanPesan();
 
-        $this->validate(
-            $this->aturanBerprefiks(),
-            [],
-            $this->labelBerprefiks(),
-        );
+        $aturan = $this->aturanBerprefiks();
+
+        // Grup tanpa satu pun baris pengaturan menghasilkan larik aturan kosong.
+        // Livewire melempar MissingRulesException untuk itu — 500 pada
+        // /livewire/update, lalu komponen hilang dari DOM. Tidak ada yang perlu
+        // divalidasi bila tidak ada kolom yang bisa diisi.
+        if ($aturan !== []) {
+            $this->validate(
+                $aturan,
+                [],
+                $this->labelBerprefiks(),
+            );
+        }
 
         $this->unggahGambarTertunda($penulis);
 
@@ -120,7 +128,7 @@ class PengaturanSitus extends KomponenAdmin
                 request(),
                 auth()->user()?->email,
                 auth()->id(),
-                'Gagal simpan pengaturan tab '.$this->tab,
+                'Failed to save settings for tab '.$this->tab,
             );
             Log::error(__('site.msg.pengaturan.gagal'), [
                 'tab' => $this->tab,
@@ -137,7 +145,7 @@ class PengaturanSitus extends KomponenAdmin
         if ($hasil['diubah'] === []) {
             $this->pesanSukses = __('site.msg.pengaturan.tidak_ada_perubahan');
         } else {
-            $this->pesanSukses = count($hasil['diubah']).' pengaturan tersimpan: '.implode(', ', $hasil['diubah']).'.';
+            $this->pesanSukses = count($hasil['diubah']).' settings saved: '.implode(', ', $hasil['diubah']).'.';
         }
 
         // Muat ulang dari basis data supaya yang tampil benar-benar nilai
@@ -163,9 +171,13 @@ class PengaturanSitus extends KomponenAdmin
         try {
             $this->hasilPaypal = $klien->ujiKoneksi();
         } catch (Throwable $e) {
+            // Rincian teknis hanya ke log. Pesan pengecualian dapat memuat
+            // kredensial PayPal, jalur berkas, atau jawaban mentah API.
+            Log::error('Uji koneksi PayPal gagal', ['sebab' => $e->getMessage()]);
+
             $this->hasilPaypal = [
                 'ok' => false,
-                'pesan' => 'Pengujian gagal dijalankan: '.$e->getMessage(),
+                'pesan' => __('site.msg.pengaturan.paypal_gagal', ['pesan' => __('site.msg.pengaturan.cek_log')]),
                 'detail' => [],
             ];
         } finally {
@@ -206,17 +218,18 @@ class PengaturanSitus extends KomponenAdmin
 
         try {
             Mail::raw(
-                'Ini email uji dari panel '.config('app.name').".\n\n"
-                ."Bila Anda menerima email ini, pengaturan SMTP sudah benar dan\n"
-                .'notifikasi pesanan akan terkirim ke alamat ini.',
+                'This is a test email from the '.config('app.name').' panel.'."\n\n"
+                ."If you receive this email, the SMTP settings are correct and\n"
+                .'order notifications will be delivered to this address.',
                 function ($m) use ($tujuan): void {
-                    $m->to($tujuan)->subject('Email uji · konfigurasi SMTP berhasil');
+                    $m->to($tujuan)->subject('Test email · SMTP configuration works');
                 },
             );
 
-            $this->pesanSukses = 'Email uji terkirim ke '.$tujuan.'. Periksa kotak masuk (dan folder spam) dalam beberapa menit.';
+            $this->pesanSukses = 'Test email sent to '.$tujuan.'. Check the inbox (and spam folder) in a few minutes.';
         } catch (Throwable $e) {
-            $this->galat = 'Email uji gagal: '.mb_substr($e->getMessage(), 0, 200);
+            Log::error('Test email failed', ['sebab' => $e->getMessage()]);
+            $this->galat = __('site.msg.pengaturan.email_uji_gagal');
         }
     }
 
@@ -269,7 +282,7 @@ class PengaturanSitus extends KomponenAdmin
         $this->bersihkanPesan();
 
         if (! in_array($kunci, KomponenPengaturan::KUNCI_RAHASIA, true)) {
-            $this->galat = 'Kunci "'.$kunci.'" bukan kredensial yang dapat dihapus.';
+            $this->galat = 'Key "'.$kunci.'" is not a credential that can be deleted.';
 
             return;
         }
@@ -280,7 +293,7 @@ class PengaturanSitus extends KomponenAdmin
         $this->nilai[KomponenPengaturan::kunciTerisi($kunci)] = false;
         $this->hasilPaypal = null;
 
-        $this->pesanSukses = 'Kredensial "'.$kunci.'" dihapus. Pengaturan ini sekarang kosong.';
+        $this->pesanSukses = 'Credential "'.$kunci.'" removed. This setting is now empty.';
     }
 
     /**
@@ -365,7 +378,7 @@ class PengaturanSitus extends KomponenAdmin
         $grup = GrupPengaturan::from($this->tab);
 
         return view('livewire.admin.pengaturan', [
-            'judul' => 'Pengaturan Situs',
+            'judul' => 'Site Settings',
             'daftarTab' => collect(GrupPengaturan::cases())->map(fn (GrupPengaturan $g): array => [
                 'nilai' => $g->value,
                 'label' => $g->label(),
@@ -373,7 +386,7 @@ class PengaturanSitus extends KomponenAdmin
             ]),
             'grup' => $grup,
             'baris' => $this->barisTampil($grup),
-        ])->layout('layouts.admin', ['judul' => 'Pengaturan Situs', 'bagian' => 'Situs']);
+        ])->layout('layouts.admin', ['judul' => 'Site Settings', 'bagian' => 'Site']);
     }
 
     /**
@@ -403,24 +416,24 @@ class PengaturanSitus extends KomponenAdmin
     private function bantuan(string $kunci): ?string
     {
         return match ($kunci) {
-            'whatsapp_number' => 'Format internasional tanpa tanda plus, contoh 628123456789.',
-            'whatsapp_message_template' => 'Placeholder tersedia: {nama_produk}, {url_produk}, {nama_toko}.',
+            'whatsapp_number' => 'International format without a plus sign, e.g. 628123456789.',
+            'whatsapp_message_template' => 'Available placeholders: {nama_produk}, {url_produk}, {nama_toko}.',
             'maps_embed' => __('site.msg2.pengaturan.maps_hint'),
             'paypal_client_id', 'paypal_client_secret' => __('site.msg2.pengaturan.nilai_tersembunyi'),
-            'manual_bank_accounts' => 'Simpan sebagai larik JSON: [{"bank":"BCA","nomor":"123","atas_nama":"Nama"}].',
-            'order_prefix' => 'Dipakai di depan nomor pesanan, contoh IK-20261017-0001.',
-            'low_stock_threshold' => 'Peringatan stok menipis muncul saat sisa stok mencapai angka ini.',
-            'maintenance_mode' => 'Saat aktif, pengunjung melihat halaman pemeliharaan. Panel admin tetap dapat diakses.',
+            'manual_bank_accounts' => 'Save as a JSON array: [{"bank":"BCA","nomor":"123","atas_nama":"Name"}].',
+            'order_prefix' => 'Used as the order number prefix, e.g. IK-20261017-0001.',
+            'low_stock_threshold' => 'The low-stock warning appears when remaining stock reaches this number.',
+            'maintenance_mode' => 'When enabled, visitors see the maintenance page. The admin panel remains accessible.',
             'notif_item_stok_habis' => __('site.msg2.pengaturan.bantuan_stok_habis'),
             'notif_item_stok_menipis' => __('site.msg2.pengaturan.bantuan_stok_menipis'),
             'notif_item_pesanan_siap_kirim' => __('site.msg2.pengaturan.bantuan_perlu_dikirim'),
             'notif_item_hampir_batal' => __('site.msg2.pengaturan.bantuan_hampir_batal'),
             'notif_item_masuk_keranjang' => __('site.msg2.pengaturan.bantuan_keranjang'),
-            'notif_kirim_dibuat' => 'Dikirim ke pembeli saat pesanan baru masuk.',
-            'notif_kirim_dibayar' => 'Dikirim ke pembeli setelah pembayaran diverifikasi.',
-            'notif_kirim_dikirim' => 'Dikirim ke pembeli saat pesanan berubah menjadi dikirim.',
+            'notif_kirim_dibuat' => 'Sent to the buyer when a new order arrives.',
+            'notif_kirim_dibayar' => 'Sent to the buyer after payment is verified.',
+            'notif_kirim_dikirim' => 'Sent to the buyer when an order becomes shipped.',
             'notif_push_perangkat' => __('site.msg2.pengaturan.bantuan_push'),
-            'notif_push_surel_cadangan' => 'Bila push tidak sampai — belum ada perangkat berlangganan atau layanan push bermasalah — kirim surel ke admin sebagai gantinya.',
+            'notif_push_surel_cadangan' => 'If push cannot be delivered — no subscribed device or the push service is down — send an email to the admin instead.',
             default => null,
         };
     }

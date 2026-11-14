@@ -13,11 +13,11 @@
             <p class="part-no">{{ __('site.admin.produk_daftar.eyebrow') }}</p>
             <h1 class="mt-1 font-display text-2xl font-semibold">{{ __('site.admin.produk_daftar.judul') }}</h1>
             <p class="mt-1 text-sm text-muted">
-                {{ number_format($jumlah['semua'], 0, ',', '.') }} produk ·
-                {{ number_format($jumlah['terbit'], 0, ',', '.') }} terbit ·
-                {{ number_format($jumlah['draf'], 0, ',', '.') }} draf
-                @if ($jumlah[__('site.admin.produk_daftar.habis')] > 0)
-                    · <span class="text-danger">{{ number_format($jumlah[__('site.admin.produk_daftar.habis')], 0, ',', '.') }} stok {{ __('site.admin.produk_daftar.habis') }}</span>
+                {{ number_format($jumlah['semua']) }} products ·
+                {{ number_format($jumlah['terbit']) }} published ·
+                {{ number_format($jumlah['draf']) }} drafts
+                @if ($jumlah['habis'] > 0)
+                    · <span class="text-danger">{{ number_format($jumlah['habis']) }} out of stock</span>
                 @endif
             </p>
         </div>
@@ -29,7 +29,7 @@
             </a>
             <a href="{{ route('admin.products.create') }}" class="btn btn-primary">
                 <x-ikon name="plus" :size="16" />
-                {{ __('site.admin.produk_daftar.judul') }} baru
+                New product
             </a>
         </div>
     </div>
@@ -58,10 +58,10 @@
     {{-- x-data di wadah TERLUAR, bukan di tombol.
 
          Versi pertama memasang x-data pada tombol itu sendiri dan memanggil
-         $refs.saringan{{ __('site.admin.produk_daftar.judul') }} dari sana. Itu tidak pernah jalan: $refs hanya
+         $refs.saringanProduk dari sana. Itu tidak pernah jalan: $refs hanya
          memuat ref di dalam subtree elemen yang memegang x-data, dan div
          saringan adalah SAUDARA tombol, bukan anaknya. Hasilnya
-         $refs.saringan{{ __('site.admin.produk_daftar.judul') }} === undefined, dan kliknya diam tanpa galat —
+         $refs.saringanProduk === undefined, dan kliknya diam tanpa galat —
          saringan di ponsel tidak pernah terbuka.
 
          Dengan x-data di .plate, $refs milik tombol melihat div di sebelahnya.
@@ -92,7 +92,7 @@
         {{-- Baris saringan: DUA select, bukan empat tombol + empat select.
 
              Sebelumnya ada sembilan kontrol di sini — tombol {{ __('site.admin.produk_daftar.terbit') }}, {{ __('site.admin.produk_daftar.draf') }},
-             {{ __('site.admin.produk_daftar.stok_{{ __('site.admin.produk_daftar.habis') }}') }}, Menipis, ditambah select kategori, stok, publikasi,
+             {{ __('site.admin.produk_daftar.stok_habis') }}, Menipis, ditambah select kategori, stok, publikasi,
              urutan, dan {{ __('site.admin.produk_daftar.bersihkan') }}. Empat tombol itu SEPENUHNYA redundan:
              "{{ __('site.admin.produk_daftar.terbit') }}" sama dengan publikasi=terbit, "Menipis" sama dengan
              stok=menipis. Menghapusnya tidak menghilangkan satu pun
@@ -104,19 +104,19 @@
              (cari) tetap terbuka.
 
              Nilai `terbit` dan `stok` TETAP dipakai sebagai properti: tautan
-             ?stok={{ __('site.admin.produk_daftar.habis') }}&terbit=draf dari lonceng notifikasi dan dari halaman
+             ?stok=habis&terbit=draf dari lonceng notifikasi dan dari halaman
              {{ __('site.admin.produk_daftar.kategori') }} masih harus bekerja. Select Kondisi hanya menulis ke
              keduanya.
 
              Di ponsel barisnya dilipat di balik tombol saringan; x-show
              memasang style="display:none" sehingga penglihatannya dibalik
              lewat `saringan || lebar`, bukan lewat class responsif. --}}
-        <div x-ref="saringan{{ __('site.admin.produk_daftar.judul') }}" x-show="saringan || lebar" x-cloak
+        <div x-ref="saringanProduk"" x-show="saringan || lebar" x-cloak
              class="flex flex-wrap items-center gap-2">
             <select wire:model.live="kategori" class="field w-auto" aria-label="{{ __('site.admin.produk_daftar.saring_kategori') }}">
                 <option value="semua">{{ __('site.admin.produk_daftar.semua_kategori') }}</option>
-                @foreach ($daftar{{ __('site.admin.produk_daftar.kategori') }} as $k)
-                    <option value="{{ $k->id }}">{{ $k->name_id }}</option>
+                @foreach ($daftarKategori as $k)
+                    <option value="{{ $k->id }}">{{ $k->nama() }}</option>
                 @endforeach
             </select>
 
@@ -129,7 +129,7 @@
                 <option value="semua">{{ __('site.admin.produk_daftar.semua_kondisi') }}</option>
                 <option value="terbit">{{ __('site.admin.produk_daftar.terbit') }}</option>
                 <option value="draf">{{ __('site.admin.produk_daftar.draf') }}</option>
-                <option value="{{ __('site.admin.produk_daftar.habis') }}">{{ __('site.admin.produk_daftar.stok_{{ __('site.admin.produk_daftar.habis') }}') }}</option>
+                <option value="habis">{{ __('site.admin.produk_daftar.stok_habis') }}</option>
                 <option value="menipis">{{ __('site.admin.produk_daftar.stok_menipis') }}</option>
                 <option value="ada">{{ __('site.admin.produk_daftar.ada_stok') }}</option>
             </select>
@@ -160,14 +160,14 @@
                 <x-ikon name="box" :size="28" class="mx-auto text-dim" />
                 <p class="mt-3 text-sm text-muted">
                     @if ($cari !== '' || $kategori !== 'semua' || $stok !== 'semua' || $terbit !== 'semua')
-                        Tidak ada produk yang cocok dengan saringan ini.
+                        No products match this filter.
                     @else
-                        Belum ada produk. Mulai dengan menambahkan yang pertama.
+                        No products yet. Start by adding the first one.
                     @endif
                 </p>
                 <a href="{{ route('admin.products.create') }}" class="btn btn-primary mt-4">
                     <x-ikon name="plus" :size="16" />
-                    {{ __('site.admin.produk_daftar.judul') }} baru
+                    New product
                 </a>
             </div>
         @else
@@ -181,7 +181,7 @@
                 </label>
 
                 @if (count($terpilih) > 0)
-                    <span class="tech text-xs text-accent">{{ count($terpilih) }} terpilih</span>
+                    <span class="tech text-xs text-accent">{{ count($terpilih) }} selected</span>
                 @endif
             </div>
 
@@ -207,7 +207,7 @@
 
                         {{-- Gambar: seluruh permukaannya membuka penyuntingan. --}}
                         <a href="{{ route('admin.products.edit', $produk->ulid) }}"
-                           class="relative block aspect-square bg-sunken" aria-label="{{ __('site.admin.produk_daftar.sunting') }} {{ $produk->title_id }}">
+                           class="relative block aspect-square bg-sunken" aria-label="{{ __('site.admin.produk_daftar.sunting') }} {{ $produk->judul() }}">
                             @if ($gmbr)
                                 <img src="{{ $gmbr->url('thumb') }}" alt=""
                                      width="220" height="220" loading="lazy" decoding="async"
@@ -220,13 +220,13 @@
 
                             @if ($produk->is_featured)
                                 <span class="absolute left-2 top-2 rounded-full bg-brass/90 px-2 py-0.5 text-[length:var(--t-xs)] font-medium text-white">
-                                    unggulan
+                                    featured
                                 </span>
                             @endif
 
                             <span class="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-surface/90 shadow-sm">
                                 <input type="checkbox" value="{{ $produk->id }}" wire:model.live="terpilih"
-                                       class="h-3.5 w-3.5" aria-label="Pilih {{ $produk->title_id }}">
+                                       class="h-3.5 w-3.5" aria-label="Select {{ $produk->judul() }}">
                             </span>
                         </a>
 
@@ -234,34 +234,35 @@
                             <div class="min-w-0">
                                 <a href="{{ route('admin.products.edit', $produk->ulid) }}"
                                    class="line-clamp-2 block text-sm font-medium leading-snug hover:text-accent">
-                                    {{ $produk->title_id }}
+                                    {{ $produk->judul() }}
                                 </a>
                                 <p class="tech mt-1 truncate text-xs text-dim">
-                                    {{ $produk->sku }} · {{ $produk->variants_count }} varian
+                                    {{ $produk->sku }} · {{ $produk->variants_count }} variants
                                 </p>
                             </div>
 
-                            <p class="truncate text-xs text-muted">{{ $produk->category?->name_id ?? '—' }}</p>
+                            <p class="truncate text-xs text-muted">{{ $produk->category?->nama() ?? '—' }}</p>
 
                             <div class="mt-auto flex items-end justify-between gap-2">
                                 <div>
-                                    <p class="tech text-sm font-medium">{{ rupiah($produk->base_price) }}</p>
+                                    <p class="tech text-sm font-medium">{{ harga_produk($produk, false) }}</p>
                                     <p class="tech text-xs">
                                         @if ($stokBebas <= 0)
                                             <span class="text-danger">{{ __('site.admin.produk_daftar.habis') }}</span>
                                         @elseif ($menipis)
-                                            <span class="text-warn">{{ $stokBebas }} sisa</span>
+                                            <span class="text-warn">{{ $stokBebas }} left</span>
                                         @else
-                                            <span class="text-muted">{{ $stokBebas }} stok</span>
+                                            <span class="text-muted">{{ $stokBebas }} in stock</span>
                                         @endif
 
                                         @if ((int) ($produk->stok_ditahan ?? 0) > 0)
-                                            <span class="text-dim" title="{{ __('site.admin.produk_daftar.ditahan') }}">· {{ $produk->stok_ditahan }} ditahan</span>
+                                            <span class="text-dim" title="{{ __('site.admin.produk_daftar.ditahan') }}">· {{ $produk->stok_ditahan }} reserved</span>
                                         @endif
                                     </p>
                                 </div>
 
-                                <button type="button" wire:click="ubah{{ __('site.admin.produk_daftar.terbit') }}Satu({{ $produk->id }})"
+                                <button type="button" wire:click="ubahTerbitSatu({{ $produk->id }})"
+                                        wire:confirm="{{ $produk->is_published ? 'Remove' : 'Publish' }} &quot;{{ $produk->judul() }}&quot; {{ $produk->is_published ? 'from' : 'to' }} the catalog?"
                                         class="inline-flex flex-none items-center gap-1.5 rounded-full px-2 py-0.5 text-xs
                                                {{ $produk->is_published ? 'bg-ok/12 text-ok' : 'bg-sunken text-muted' }}">
                                     <span class="h-1.5 w-1.5 rounded-full {{ $produk->is_published ? 'bg-ok' : 'bg-line' }}"></span>
@@ -284,7 +285,7 @@
                                     <span class="visually-hidden">{{ __('site.admin.produk_daftar.duplikat') }}</span>
                                 </button>
                                 <button type="button" wire:click="hapus({{ $produk->id }})"
-                                        wire:confirm="{{ __('site.admin.produk_daftar.hapus') }} produk &quot;{{ $produk->title_id }}&quot; beserta varian dan gambarnya?"
+                                        wire:confirm="Delete product &quot;{{ $produk->judul() }}&quot; with its variants and images?"
                                         class="btn-icon btn-icon-sm hover:text-danger" title="{{ __('site.admin.produk_daftar.hapus') }}">
                                     <x-ikon name="trash" :size="15" />
                                     <span class="visually-hidden">{{ __('site.admin.produk_daftar.hapus') }}</span>
@@ -305,23 +306,29 @@
     @if (count($terpilih) > 0)
         <div class="sticky bottom-3 z-20 mx-auto w-fit max-w-full">
             <div class="plate plate-up flex flex-wrap items-center gap-2 p-2 shadow-float">
-                <span class="part-no px-2">{{ count($terpilih) }} dipilih</span>
+                <span class="part-no px-2">{{ count($terpilih) }} selected</span>
 
-                <button type="button" wire:click="ubah{{ __('site.admin.produk_daftar.terbit') }}Massal(true)" class="btn btn-outline btn-sm">{{ __('site.admin.produk_daftar.terbitkan') }}</button>
-                <button type="button" wire:click="ubah{{ __('site.admin.produk_daftar.terbit') }}Massal(false)" class="btn btn-outline btn-sm">{{ __('site.admin.produk_daftar.tarik') }}</button>
-                <button type="button" wire:click="ubah{{ __('site.admin.produk_daftar.unggulan') }}Massal(true)" class="btn btn-outline btn-sm">{{ __('site.admin.produk_daftar.unggulan') }}</button>
+                <button type="button" wire:click="ubahTerbitMassal(true)"
+                        wire:confirm="Publish {{ count($terpilih) }} selected products?"
+                        class="btn btn-outline btn-sm">{{ __('site.admin.produk_daftar.terbitkan') }}</button>
+                <button type="button" wire:click="ubahTerbitMassal(false)"
+                        wire:confirm="Remove {{ count($terpilih) }} selected products from the catalog?"
+                        class="btn btn-outline btn-sm">{{ __('site.admin.produk_daftar.tarik') }}</button>
+                <button type="button" wire:click="ubahUnggulanMassal(true)"
+                        wire:confirm="Feature {{ count($terpilih) }} selected products?"
+                        class="btn btn-outline btn-sm">{{ __('site.admin.produk_daftar.unggulan') }}</button>
 
-                <select wire:change="pindah{{ __('site.admin.produk_daftar.kategori') }}Massal($event.target.value)" class="field w-auto py-1.5 text-sm"
+                <select wire:change="pindahKategoriMassal($event.target.value)" class="field w-auto py-1.5 text-sm"
                         aria-label="{{ __('site.admin.produk_daftar.pindahkan_kategori') }}">
                     <option value="">{{ __('site.admin.produk_daftar.pindah_ke') }}</option>
-                    @foreach ($daftar{{ __('site.admin.produk_daftar.kategori') }} as $k)
-                        <option value="{{ $k->id }}">{{ $k->name_id }}</option>
+                    @foreach ($daftarKategori as $k)
+                        <option value="{{ $k->id }}">{{ $k->nama() }}</option>
                     @endforeach
                 </select>
 
                 <button type="button"
                         wire:click="hapusMassal"
-                        wire:confirm="{{ __('site.admin.produk_daftar.hapus') }} {{ count($terpilih) }} produk terpilih beserta gambarnya?"
+                        wire:confirm="Delete {{ count($terpilih) }} selected products with their images?"
                         class="btn btn-danger btn-sm">
                     <x-ikon name="trash" :size="14" />
                     {{ __('site.admin.produk_daftar.hapus') }}

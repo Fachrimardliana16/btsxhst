@@ -21,9 +21,9 @@
         <div class="plate border-l-2 border-l-warn p-4 text-sm">
             <p class="font-semibold">{{ __('site.admin.notifikasi_perangkat.kunci_belum') }}</p>
             <p class="mt-1 text-muted">
-                {{ __('site.admin.notifikasi_perangkat.tambahkan') }} <code class="tech">VAPID_PUBLIC_KEY</code> dan
-                <code class="tech">VAPID_PRIVATE_KEY</code> ke berkas
-                <code class="tech">.env</code>, lalu jalankan
+                {{ __('site.admin.notifikasi_perangkat.tambahkan') }} <code class="tech">VAPID_PUBLIC_KEY</code> and
+                <code class="tech">VAPID_PRIVATE_KEY</code> to the
+                <code class="tech">.env</code> file, then run
                 <code class="tech">php artisan config:clear</code>.
                 {{ __('site.admin.notifikasi_perangkat.kunci_cara') }}
             </p>
@@ -33,12 +33,12 @@
     <div class="plate p-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <p class="font-medium">{{ $jumlahPerangkat }} perangkat terdaftar</p>
+                <p class="font-medium">{{ $jumlahPerangkat }} registered devices</p>
                 <p class="mt-0.5 text-sm text-muted">
                     @if ($jumlahPerangkat > 0)
-                        Notifikasi dikirim ke semua perangkat terdaftar. {{ __('site.admin.notifikasi_perangkat.matikan') }} akan menghapus milik akun Anda.
+                        Notifications go to every registered device. {{ __('site.admin.notifikasi_perangkat.matikan') }} removes the ones on your account.
                     @else
-                        Belum ada perangkat. Izinkan notifikasi dari peramban ini.
+                        No devices yet. Allow notifications from this browser.
                     @endif
                 </p>
             </div>
@@ -47,7 +47,7 @@
                 <button type="button" id="tombol-izin-push" class="btn btn-primary"
                         @disabled($aktif || ! $siap) data-kunci="{{ $kunciPublik }}">
                     <x-ikon name="bell" :size="16" />
-                    {{ $aktif ? 'Sudah aktif' : 'Izinkan notifikasi' }}
+                    {{ $aktif ? 'Already enabled' : 'Allow notifications' }}
                 </button>
 
                 @if ($aktif)

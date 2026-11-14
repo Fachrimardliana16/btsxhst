@@ -95,10 +95,10 @@ class Kategori extends KomponenAdmin
         $kategori = Category::query()->findOrFail($id);
 
         $this->suntingId = $kategori->id;
-        $this->nama_id = (string) $kategori->name_id;
-        $this->nama_en = (string) $kategori->name_en;
-        $this->deskripsi_id = (string) $kategori->description_id;
-        $this->deskripsi_en = (string) $kategori->description_en;
+        $this->nama_id = (string) ($kategori->name_en ?: $kategori->name_id);
+        $this->nama_en = '';
+        $this->deskripsi_id = (string) ($kategori->description_en ?: $kategori->description_id);
+        $this->deskripsi_en = '';
         $this->slug = (string) $kategori->slug;
         $this->aktif = (bool) $kategori->is_active;
         $this->slugDisentuh = true;
@@ -111,9 +111,7 @@ class Kategori extends KomponenAdmin
     {
         $aturan = [
             'nama_id' => ['required', 'string', 'min:2', 'max:120'],
-            'nama_en' => ['nullable', 'string', 'max:120'],
             'deskripsi_id' => ['nullable', 'string', 'max:2000'],
-            'deskripsi_en' => ['nullable', 'string', 'max:2000'],
             'slug' => [
                 'required', 'string', 'max:140', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
                 Rule::unique('categories', 'slug')->ignore($this->suntingId),
@@ -123,7 +121,7 @@ class Kategori extends KomponenAdmin
 
         $pesan = [
             'nama_id.required' => __('site.msg.kategori.nama_id_wajib'),
-            'nama_id.min' => 'Nama kategori minimal dua huruf.',
+            'nama_id.min' => 'The category name must be at least two characters.',
             'slug.regex' => __('site.msg.kategori.slug_format'),
             'slug.unique' => __('site.msg.kategori.slug_dipakai'),
         ];
@@ -139,7 +137,7 @@ class Kategori extends KomponenAdmin
             if ($terpakai > 0) {
                 $this->addError(
                     'aktif',
-                    "Kategori ini dipakai {$terpakai} produk. Pindahkan produknya dulu sebelum menonaktifkan.",
+                    "This category is used by {$terpakai} products. Move them first before deactivating it.",
                 );
 
                 return;
@@ -152,9 +150,9 @@ class Kategori extends KomponenAdmin
 
                 $kategori = Category::query()->create([
                     'name_id' => $bersih['nama_id'],
-                    'name_en' => $bersih['nama_en'] ?: null,
+                    'name_en' => $bersih['nama_id'],
                     'description_id' => $bersih['deskripsi_id'] ?: null,
-                    'description_en' => $bersih['deskripsi_en'] ?: null,
+                    'description_en' => $bersih['deskripsi_id'] ?: null,
                     'slug' => $bersih['slug'],
                     'display_order' => $urutan,
                     'is_active' => $bersih['aktif'],
@@ -162,7 +160,7 @@ class Kategori extends KomponenAdmin
 
                 CatatanAktivitas::catat('kategori.dibuat', ['slug' => $kategori->slug], auth()->id(), $kategori);
                 CacheKatalog::tandaiBerubah('kategori dibuat');
-                $this->pesan = 'Kategori "'.$kategori->name_id.'" ditambahkan.';
+                $this->pesan = 'Category "'.$kategori->name_id.'" added.';
             } else {
                 $kategori = Category::query()->findOrFail($this->suntingId);
 
@@ -174,9 +172,9 @@ class Kategori extends KomponenAdmin
 
                 $kategori->update([
                     'name_id' => $bersih['nama_id'],
-                    'name_en' => $bersih['nama_en'] ?: null,
+                    'name_en' => $bersih['nama_id'],
                     'description_id' => $bersih['deskripsi_id'] ?: null,
-                    'description_en' => $bersih['deskripsi_en'] ?: null,
+                    'description_en' => $bersih['deskripsi_id'] ?: null,
                     'slug' => $bersih['slug'],
                     'is_active' => $bersih['aktif'],
                 ]);
@@ -192,7 +190,7 @@ class Kategori extends KomponenAdmin
 
                 CacheKatalog::tandaiBerubah('kategori diubah');
 
-                $this->pesan = 'Kategori "'.$kategori->name_id.'" diperbarui.';
+                $this->pesan = 'Category "'.$kategori->name_id.'" updated.';
             }
         });
 
@@ -210,7 +208,7 @@ class Kategori extends KomponenAdmin
             if ($terpakai > 0) {
                 $this->addError(
                     'umum',
-                    "Kategori \"{$kategori->name_id}\" dipakai {$terpakai} produk, jadi belum bisa dinonaktifkan.",
+                    "Category \"{$kategori->name_id}\" is used by {$terpakai} products, so it cannot be deactivated yet.",
                 );
 
                 return;
@@ -230,8 +228,8 @@ class Kategori extends KomponenAdmin
         CacheKatalog::tandaiBerubah('kategori status');
 
         $this->pesan = $kategori->is_active
-            ? 'Kategori "'.$kategori->name_id.'" diaktifkan.'
-            : 'Kategori "'.$kategori->name_id.'" dinonaktifkan.';
+            ? 'Category "'.$kategori->name_id.'" activated.'
+            : 'Category "'.$kategori->name_id.'" deactivated.';
     }
 
     /**
@@ -273,7 +271,7 @@ class Kategori extends KomponenAdmin
         if ($terpakai > 0) {
             $this->addError(
                 'umum',
-                "Kategori \"{$kategori->name_id}\" masih dipakai {$terpakai} produk. Pindahkan produknya dulu.",
+                "Category \"{$kategori->name_id}\" is still used by {$terpakai} products. Move them first.",
             );
 
             return;
@@ -356,6 +354,6 @@ class Kategori extends KomponenAdmin
             'daftar' => $daftar,
             'jumlah' => Category::query()->count(),
             'totalProduk' => Product::query()->count(),
-        ])->layout('layouts.admin', ['judul' => 'Kategori', 'bagian' => 'Katalog']);
+        ])->layout('layouts.admin', ['judul' => 'Categories', 'bagian' => 'Katalog']);
     }
 }

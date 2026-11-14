@@ -75,7 +75,7 @@ class Masuk extends Component
         if (RateLimiter::tooManyAttempts($kunciEmail, $batas[0])) {
             $sisa = RateLimiter::availableIn($kunciEmail);
 
-            Keamanan::catat(TipeKejadianKeamanan::BatasLaju, request(), $this->email, ringkasan: 'Akun ini dibatasi '.$sisa.' detik');
+            Keamanan::catat(TipeKejadianKeamanan::BatasLaju, request(), $this->email, ringkasan: 'This account is rate-limited for '.$sisa.' seconds');
             $this->tungguDetik = $sisa;
             $this->galat = __('site.admin.galat.akun_dibatasi');
 

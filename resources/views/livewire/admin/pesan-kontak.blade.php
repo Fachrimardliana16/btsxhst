@@ -47,10 +47,10 @@
                 class="btn {{ $baca === 'sudah' ? 'btn-primary' : 'btn-outline' }} btn-sm">{{ __('site.admin.pesan_kontak.sudah_dibaca') }}</button>
 
         @if (count($terpilih) > 0)
-            <span class="tech text-xs text-accent">{{ count($terpilih) }} terpilih</span>
+            <span class="tech text-xs text-accent">{{ count($terpilih) }} selected</span>
             <button type="button" wire:click="tandaiDibacaMassal" class="btn btn-outline btn-sm">{{ __('site.admin.pesan_kontak.tandai_dibaca') }}</button>
             <button type="button" wire:click="hapusMassal"
-                    wire:confirm="{{ __('site.admin.pesan_kontak.hapus') }} {{ count($terpilih) }} pesan terpilih?"
+                    wire:confirm="{{ __('site.admin.pesan_kontak.hapus') }} {{ count($terpilih) }} selected messages?"
                     class="btn btn-danger btn-sm">{{ __('site.admin.pesan_kontak.hapus') }}</button>
         @endif
     </div>
@@ -63,7 +63,7 @@
                 <div class="p-8 text-center">
                     <x-ikon name="mail" :size="28" class="mx-auto text-dim" />
                     <p class="mt-3 text-sm text-muted">
-                        {{ $cari !== '' || $baca !== 'semua' ? 'Tidak ada pesan yang cocok.' : 'Belum ada pesan masuk.' }}
+                        {{ $cari !== '' || $baca !== 'semua' ? 'No messages match.' : 'No messages yet.' }}
                     </p>
                 </div>
             @else
@@ -73,7 +73,7 @@
                             class="border-b border-line-soft last:border-0">
                             <div class="flex items-start gap-3 p-3 hover:bg-sunken {{ $dipilih === $m->id ? 'bg-sunken' : '' }}">
                                 <input type="checkbox" value="{{ $m->id }}" wire:model.live="terpilih"
-                                       class="mt-1 h-4 w-4" aria-label="Pilih pesan dari {{ $m->name }}">
+                                       class="mt-1 h-4 w-4" aria-label="Select message from {{ $m->name }}">
 
                                 <button type="button" wire:click="buka({{ $m->id }})" class="min-w-0 flex-1 text-left">
                                     <div class="flex items-center gap-2">
@@ -185,7 +185,7 @@
                     @endif
 
                     <button type="button" wire:click="tandaiBalas({{ $rinci->id }})" class="btn btn-outline btn-sm">
-                        {{ $rinci->replied_at ? 'Lepas tanda dibalas' : 'Tandai sudah dibalas' }}
+                        {{ $rinci->replied_at ? 'Mark as not replied' : 'Mark as replied' }}
                     </button>
 
                     <button type="button" wire:click="tandaiDibaca({{ $rinci->id }})" class="btn btn-ghost btn-sm">
@@ -193,7 +193,7 @@
                     </button>
 
                     <button type="button" wire:click="hapus({{ $rinci->id }})"
-                            wire:confirm="{{ __('site.admin.pesan_kontak.hapus') }} pesan dari {{ $rinci->name }}?"
+                            wire:confirm="{{ __('site.admin.pesan_kontak.hapus') }} message from {{ $rinci->name }}?"
                             class="btn btn-ghost btn-sm ml-auto hover:text-danger">
                         <x-ikon name="trash" :size="14" />
                         {{ __('site.admin.pesan_kontak.hapus') }}

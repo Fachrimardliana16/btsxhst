@@ -73,11 +73,11 @@ class MataUang
     public static function bawaan(): string
     {
         try {
-            $nilai = strtoupper(trim((string) Pengaturan::instance()->teks('mata_uang_bawaan', self::IDR)));
+            $nilai = strtoupper(trim((string) Pengaturan::instance()->teks('mata_uang_bawaan', self::USD)));
 
-            return in_array($nilai, self::DIDUKUNG, true) ? $nilai : self::IDR;
+            return in_array($nilai, self::DIDUKUNG, true) ? $nilai : self::USD;
         } catch (Throwable) {
-            return self::IDR;
+            return self::USD;
         }
     }
 
@@ -96,24 +96,13 @@ class MataUang
     /**
      * Simbol untuk sebuah mata uang.
      *
-     * `currency_symbol` di Pengaturan Lanjutan hanya berlaku untuk rupiah —
-     * itulah mata uang yang dapat diganti simbolnya oleh pemilik toko. USD
-     * selalu "$": mengganti simbol dolar menjadi "Rp" akan menghasilkan
-     * "$ 1.250.000" yang menyesatkan.
+     * Toko menjual dalam dolar, jadi tidak ada lagi simbol yang dapat diubah
+     * dari panel: `currency_symbol` sudah dihapus. Rupiah tetap dikenali untuk
+     * data lama, dengan simbol bawaannya.
      */
     public static function simbol(string $mata): string
     {
-        if ($mata === self::USD) {
-            return '$';
-        }
-
-        try {
-            $simbol = trim((string) Pengaturan::instance()->teks('currency_symbol', ''));
-
-            return $simbol !== '' ? $simbol : 'Rp';
-        } catch (Throwable) {
-            return 'Rp';
-        }
+        return $mata === self::USD ? '$' : 'Rp';
     }
 
     /**

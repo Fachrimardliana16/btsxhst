@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Enums\TipeKupon;
 use App\Models\Coupon;
 use App\Support\CatatanAktivitas;
+use App\Support\HargaDolar;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -44,9 +45,16 @@ class Kupon extends KomponenAdmin
 
     public string $value = '';
 
+    /** Nilai yang diisi admin, dalam dolar (kupon persen memakai angka yang sama). */
+    public string $value_usd = '';
+
     public string $min_spend = '';
 
+    public string $min_spend_usd = '';
+
     public string $max_discount = '';
+
+    public string $max_discount_usd = '';
 
     public string $quota = '';
 
@@ -99,8 +107,17 @@ class Kupon extends KomponenAdmin
         $this->code = (string) $kupon->code;
         $this->type = $kupon->type->value;
         $this->value = (string) $kupon->value;
+        $this->value_usd = $kupon->type === TipeKupon::Persen
+            ? (string) $kupon->value
+            : (string) (HargaDolar::dariRupiah($kupon->value) ?? '');
         $this->min_spend = $kupon->min_spend === null ? '' : (string) $kupon->min_spend;
+        $this->min_spend_usd = $kupon->min_spend === null || (float) $kupon->min_spend <= 0
+            ? ''
+            : (string) (HargaDolar::dariRupiah($kupon->min_spend) ?? '');
         $this->max_discount = $kupon->max_discount === null ? '' : (string) $kupon->max_discount;
+        $this->max_discount_usd = is_numeric($kupon->max_discount) && (float) $kupon->max_discount > 0
+            ? (string) (HargaDolar::dariRupiah($kupon->max_discount) ?? '')
+            : '';
         $this->quota = $kupon->quota === null ? '' : (string) $kupon->quota;
         $this->starts_at = $kupon->starts_at?->format('Y-m-d\TH:i') ?? '';
         $this->ends_at = $kupon->ends_at?->format('Y-m-d\TH:i') ?? '';
@@ -133,9 +150,12 @@ class Kupon extends KomponenAdmin
                 Rule::unique('coupons', 'code')->ignore($this->suntingId),
             ],
             'type' => ['required', Rule::in(TipeKupon::values())],
-            'value' => ['required', 'numeric', 'min:0', 'max:999999999'],
+            'value' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'value_usd' => ['nullable', 'numeric', 'min:0', 'max:999999'],
             'min_spend' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'min_spend_usd' => ['nullable', 'numeric', 'min:0', 'max:999999'],
             'max_discount' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'max_discount_usd' => ['nullable', 'numeric', 'min:0', 'max:999999'],
             'quota' => ['nullable', 'integer', 'min:1', 'max:1000000'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
@@ -156,7 +176,7 @@ class Kupon extends KomponenAdmin
             'code.required' => __('site.msg.kupon.kode_wajib'),
             'code.regex' => __('site.msg.kupon.kode_format'),
             'code.unique' => __('site.msg.kupon.kode_dipakai'),
-            'code.min' => 'Kode minimal tiga karakter.',
+            'code.min' => 'Code must be at least three characters.',
             'value.required' => __('site.msg.kupon.nilai_wajib'),
             'value.numeric' => __('site.msg.kupon.nilai_angka'),
             'ends_at.after' => __('site.msg.kupon.tanggal_terbalik'),
@@ -166,18 +186,33 @@ class Kupon extends KomponenAdmin
 
         $bersih = $this->validate($aturan, $pesan);
 
+        // Formulir memakai kolom dolar. Nilai lama (rupiah) tetap dibaca bila
+        // kolom dolar kosong, supaya data yang dibuat sebelum perubahan ini
+        // masih dapat disunting tanpa kehilangan angkanya.
+        $nilaiUsd = $this->value_usd !== '' ? (float) $this->value_usd : null;
+        $minUsd = $this->min_spend_usd !== '' ? (float) $this->min_spend_usd : null;
+        $maksUsd = $this->max_discount_usd !== '' ? (float) $this->max_discount_usd : null;
+
+        if ($nilaiUsd === null && ($bersih['value'] === null || $bersih['value'] === '')) {
+            $this->addError('value_usd', 'Enter a discount value.');
+
+            return;
+        }
+
+        $nilaiEfektif = $nilaiUsd ?? (float) $bersih['value'];
+
         // Persentase di atas 100 bukan potongan, melainkan pemberian uang.
         // Batasnya ditegakkan di sini supaya tidak ada kupon yang membuat
         // total pesanan menjadi negatif.
-        if ($jenis === TipeKupon::Persen && (float) $bersih['value'] > 100) {
-            $this->addError('value', __('site.msg2.kupon.persen_maks'));
+        if ($jenis === TipeKupon::Persen && $nilaiEfektif > 100) {
+            $this->addError($nilaiUsd !== null ? 'value_usd' : 'value', __('site.msg2.kupon.persen_maks'));
 
             return;
         }
 
         // Potongan nominal tanpa nilai jelas tidak memotong apa pun.
-        if ($jenis === TipeKupon::Nominal && (float) $bersih['value'] <= 0) {
-            $this->addError('value', __('site.msg2.kupon.nominal_nol'));
+        if ($jenis === TipeKupon::Nominal && $nilaiEfektif <= 0) {
+            $this->addError($nilaiUsd !== null ? 'value_usd' : 'value', __('site.msg2.kupon.nominal_nol'));
 
             return;
         }
@@ -185,7 +220,9 @@ class Kupon extends KomponenAdmin
         $data = [
             'code' => mb_strtoupper($bersih['code']),
             'type' => $jenis,
-            'value' => $bersih['value'],
+            'value' => $jenis === TipeKupon::Persen
+                ? $nilaiEfektif
+                : ($nilaiUsd !== null ? HargaDolar::keRupiah($nilaiUsd) : (float) $bersih['value']),
             // min_spend memakai 0 sebagai "tanpa minimum", bukan null: kolomnya
             // NOT NULL dengan nilai bawaan 0, dan Coupon::alasanTidakSah()
             // memeriksanya sebagai angka (min_spend > 0). Mengirim null akan
@@ -194,8 +231,12 @@ class Kupon extends KomponenAdmin
             //
             // max_discount sebaliknya memakai null sebagai "tanpa batas", karena
             // pembacanya membandingkan dengan null secara tegas.
-            'min_spend' => $bersih['min_spend'] === null || $bersih['min_spend'] === '' ? 0 : $bersih['min_spend'],
-            'max_discount' => $bersih['max_discount'] === null || $bersih['max_discount'] === '' ? null : $bersih['max_discount'],
+            'min_spend' => $minUsd !== null
+                ? HargaDolar::keRupiah($minUsd)
+                : ($bersih['min_spend'] === null || $bersih['min_spend'] === '' ? 0 : $bersih['min_spend']),
+            'max_discount' => $maksUsd !== null
+                ? HargaDolar::keRupiah($maksUsd)
+                : ($bersih['max_discount'] === null || $bersih['max_discount'] === '' ? null : $bersih['max_discount']),
             'quota' => $bersih['quota'] === null || $bersih['quota'] === '' ? null : (int) $bersih['quota'],
             'starts_at' => $bersih['starts_at'] ?: null,
             'ends_at' => $bersih['ends_at'] ?: null,
@@ -214,7 +255,7 @@ class Kupon extends KomponenAdmin
 
             CatatanAktivitas::catat('kupon.dibuat', ['code' => $kupon->code], auth()->id(), $kupon);
 
-            $this->pesan = 'Kupon "'.$kupon->code.'" ditambahkan.';
+            $this->pesan = 'Coupon "'.$kupon->code.'" added.';
         } else {
             $kupon = Coupon::query()->findOrFail($this->suntingId);
 
@@ -224,7 +265,7 @@ class Kupon extends KomponenAdmin
             if (array_key_exists('quota', $data) && $data['quota'] !== null && $data['quota'] < $kupon->used_count) {
                 $this->addError(
                     'quota',
-                    'Kuota tidak boleh di bawah '.$kupon->used_count.' karena sudah dipakai sebanyak itu.',
+                    'The usage limit cannot be lower than '.$kupon->used_count.' because it has already been used that many times.',
                 );
 
                 return;
@@ -234,7 +275,7 @@ class Kupon extends KomponenAdmin
 
             CatatanAktivitas::catat('kupon.diubah', ['code' => $kupon->code], auth()->id(), $kupon);
 
-            $this->pesan = 'Kupon "'.$kupon->code.'" diperbarui.';
+            $this->pesan = 'Coupon "'.$kupon->code.'" updated.';
         }
 
         $this->bersihkan();
@@ -252,8 +293,8 @@ class Kupon extends KomponenAdmin
         ], auth()->id(), $kupon);
 
         $this->pesan = $kupon->is_active
-            ? 'Kupon "'.$kupon->code.'" diaktifkan.'
-            : 'Kupon "'.$kupon->code.'" dinonaktifkan.';
+            ? 'Coupon "'.$kupon->code.'" activated.'
+            : 'Coupon "'.$kupon->code.'" deactivated.';
     }
 
     public function hapus(int $id): void
@@ -266,7 +307,7 @@ class Kupon extends KomponenAdmin
         if ($kupon->orders_count > 0) {
             $this->addError(
                 'umum',
-                'Kupon ini sudah dipakai '.$kupon->orders_count.' pesanan. Nonaktifkan saja, jangan dihapus.',
+                'This coupon has been used on '.$kupon->orders_count.' orders. Deactivate it instead of deleting it.',
             );
 
             return;
@@ -276,20 +317,25 @@ class Kupon extends KomponenAdmin
 
         $kupon->delete();
 
-        $this->pesan = 'Kupon "'.$kupon->code.'" dihapus.';
+        $this->pesan = 'Coupon "'.$kupon->code.'" deleted.';
     }
 
-    /** Pratinjau potongan untuk belanja contoh, membantu memeriksa batasnya. */
-    public function pratinjauPotongan(float $belanja = 500000, float $ongkir = 25000): array
+    /** Pratinjau potongan untuk belanja contoh dalam dolar. */
+    public function pratinjauPotongan(float $belanja = 500, float $ongkir = 25): array
     {
         $jenis = TipeKupon::tryFrom($this->type) ?? TipeKupon::Persen;
 
-        $potongan = $jenis->hitung(
-            $belanja,
-            (float) ($this->value ?: 0),
-            $this->max_discount === '' ? null : (float) $this->max_discount,
-            $ongkir,
-        );
+        $nilai = $this->value_usd !== ''
+            ? (float) $this->value_usd
+            : ($jenis === TipeKupon::Persen
+                ? (float) ($this->value ?: 0)
+                : (HargaDolar::dariRupiah($this->value) ?? 0.0));
+
+        $maks = $this->max_discount_usd !== ''
+            ? (float) $this->max_discount_usd
+            : (HargaDolar::dariRupiah($this->max_discount) ?: null);
+
+        $potongan = $jenis->hitung($belanja, $nilai, $maks, $ongkir);
 
         return ['potongan' => $potongan, 'belanja' => $belanja, 'ongkir' => $ongkir];
     }
@@ -300,8 +346,11 @@ class Kupon extends KomponenAdmin
         $this->code = '';
         $this->type = 'percent';
         $this->value = '';
+        $this->value_usd = '';
         $this->min_spend = '';
+        $this->min_spend_usd = '';
         $this->max_discount = '';
+        $this->max_discount_usd = '';
         $this->quota = '';
         $this->starts_at = '';
         $this->ends_at = '';
@@ -341,7 +390,7 @@ class Kupon extends KomponenAdmin
             // tersimpan, tautan tetap ditunjukkan supaya pengelola tahu bentuk
             // alamat yang akan dibagikan KOL — dari kode yang sedang diketik.
             'tautanKol' => $this->tautanKol(),
-        ])->layout('layouts.admin', ['judul' => 'Kupon', 'bagian' => 'Penjualan']);
+        ])->layout('layouts.admin', ['judul' => 'Coupons', 'bagian' => 'Sales']);
     }
 
     /**

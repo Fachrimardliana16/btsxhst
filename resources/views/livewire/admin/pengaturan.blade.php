@@ -1,4 +1,4 @@
-<div class="space-y-5" wire:key="setelan-{{ $tab }}-{{ $versi }}">
+<div class="space-y-5">
 
     {{-- ── Pemilih tab ─────────────────────────────────────────────── --}}
     <div class="-mx-3 overflow-x-auto px-3 lg:mx-0 lg:px-0">
@@ -37,7 +37,7 @@
         <div class="plate border-l-2 border-danger p-3 text-sm" role="alert">{{ $message }}</div>
     @enderror
 
-    <form wire:submit="simpan" class="space-y-5">
+    <form wire:submit="simpan" wire:key="form-setelan-{{ $tab }}-{{ $versi }}" class="space-y-5">
 
         {{-- ── Hasil uji koneksi PayPal ────────────────────────────── --}}
         @if ($tab === 'payment' && $hasilPaypal !== null)
@@ -71,8 +71,8 @@
                     $kelompokNotif = $tab !== 'notification'
                         ? null
                         : (\Illuminate\Support\Str::startsWith($b['kunci'], 'notif_item_')
-                            ? 'Butir lonceng panel'
-                            : 'Notifikasi yang dikirim');
+                            ? 'Panel bell items'
+                             : 'Sent notifications');
 
                     $kelompokTerakhir ??= null;
                 @endphp
@@ -106,7 +106,7 @@
                                    type="password"
                                    autocomplete="new-password"
                                    wire:model="nilai.{{ $b['kunci'] }}"
-                                   placeholder="{{ $b['terisi'] ? '•••••••• {{ __('site.admin.pengaturan.tersimpan') }} — ketik untuk mengganti' : 'belum diisi' }}"
+                                   placeholder="{{ $b['terisi'] ? '•••••••• '.__('site.admin.pengaturan.tersimpan').' — type to replace' : 'not set' }}"
                                    class="field tech min-w-0 flex-1" />
 
                             @if ($b['terisi'])
@@ -114,11 +114,11 @@
 
                                 <button type="button"
                                         wire:click="hapusKredensial('{{ $b['kunci'] }}')"
-                                        wire:confirm="Hapus kredensial ini? Tindakan ini tidak dapat dibatalkan."
+                                        wire:confirm="Delete the stored credentials? This cannot be undone."
                                         class="btn-icon flex-none text-danger"
-                                        title="Hapus kredensial {{ __('site.admin.pengaturan.tersimpan') }}">
+                                        title="Delete stored credentials for {{ $b['label'] }}">
                                     <x-ikon name="trash" :size="17" />
-                                    <span class="visually-hidden">Hapus {{ $b['label'] }}</span>
+                                    <span class="visually-hidden">Delete {{ $b['label'] }}</span>
                                 </button>
                             @else
                                 <span class="badge badge-neutral flex-none">{{ __('site.admin.pengaturan.kosong') }}</span>
@@ -153,26 +153,26 @@
                     @elseif ($b['tipe'] === 'image')
                         {{-- Berkas diunggah saat simpan, bukan saat dipilih,
                              supaya tidak ada berkas tayang sebelum disetujui. --}}
-                        <div class="mt-2 flex flex-wrap items-center gap-3">
+                        <div class="mt-2 space-y-2">
                             @if (filled($nilai[$b['kunci']] ?? null))
                                 <img src="{{ \App\Models\ProductMedia::urlMedia($nilai[$b['kunci']]) }}"
                                      alt="{{ $b['label'] }}"
-                                     class="h-12 w-auto flex-none rounded border border-line-soft bg-sunken object-contain p-1" />
+                                     class="h-12 w-auto rounded border border-line-soft bg-sunken object-contain p-1" />
                             @else
-                                <span class="badge badge-neutral flex-none">{{ __('site.admin.pengaturan.belum_ada_berkas') }}</span>
+                                <span class="badge badge-neutral">{{ __('site.admin.pengaturan.belum_ada_berkas') }}</span>
                             @endif
 
-                            <input id="f-{{ $b['kunci'] }}"
-                                   type="file"
-                                   accept="image/jpeg,image/png,image/webp,image/avif"
-                                   wire:model="berkas.{{ $b['kunci'] }}"
-                                   class="min-w-0 flex-1 text-sm" />
+                            <x-file-upload model="berkas.{{ $b['kunci'] }}"
+                                           accept="image/jpeg,image/png,image/webp,image/avif"
+                                           :id="'f-'.$b['kunci']"
+                                           title="Choose a new image or drop it here"
+                                           hint="JPG, PNG, WebP, or AVIF · up to 5 MB" />
                         </div>
 
                         @if ($berkas[$b['kunci']] ?? null)
                             <p class="tech mt-2 text-xs text-muted" wire:loading.remove
                                wire:target="berkas.{{ $b['kunci'] }}">
-                                Siap diunggah: {{ ukuran_berkas($berkas[$b['kunci']]->getSize()) }}
+                                Ready to upload: {{ ukuran_berkas($berkas[$b['kunci']]->getSize()) }}
                             </p>
                             <p class="tech mt-2 text-xs text-dim" wire:loading wire:target="berkas.{{ $b['kunci'] }}">
                                 {{ __('site.admin.pengaturan.mengunggah') }}

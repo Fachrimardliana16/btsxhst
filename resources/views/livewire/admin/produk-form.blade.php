@@ -9,15 +9,15 @@
     {{-- ── Kepala ──────────────────────────────────────────────────── --}}
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="min-w-0">
-            <p class="part-no">Katalog · produk {{ $produk ? '· '.$produk->sku : '· baru' }}</p>
+            <p class="part-no">Catalog · product {{ $produk ? '· '.$produk->sku : '· new' }}</p>
             <h1 class="mt-1 font-display text-2xl font-semibold">
-                {{ $produk ? $produk->title_id : 'Produk Baru' }}
+                {{ $produk ? $produk->judul() : 'New Product' }}
             </h1>
             @if ($produk)
                 <p class="mt-1 text-sm text-muted">
-                    {{ $produk->is_published ? 'Terbit' : 'Draf' }} ·
-                    {{ $produk->variants->count() }} varian ·
-                    {{ $media->count() }} gambar
+                    {{ $produk->is_published ? 'Published' : 'Draft' }} ·
+                    {{ $produk->variants->count() }} variants ·
+                    {{ $media->count() }} images
                 </p>
             @else
                 <p class="mt-1 text-sm text-muted">
@@ -57,14 +57,15 @@
                 @endif
 
                 <button type="button" wire:click="ubahTerbit"
+                        wire:confirm="{{ $produk->is_published ? 'Remove this product from the catalog?' : 'Publish this product?' }}"
                         class="btn {{ $produk->is_published ? 'btn-outline' : 'btn-primary' }} btn-sm"
-                        title="{{ $produk->is_published ? 'Tarik dari katalog' : 'Terbitkan' }}">
+                        title="{{ $produk->is_published ? 'Remove from catalog' : 'Publish' }}">
                     <x-ikon name="{{ $produk->is_published ? 'close' : 'check' }}" :size="15" />
                     <span class="hidden sm:inline">
-                        {{ $produk->is_published ? 'Tarik dari katalog' : 'Terbitkan' }}
+                        {{ $produk->is_published ? 'Remove from catalog' : 'Publish' }}
                     </span>
                     <span class="sr-only sm:hidden">
-                        {{ $produk->is_published ? 'Tarik dari katalog' : 'Terbitkan' }}
+                        {{ $produk->is_published ? 'Remove from catalog' : 'Publish' }}
                     </span>
                 </button>
             @endif
@@ -83,9 +84,9 @@
     <div class="-mx-3 overflow-x-auto px-3 lg:mx-0 lg:px-0">
         <div class="flex min-w-max gap-1 border-b border-line-soft" role="tablist">
             @foreach ([
-                'info' => ['label' => 'Informasi Dasar', 'ikon' => 'card', 'siap' => $produk !== null],
-                'varian' => ['label' => 'Varian', 'ikon' => 'sliders', 'siap' => $produk !== null],
-                'media' => ['label' => 'Gambar', 'ikon' => 'image', 'siap' => $produk !== null],
+                'info' => ['label' => 'Basic Information', 'ikon' => 'card', 'siap' => $produk !== null],
+                'varian' => ['label' => 'Variants', 'ikon' => 'sliders', 'siap' => $produk !== null],
+                'media' => ['label' => 'Images', 'ikon' => 'image', 'siap' => $produk !== null],
             ] as $kunci => $t)
                 <button type="button" role="tab" wire:click="aturTab('{{ $kunci }}')"
                         @disabled(! $t['siap'])
@@ -117,18 +118,11 @@
                         <h2 class="font-display text-lg font-semibold">{{ __('site.admin.produk_form.nama_produk') }}</h2>
 
                         <div>
-                            <label for="title_id" class="part-no">{{ __('site.admin.produk_form.nama_id') }} <span class="text-danger">*</span></label>
+                            <label for="title_id" class="part-no">{{ __('site.admin.produk_form.nama_produk') }} <span class="text-danger">*</span></label>
                             <input id="title_id" type="text" wire:model.live.debounce.500ms="title_id"
-                                   class="field mt-1" placeholder="Knalpot Racing Jupiter MX"
+                                   class="field mt-1" placeholder="Jupiter MX Racing Exhaust"
                                    aria-invalid="{{ $errors->has('title_id') ? 'true' : 'false' }}">
                             @error('title_id') <p class="field-error">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="title_en" class="part-no">{{ __('site.admin.produk_form.nama_en') }}</label>
-                            <input id="title_en" type="text" wire:model="title_en" class="field mt-1">
-                            <p class="mt-1 text-xs text-dim">{{ __('site.admin.produk_form.kosong_terjemahan') }}</p>
-                            @error('title_en') <p class="field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
@@ -151,17 +145,10 @@
                         </div>
 
                         <div>
-                            <label for="excerpt_id" class="part-no">{{ __('site.admin.produk_form.ringkasan') }} (Indonesia)</label>
+                            <label for="excerpt_id" class="part-no">{{ __('site.admin.produk_form.ringkasan') }}</label>
                             <textarea id="excerpt_id" wire:model="excerpt_id" class="field mt-1" rows="2"
                                       maxlength="300"></textarea>
                             @error('excerpt_id') <p class="field-error">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="excerpt_en" class="part-no">{{ __('site.admin.produk_form.ringkasan') }} (Inggris)</label>
-                            <textarea id="excerpt_en" wire:model="excerpt_en" class="field mt-1" rows="2"
-                                      maxlength="300"></textarea>
-                            @error('excerpt_en') <p class="field-error">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
@@ -169,15 +156,9 @@
                         <h2 class="font-display text-lg font-semibold">{{ __('site.admin.produk_form.deskripsi_lengkap') }}</h2>
 
                         <div>
-                            <label for="description_id" class="part-no">{{ __('site.admin.produk_form.deskripsi_id') }}</label>
+                            <label for="description_id" class="part-no">{{ __('site.admin.produk_form.deskripsi_lengkap') }}</label>
                             <textarea id="description_id" wire:model="description_id" class="field mt-1" rows="8"></textarea>
                             @error('description_id') <p class="field-error">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="description_en" class="part-no">{{ __('site.admin.produk_form.deskripsi_en') }}</label>
-                            <textarea id="description_en" wire:model="description_en" class="field mt-1" rows="8"></textarea>
-                            @error('description_en') <p class="field-error">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
@@ -188,14 +169,14 @@
                         <h2 class="font-display text-lg font-semibold">{{ __('site.admin.produk_form.harga_dan_berat') }}</h2>
 
                         <div>
-                            <label for="base_price" class="part-no">{{ __('site.admin.produk_form.harga_dasar') }} <span class="text-danger">*</span></label>
+                            <label for="base_price_usd" class="part-no">Base price (USD) <span class="text-danger">*</span></label>
                             <div class="mt-1 flex items-center gap-2">
-                                <span class="tech text-sm text-dim">Rp</span>
-                                <input id="base_price" type="text" inputmode="numeric" wire:model="base_price"
-                                       class="field tech" aria-invalid="{{ $errors->has('base_price') ? 'true' : 'false' }}">
+                                <span class="tech text-sm text-dim">$</span>
+                                <input id="base_price_usd" type="text" inputmode="decimal" wire:model="base_price_usd"
+                                       class="field tech" aria-invalid="{{ $errors->has('base_price_usd') ? 'true' : 'false' }}">
                             </div>
-                            <p class="mt-1 text-xs text-dim">{{ __('site.admin.produk_form.harga_hint') }}</p>
-                            @error('base_price') <p class="field-error">{{ $message }}</p> @enderror
+                            <p class="mt-1 text-xs text-dim">The price buyers see, in US dollars.</p>
+                            @error('base_price_usd') <p class="field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
@@ -216,7 +197,7 @@
                                     aria-invalid="{{ $errors->has('category_id') ? 'true' : 'false' }}">
                                 <option value="">{{ __('site.admin.produk_form.pilih_kategori') }}</option>
                                 @foreach ($kategori as $k)
-                                    <option value="{{ $k->id }}">{{ $k->name_id }}</option>
+                                    <option value="{{ $k->id }}">{{ $k->nama() }}</option>
                                 @endforeach
                             </select>
                             @error('category_id') <p class="field-error">{{ $message }}</p> @enderror
@@ -294,18 +275,6 @@
                                                 </button>
                                             </div>
                                         </div>
-
-                                        <details class="mt-2">
-                                            <summary class="cursor-pointer text-xs text-dim">{{ __('site.product.spec_lang') }}</summary>
-                                            <div class="mt-2 grid gap-2 sm:grid-cols-2">
-                                                <input type="text" wire:model="spesifikasi.{{ $i }}.label_en"
-                                                       class="field py-2 text-xs" placeholder="{{ __('site.admin.produk_form.material') }} (EN)"
-                                                       aria-label="{{ __('site.product.spec_label') }} EN">
-                                                <input type="text" wire:model="spesifikasi.{{ $i }}.nilai_en"
-                                                       class="field py-2 text-xs" placeholder="Stainless 304 (EN)"
-                                                       aria-label="{{ __('site.product.spec_value') }} EN">
-                                            </div>
-                                        </details>
                                     </div>
                                 @endforeach
                             </div>
@@ -328,7 +297,7 @@
                             <span class="text-sm">{{ __('site.admin.produk_form.terbitkan') }}</span>
                         </label>
                         <p class="text-xs text-dim">
-                            Produk tanpa varian tidak dapat diterbitkan — pembeli akan sampai di halaman yang tidak bisa dibeli.
+                            A product without variants cannot be published — buyers would reach a page they cannot purchase from.
                         </p>
 
                         <label class="flex items-center gap-2">
@@ -360,8 +329,8 @@
                 <div>
                     <p class="text-sm font-medium">{{ __('site.admin.produk_form.varian_judul') }}</p>
                     <p class="text-xs text-dim">
-                        Harga akhir = harga dasar {{ rupiah($base_price ?: 0) }} ditambah penyesuaian varian.
-                        Kolom yang ditahan diisi otomatis oleh pesanan berjalan.
+                        Final price = base price {{ dolar($base_price_usd !== '' ? (float) $base_price_usd : \App\Support\HargaDolar::dariRupiah($base_price)) }} plus the variant adjustment.
+                        The reserved column is filled automatically by open orders.
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
@@ -399,7 +368,13 @@
                         <tbody>
                             @forelse ($varian as $i => $v)
                                 @php
-                                    $hargaAkhir = (float) ($base_price ?: 0) + (float) ($v['selisih'] ?: 0);
+                                    $dasarUsd = $base_price_usd !== ''
+                                        ? (float) $base_price_usd
+                                        : (float) (\App\Support\HargaDolar::dariRupiah($base_price) ?? 0);
+                                    $selisihUsd = (string) ($v['selisih_usd'] ?? '') !== ''
+                                        ? (float) $v['selisih_usd']
+                                        : (float) (\App\Support\HargaDolar::dariRupiah($v['selisih'] ?? 0) ?? 0);
+                                    $hargaAkhir = $dasarUsd + $selisihUsd;
                                 @endphp
 
                                 <tr class="border-b border-line-soft last:border-0" wire:key="varian-{{ $i }}-{{ $v['id'] ?? 'baru' }}">
@@ -424,29 +399,24 @@
                                     <td class="p-3">
                                         <input type="text" wire:model="varian.{{ $i }}.nama_id"
                                                class="field py-2" placeholder="{{ __('site.admin.produk_form.contoh_varian') }}"
-                                               aria-label="{{ __('site.admin.produk_form.nama_varian') }} baris {{ $i + 1 }}"
+                                               aria-label="{{ __('site.admin.produk_form.nama_varian') }} row {{ $i + 1 }}"
                                                aria-invalid="{{ $errors->has('varian.'.$i.'.nama_id') ? 'true' : 'false' }}">
                                         @error("varian.$i.nama_id") <p class="field-error">{{ $message }}</p> @enderror
-
-                                        <input type="text" wire:model="varian.{{ $i }}.nama_en"
-                                               class="field mt-1 py-1.5 text-[length:var(--t-xs)]"
-                                               placeholder="English name (opsional)"
-                                               aria-label="{{ __('site.admin.produk_form.nama_varian') }} Inggris baris {{ $i + 1 }}">
                                     </td>
 
                                     <td class="p-3">
-                                        <input type="text" inputmode="numeric" wire:model.live.debounce.400ms="varian.{{ $i }}.selisih"
+                                        <input type="text" inputmode="decimal" wire:model.live.debounce.400ms="varian.{{ $i }}.selisih_usd"
                                                class="field tech w-28 py-2"
-                                               aria-label="{{ __('site.admin.produk_form.selisih_harga') }} baris {{ $i + 1 }}"
-                                               aria-invalid="{{ $errors->has('varian.'.$i.'.selisih') ? 'true' : 'false' }}">
-                                        <p class="tech mt-1 text-xs text-dim">= {{ rupiah($hargaAkhir) }}</p>
-                                        @error("varian.$i.selisih") <p class="field-error">{{ $message }}</p> @enderror
+                                               aria-label="{{ __('site.admin.produk_form.selisih_harga') }} row {{ $i + 1 }}"
+                                               aria-invalid="{{ $errors->has('varian.'.$i.'.selisih_usd') ? 'true' : 'false' }}">
+                                        <p class="tech mt-1 text-xs text-dim">= {{ dolar($hargaAkhir) }}</p>
+                                        @error("varian.$i.selisih_usd") <p class="field-error">{{ $message }}</p> @enderror
                                     </td>
 
                                     <td class="p-3">
                                         <input type="text" inputmode="numeric" wire:model="varian.{{ $i }}.stok"
                                                class="field tech w-20 py-2"
-                                               aria-label="{{ __('site.admin.produk_form.stok') }} baris {{ $i + 1 }}"
+                                               aria-label="{{ __('site.admin.produk_form.stok') }} row {{ $i + 1 }}"
                                                aria-invalid="{{ $errors->has('varian.'.$i.'.stok') ? 'true' : 'false' }}">
                                         @error("varian.$i.stok") <p class="field-error">{{ $message }}</p> @enderror
                                     </td>
@@ -460,13 +430,13 @@
                                     <td class="p-3">
                                         <input type="text" inputmode="numeric" wire:model="varian.{{ $i }}.berat"
                                                class="field tech w-24 py-2" placeholder="{{ $weight_gram }}"
-                                               aria-label="Berat baris {{ $i + 1 }}">
+                                               aria-label="Weight row {{ $i + 1 }}">
                                     </td>
 
                                     <td class="p-3">
                                         <span class="switch">
                                             <input type="checkbox" wire:model="varian.{{ $i }}.aktif"
-                                                   aria-label="Varian baris {{ $i + 1 }} aktif">
+                                                   aria-label="Variant row {{ $i + 1 }} active">
                                             <span></span>
                                         </span>
                                     </td>
@@ -479,7 +449,7 @@
                                                 <span class="visually-hidden">{{ __('site.admin.produk_form.salin_varian') }}</span>
                                             </button>
                                             <button type="button" wire:click="hapusVarian({{ $i }})"
-                                                    wire:confirm="{{ __('site.admin.produk_form.hapus_varian') }} baris {{ $i + 1 }}?"
+                                                    wire:confirm="Delete variant row {{ $i + 1 }}?"
                                                     class="btn-icon btn-icon-sm hover:text-danger" title="{{ __('site.admin.produk_form.hapus_varian') }}">
                                                 <x-ikon name="trash" :size="15" />
                                                 <span class="visually-hidden">{{ __('site.admin.produk_form.hapus_varian') }}</span>
@@ -492,11 +462,11 @@
                                     <td colspan="8" class="p-8 text-center">
                                         <x-ikon name="sliders" :size="28" class="mx-auto text-dim" />
                                         <p class="mt-3 text-sm text-muted">
-                                            Belum ada varian. Produk harus punya minimal satu agar bisa dibeli.
+                                            No variants yet. A product needs at least one to be purchasable.
                                         </p>
                                         <button type="button" wire:click="tambahVarian" class="btn btn-primary mt-4">
                                             <x-ikon name="plus" :size="16" />
-                                            {{ __('site.admin.produk_form.tambah_varian') }} pertama
+                                            Add first variant
                                         </button>
                                     </td>
                                 </tr>
@@ -524,19 +494,23 @@
             <div class="plate p-4">
                 <h2 class="font-display text-lg font-semibold">{{ __('site.admin.produk_form.unggah_gambar') }}</h2>
                 <p class="mt-0.5 text-xs text-dim">
-                    JPG, PNG, WebP, atau AVIF. Maksimum 5 MB per berkas, 200 berkas dan 50 MB per produk.
-                    Berkas diproses di latar belakang; gambar yang baru diunggah muncul beberapa saat kemudian.
+                    JPG, PNG, WebP, or AVIF. Maximum 5 MB per file, 200 files and 50 MB per product.
+                    Each image is cropped to 4:3 before upload, so portrait photos fill the card without empty space.
+                    Files are processed in the background; new uploads appear after a moment.
                 </p>
 
-                <div class="mt-3 flex flex-wrap items-center gap-3">
-                    <input type="file" wire:model="berkasBaru" multiple accept="image/jpeg,image/png,image/webp,image/avif"
-                           class="field w-auto py-2 file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-fg"
-                           aria-label="{{ __('site.admin.produk_form.pilih_gambar') }}">
+                <x-file-upload model="berkasBaru" multiple crop="product"
+                               accept="image/jpeg,image/png,image/webp,image/avif"
+                               title="Click to choose images or drop them here"
+                               class="mt-3">
+                    JPG, PNG, WebP, or AVIF · up to 5 MB per file
+                </x-file-upload>
 
+                <div class="mt-3 flex flex-wrap items-center gap-3">
                     <button type="button" wire:click="unggah" class="btn btn-primary"
                             wire:loading.attr="disabled" @disabled($berkasBaru === [])>
                         <x-ikon name="upload" :size="16" />
-                        <span wire:loading.remove wire:target="unggah">Unggah</span>
+                        <span wire:loading.remove wire:target="unggah">Upload</span>
                         <span wire:loading wire:target="unggah">{{ __('site.admin.produk_form.mengunggah') }}</span>
                     </button>
 
@@ -549,21 +523,21 @@
                 @error('berkasBaru.*') <p class="field-error mt-2">{{ $message }}</p> @enderror
 
                 @if (count($berkasBaru) > 0)
-                    <p class="tech mt-2 text-xs text-muted">{{ count($berkasBaru) }} berkas siap diunggah</p>
+                    <p class="tech mt-2 text-xs text-muted">{{ count($berkasBaru) }} files ready to upload</p>
                 @endif
             </div>
 
             {{-- Yang ditolak --}}
             @if ($ditolak !== [])
                 <div class="plate border-l-2 border-danger p-3 text-sm" role="alert">
-                    <p class="font-medium">{{ count($ditolak) }} berkas ditolak:</p>
+                    <p class="font-medium">{{ count($ditolak) }} files rejected:</p>
                     <ul class="mt-1 list-disc space-y-0.5 pl-5 text-muted">
                         @foreach ($ditolak as $alasan)
                             <li>{{ $alasan }}</li>
                         @endforeach
                     </ul>
                     <p class="mt-2 text-xs text-dim">
-                        Alasan lengkap tersimpan di catatan unggahan, termasuk berkas yang berasal dari titik akhir langsung.
+                        Full reasons are kept in the upload log, including files sent through the direct endpoint.
                     </p>
                 </div>
             @endif
@@ -576,7 +550,7 @@
                         <button type="button" wire:click="periksaAntrean" class="ml-1 text-accent underline">{{ __('site.admin.produk_form.periksa_lagi') }}</button>
                     </p>
                     <p class="mt-1 text-xs text-dim">
-                        Pemrosesan berjalan di latar belakang. Bila angka ini tidak berubah, pastikan pekerja antrean hidup:
+                        Processing runs in the background. If this number does not change, make sure the queue worker is running:
                         <code class="tech">php artisan queue:work</code>
                     </p>
                 </div>
@@ -592,9 +566,9 @@
                 <div class="plate p-4">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <h2 class="font-display text-lg font-semibold">
-                            {{ $media->count() }} gambar
+                            {{ $media->count() }} images
                         </h2>
-                        <p class="text-xs text-dim">{{ __('site.admin.produk_form.urutan') }} di sini menentukan urutan di halaman produk. Gambar utama tampil di katalog.</p>
+                        <p class="text-xs text-dim">{{ __('site.admin.produk_form.urutan') }} here determines the order on the product page. The primary image is shown in the catalog.</p>
                     </div>
 
                     <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -619,7 +593,7 @@
 
                                 <div class="space-y-2 p-2">
                                     <p class="truncate text-xs text-muted" title="{{ $g->original_filename }}">
-                                        {{ $g->original_filename ?: 'tanpa nama' }}
+                                        {{ $g->original_filename ?: 'untitled' }}
                                     </p>
                                     <p class="tech text-xs text-dim">
                                         {{ $g->width }}×{{ $g->height }} · {{ ukuran_berkas($g->byte_size) }}
@@ -629,9 +603,9 @@
                                         <label for="alt-{{ $g->id }}" class="part-no">{{ __('site.admin.produk_form.teks_alternatif') }}</label>
                                         <input id="alt-{{ $g->id }}" type="text"
                                                class="field mt-1 py-1.5 text-[length:var(--t-xs)]"
-                                               placeholder="{{ $produk->title_id }}"
-                                               value="{{ $g->alt_text_id }}"
-                                               wire:blur="simpanAlt({{ $g->id }}, $event.target.value, 'id')">
+                                               placeholder="{{ $produk->judul() }}"
+                                               value="{{ $g->alt_text_en ?: $g->alt_text_id }}"
+                                               wire:blur="simpanAlt({{ $g->id }}, $event.target.value, 'en')">
                                     </div>
 
                                     <div class="flex items-center gap-1">
@@ -649,7 +623,7 @@
                                         </button>
 
                                         @unless ($g->is_primary)
-                                            <button type="button" wire:click="jadikan{{ __('site.admin.produk_form.utama') }}({{ $g->id }})"
+                                            <button type="button" wire:click="jadikanUtama({{ $g->id }})"
                                                     class="btn-icon h-7 w-7" title="{{ __('site.admin.produk_form.jadikan_utama') }}">
                                                 <x-ikon name="star" :size="14" />
                                                 <span class="visually-hidden">{{ __('site.admin.produk_form.jadikan_utama') }}</span>
@@ -657,7 +631,7 @@
                                         @endunless
 
                                         <button type="button" wire:click="hapusMedia({{ $g->id }})"
-                                                wire:confirm="{{ __('site.admin.produk_form.hapus_gambar') }} ini?"
+                                                wire:confirm="Delete this image?"
                                                 class="btn-icon ml-auto h-7 w-7 hover:text-danger" title="{{ __('site.admin.produk_form.hapus_gambar') }}">
                                             <x-ikon name="trash" :size="14" />
                                             <span class="visually-hidden">{{ __('site.admin.produk_form.hapus_gambar') }}</span>

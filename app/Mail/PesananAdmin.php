@@ -56,7 +56,7 @@ class PesananAdmin extends Mailable
                 '[%s] %s · %s',
                 $judul,
                 $this->pesanan->order_number,
-                $this->pesanan->currency.' '.rupiah($this->pesanan->grand_total),
+                $this->pesanan->currency.' '.dolar($this->pesanan->grand_total),
             ),
         );
     }

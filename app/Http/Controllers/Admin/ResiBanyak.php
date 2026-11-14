@@ -58,7 +58,7 @@ class ResiBanyak
             // satu untuk satu label, dipisah koma untuk banyak.
             'ulid' => ['required', 'string'],
         ], [
-            'ulid.required' => 'Tidak ada pesanan yang dipilih untuk dicetak.',
+            'ulid.required' => 'No orders selected for printing.',
         ]);
 
         $kunci = array_values(array_unique(array_filter(
@@ -67,13 +67,13 @@ class ResiBanyak
         )));
 
         if ($kunci === []) {
-            return back()->with('galat-admin', 'Tidak ada pesanan yang dipilih untuk dicetak.');
+            return back()->with('galat-admin', 'No orders selected for printing.');
         }
 
         if (count($kunci) > self::BATAS) {
             return back()->with(
                 'galat-admin',
-                'Maksimal '.self::BATAS.' label sekali cetak. Pilih lebih sedikit, atau cetak per halaman.'
+                'At most '.self::BATAS.' labels per print. Select fewer, or print page by page.'
             );
         }
 
@@ -113,7 +113,7 @@ class ResiBanyak
             ->values();
 
         if ($pesanan->isEmpty()) {
-            return back()->with('galat-admin', 'Pesanan yang dipilih tidak ditemukan.');
+            return back()->with('galat-admin', 'The selected orders were not found.');
         }
 
         // Pesanan yang sudah dibatalkan tetap dicetak, tetapi dengan tanda

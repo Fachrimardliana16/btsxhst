@@ -126,17 +126,6 @@ Ringkasnya:
 
 ---
 
-## Menjalankan test
-
-```bash
-php artisan test
-```
-
-Test anggaran kueri ikut berjalan di sini: setiap halaman dijaga tidak melebihi
-15 kueri, dan biaya kueri tidak boleh tumbuh mengikuti jumlah produk.
-
----
-
 ## Catatan pemasangan
 
 **Aset frontend harus dibangun setiap kali blade berubah.** Tailwind 4 hanya

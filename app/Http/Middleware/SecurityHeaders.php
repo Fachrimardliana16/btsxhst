@@ -92,6 +92,12 @@ class SecurityHeaders
     {
         $paymentHosts = 'https://www.paypal.com https://www.sandbox.paypal.com';
 
+        // Bootstrap tema di <head> disalin ulang oleh wire:navigate. Nonce
+        // halaman baru tidak berlaku untuk dokumen yang sedang berjalan
+        // (CSP milik dokumen lama), jadi salinan itu diblokir. Hash tetap
+        // membuat skrip yang isinya persis ini tetap boleh berjalan.
+        $hashTema = "'sha256-qIGaP8RvxlwBf6tS0T8+OtjojJ+n55n2gGR3EVkFXPQ='";
+
         $directives = [
             "default-src 'self'",
             "base-uri 'self'",
@@ -101,8 +107,8 @@ class SecurityHeaders
             // 'strict-dynamic' berlaku untuk skrip, tetapi modul yang dimuat
             // <model-viewer> tetap memerlukan asalnya terdaftar — tanpa itu
             // pemutar 3D (Fase 2: P2-01) tidak pernah muncul, tanpa pesan.
-            "script-src 'self' 'nonce-{$nonce}' 'strict-dynamic' 'unsafe-eval' https://www.paypal.com https://www.sandbox.paypal.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://connect.facebook.net",
-            "script-src-elem 'self' 'nonce-{$nonce}' https://www.paypal.com https://www.sandbox.paypal.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://connect.facebook.net",
+            "script-src 'self' 'nonce-{$nonce}' {$hashTema} 'strict-dynamic' 'unsafe-eval' https://www.paypal.com https://www.sandbox.paypal.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://connect.facebook.net",
+            "script-src-elem 'self' 'nonce-{$nonce}' {$hashTema} https://www.paypal.com https://www.sandbox.paypal.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://connect.facebook.net",
             // Tailwind dan Livewire memasang gaya lewat atribut style, bukan tag.
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https://www.google-analytics.com https://www.facebook.com",

@@ -121,20 +121,20 @@ html {
     background: rgba(17, 24, 39, 0.06);
 }
 
-/* Penanda aktif. Satu aturan untuk kedua keadaan: pil biru brand. `.is-aktif`
-   dipakai di samping kelas Blade bawaan supaya CSS tidak bergantung pada
-   utility `bg-accent` yang bisa saja tidak ter-generate. */
+/* Penanda aktif. Satu aturan untuk kedua keadaan: pil kuning merek dengan
+   teks hitam. `.is-aktif` dipakai di samping kelas Blade bawaan supaya CSS
+   tidak bergantung pada utility `bg-accent` yang bisa saja tidak ter-generate. */
 .navbar-tautan.is-aktif {
-    background: var(--c-accent, #0062ad);
-    color: #ffffff !important;
+    background: var(--c-accent, #fec51e);
+    color: var(--c-accent-fg, #151719) !important;
     font-weight: 700;
-    box-shadow: 0 2px 8px -2px rgba(0, 98, 173, 0.55);
+    box-shadow: 0 2px 8px -2px rgba(254, 197, 30, 0.55);
 }
 
 .race-navbar.navbar-hero .navbar-tautan.is-aktif {
-    background: rgba(255, 255, 255, 0.18);
-    color: #ffffff !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+    background: var(--c-accent, #fec51e);
+    color: var(--c-accent-fg, #151719) !important;
+    box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
 /* ═══ SEMBUNYI SAAT GULIR KE BAWAH ═════════════════════════════════════ */
@@ -208,6 +208,15 @@ html {
     min-width: 0;
     overflow: hidden;
 }
+
+/* Dua artwork logo, satu per latar. Aturan urutannya penting: keadaan
+ * `navbar-melayang` pada beranda masih membawa kelas `navbar-hero` (app.js
+ * tidak mencabutnya), jadi selektor melayang harus menang. */
+.navbar-logo__terang { display: none; }
+.navbar-hero .navbar-logo__terang { display: block; }
+.navbar-hero .navbar-logo__gelap { display: none; }
+.navbar-hero.navbar-melayang .navbar-logo__terang { display: none; }
+.navbar-hero.navbar-melayang .navbar-logo__gelap { display: block; }
 
 /* ═══ TATA LETAK BILAH ════════════════════════════════════════════════
    Menu duduk di TENGAH sisa ruang antara logo dan utilitas. `flex-1` saja

@@ -24,7 +24,7 @@
             {{-- Cincin berdenyut hanya untuk hal yang benar-benar mendesak dan
                  belum dilihat: stok habis dan pesanan yang hampir batal. --}}
             <span class="absolute inset-1 animate-ping rounded-full bg-danger/25" aria-hidden="true"></span>
-            <span class="visually-hidden">{{ $mendesak }} notifikasi mendesak</span>
+            <span class="visually-hidden">{{ $mendesak }} urgent notifications</span>
         @endif
     </button>
 
@@ -51,7 +51,7 @@
                 <p class="part-no">
                     Perlu perhatian
                     @if ($belum > 0)
-                        <span class="text-dim">· {{ $belum }} belum dilihat</span>
+                        <span class="text-dim">· {{ $belum }} unread</span>
                     @endif
                 </p>
 
@@ -87,7 +87,7 @@
                     <x-ikon name="check" :size="26" class="mx-auto text-ok" />
                     <p class="mt-2 text-sm font-medium">Nothing needs your attention.</p>
                     <p class="mt-1 text-xs text-muted">
-                        Stok aman, tidak ada pesanan menunggu, tidak ada keranjang mengendap.
+                        Stock is fine, no orders waiting, no stale carts.
                     </p>
                 </div>
             @else
@@ -125,7 +125,7 @@
 
                                     @if ($b['dilihat'])
                                         <span class="mt-1 block text-[length:var(--t-xs)] text-dim">
-                                            Sudah dilihat
+                                            Already seen
                                             @if ($b['dilihat_pada'])
                                                 · {{ $b['dilihat_pada']->diffForHumans() }}
                                             @endif

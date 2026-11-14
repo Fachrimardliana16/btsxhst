@@ -42,13 +42,13 @@ class HeroBuilder extends KomponenAdmin
         $maks = (int) config('iksan.hero.max_slides');
 
         if (HeroSlide::query()->count() >= $maks) {
-            $this->galat = 'Jumlah slide sudah mencapai batas '.$maks.'. Hapus salah satu sebelum menambah.';
+            $this->galat = 'The slide limit of '.$maks.' has been reached. Delete one before adding another.';
 
             return;
         }
 
         $slide = HeroSlide::create([
-            'title_id' => 'Slide baru',
+            'title_id' => 'New slide',
             'title_en' => 'New slide',
             'media_type' => 'image',
             // Jalur diisi placeholder karena kolomnya wajib. Berkas sungguhan
@@ -176,7 +176,7 @@ class HeroBuilder extends KomponenAdmin
 
             CacheKatalog::tandaiBerubah('hero dinonaktifkan');
 
-            $this->pesanSukses = 'Slide dinonaktifkan.';
+            $this->pesanSukses = 'Slide deactivated.';
 
             return;
         }
@@ -194,7 +194,7 @@ class HeroBuilder extends KomponenAdmin
 
         CacheKatalog::tandaiBerubah('hero diaktifkan');
 
-        $this->pesanSukses = 'Slide diaktifkan.';
+        $this->pesanSukses = 'Slide activated.';
     }
 
     public function hapus(int $id): void
@@ -269,10 +269,10 @@ class HeroBuilder extends KomponenAdmin
         $slides = HeroSlide::query()->orderBy('display_order')->orderBy('id')->get();
 
         return view('livewire.admin.hero', [
-            'judul' => 'Hero Beranda',
+            'judul' => 'Homepage Hero',
             'slides' => $slides,
             'maksSlide' => (int) config('iksan.hero.max_slides'),
-        ])->layout('layouts.admin', ['judul' => 'Hero Beranda', 'bagian' => 'Situs']);
+        ])->layout('layouts.admin', ['judul' => 'Homepage Hero', 'bagian' => 'Site']);
     }
 
     /** URL gambar untuk pratinjau. Jalur kosong berarti belum ada berkas. */
