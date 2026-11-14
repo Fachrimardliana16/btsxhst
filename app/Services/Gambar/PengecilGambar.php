@@ -48,11 +48,12 @@ class PengecilGambar
             $turunans = config('iksan.uploads.derivatives');
             $paths = [];
 
+            // Semua turunan dipotong tengah ke ukuran bingkainya. Sebelumnya
+            // turunan selain `og` diskalakan ke dalam kanvas lalu diberi latar
+            // hitam, dan hasilnya terlihat sebagai "gambar mengecil dengan
+            // ruang hitam" di kartu produk yang bingkainya 4:3.
             foreach ($turunans as $nama => [$w, $h]) {
-                $isi = match ($nama) {
-                    'og' => $this->potongTengah($kanvas, $w, $h, $kualitas),
-                    default => $this->skalaPas($kanvas, $w, $h, $kualitas),
-                };
+                $isi = $this->potongTengah($kanvas, $w, $h, $kualitas);
 
                 $relatif = trim($folder, '/').'/'.$namaDasar.'-'.$nama.'.webp';
                 \Illuminate\Support\Facades\Storage::disk('public')->put($relatif, $isi);
@@ -119,32 +120,6 @@ class PengecilGambar
         imagedestroy($img);
 
         return $hasil;
-    }
-
-    private function skalaPas(\GdImage $sumber, int $lebar, int $tinggi, int $kualitas): string
-    {
-        $asliL = imagesx($sumber);
-        $asliT = imagesy($sumber);
-
-        // Tidak pernah memperbesar. Gambar kecil dibiarkan pada ukurannya.
-        $skala = min(1.0, $lebar / max(1, $asliL), $tinggi / max(1, $asliT));
-
-        $tujuanL = max(1, (int) round($asliL * $skala));
-        $tujuanT = max(1, (int) round($asliT * $skala));
-
-        $kanvas = imagecreatetruecolor($lebar, $tinggi);
-        $latar = imagecolorallocate($kanvas, 11, 11, 12);
-        imagefilledrectangle($kanvas, 0, 0, $lebar, $tinggi, $latar);
-        imagecopyresampled(
-            $kanvas, $sumber,
-            (int) (($lebar - $tujuanL) / 2), (int) (($tinggi - $tujuanT) / 2),
-            0, 0, $tujuanL, $tujuanT, $asliL, $asliT,
-        );
-
-        $isi = $this->keWebp($kanvas, $kualitas);
-        imagedestroy($kanvas);
-
-        return $isi;
     }
 
     private function potongTengah(\GdImage $sumber, int $lebar, int $tinggi, int $kualitas): string
