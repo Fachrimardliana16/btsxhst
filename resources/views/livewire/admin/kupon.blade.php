@@ -57,13 +57,13 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-line-soft text-left">
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.kupon.kode') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.kupon.potongan') }}</th>
-                                <th class="part-no p-3 text-right font-medium">{{ __('site.admin.kupon.min_belanja') }}</th>
-                                <th class="part-no p-3 text-right font-medium">{{ __('site.admin.kupon.terpakai') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.kupon.masa_berlaku') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.kupon.pemilik_kol') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.kupon.status') }}</th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.kupon.kode') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.kupon.potongan') }}</span></th>
+                                <th class="p-3 text-right font-medium"><span class="part-no">{{ __('site.admin.kupon.min_belanja') }}</span></th>
+                                <th class="p-3 text-right font-medium"><span class="part-no">{{ __('site.admin.kupon.terpakai') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.kupon.masa_berlaku') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.kupon.pemilik_kol') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.kupon.status') }}</span></th>
                                 <th class="p-3"><span class="visually-hidden">{{ __('site.admin.kupon.tindakan') }}</span></th>
                             </tr>
                         </thead>

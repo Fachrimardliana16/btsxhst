@@ -68,9 +68,9 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-line-soft text-left">
-                        <th class="part-no p-3 font-medium">{{ __('site.admin.pengguna_peran.tindakan') }}</th>
-                        <th class="part-no p-3 text-center font-medium">Admin</th>
-                        <th class="part-no p-3 text-center font-medium">Super Admin</th>
+                        <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.pengguna_peran.tindakan') }}</span></th>
+                        <th class="p-3 text-center font-medium"><span class="part-no">Admin</span></th>
+                        <th class="p-3 text-center font-medium"><span class="part-no">Super Admin</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,10 +106,10 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-line-soft text-left">
-                        <th class="part-no p-3 font-medium">{{ __('site.admin.pengguna_peran.nama') }}</th>
-                        <th class="part-no p-3 font-medium">{{ __('site.admin.pengguna_peran.peran') }}</th>
-                        <th class="part-no p-3 font-medium">{{ __('site.admin.pengguna_peran.status') }}</th>
-                        <th class="part-no p-3 text-right font-medium">{{ __('site.admin.pengguna_peran.pesanan') }}</th>
+                        <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.pengguna_peran.nama') }}</span></th>
+                        <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.pengguna_peran.peran') }}</span></th>
+                        <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.pengguna_peran.status') }}</span></th>
+                        <th class="p-3 text-right font-medium"><span class="part-no">{{ __('site.admin.pengguna_peran.pesanan') }}</span></th>
                         <th class="p-3"><span class="visually-hidden">{{ __('site.admin.pengguna_peran.tindakan') }}</span></th>
                     </tr>
                 </thead>

@@ -67,11 +67,11 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-line-soft text-left">
-                                <th class="part-no p-3 font-medium">Order</th>
-                                <th class="part-no p-3 font-medium">Name</th>
-                                <th class="part-no p-3 font-medium">Code</th>
-                                <th class="part-no p-3 font-medium">Tracking URL</th>
-                                <th class="part-no p-3 font-medium">Status</th>
+                                <th class="p-3 font-medium"><span class="part-no">Order</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">Name</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">Code</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">Tracking URL</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">Status</span></th>
                                 <th class="p-3"><span class="visually-hidden">Actions</span></th>
                             </tr>
                         </thead>

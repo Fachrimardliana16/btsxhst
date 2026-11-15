@@ -92,11 +92,11 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-line-soft text-left">
-                            <th class="part-no p-3 font-medium">KOL</th>
-                            <th class="part-no p-3 font-medium">{{ __('site.admin.kol_performa.kupon') }}</th>
-                            <th class="part-no p-3 text-right font-medium">{{ __('site.admin.kol_performa.pesanan_sah') }}</th>
-                            <th class="part-no p-3 text-right font-medium">{{ __('site.admin.kol_performa.penjualan') }}</th>
-                            <th class="part-no p-3 text-right font-medium">{{ __('site.admin.kol_performa.potongan') }}</th>
+                            <th class="p-3 font-medium"><span class="part-no">KOL</span></th>
+                            <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.kol_performa.kupon') }}</span></th>
+                            <th class="p-3 text-right font-medium"><span class="part-no">{{ __('site.admin.kol_performa.pesanan_sah') }}</span></th>
+                            <th class="p-3 text-right font-medium"><span class="part-no">{{ __('site.admin.kol_performa.penjualan') }}</span></th>
+                            <th class="p-3 text-right font-medium"><span class="part-no">{{ __('site.admin.kol_performa.potongan') }}</span></th>
                             <th class="p-3"><span class="visually-hidden">{{ __('site.admin.kol_performa.tindakan') }}</span></th>
                         </tr>
                     </thead>

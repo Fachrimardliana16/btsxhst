@@ -64,10 +64,10 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-line-soft text-left">
-                                <th class="part-no p-3 font-medium">Order</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.faq_panel.pertanyaan') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.faq_panel.kelompok') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.faq_panel.tampil') }}</th>
+                                <th class="p-3 font-medium"><span class="part-no">Order</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.faq_panel.pertanyaan') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.faq_panel.kelompok') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.faq_panel.tampil') }}</span></th>
                                 <th class="p-3"><span class="visually-hidden">{{ __('site.admin.faq_panel.tindakan') }}</span></th>
                             </tr>
                         </thead>

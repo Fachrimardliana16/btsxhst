@@ -355,13 +355,13 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-line-soft text-left">
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.produk_form.urutan') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.produk_form.nama_varian') }} <span class="text-danger">*</span></th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.produk_form.selisih_harga') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.produk_form.stok') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.produk_form.ditahan') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.produk_form.berat') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.produk_form.aktif') }}</th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.produk_form.urutan') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.produk_form.nama_varian') }} <span class="text-danger">*</span></span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.produk_form.selisih_harga') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.produk_form.stok') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.produk_form.ditahan') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.produk_form.berat') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.produk_form.aktif') }}</span></th>
                                 <th class="p-3"><span class="visually-hidden">{{ __('site.admin.produk_form.tindakan') }}</span></th>
                             </tr>
                         </thead>

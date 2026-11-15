@@ -64,11 +64,11 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-line-soft text-left">
-                                <th class="part-no p-3 font-medium">Order</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.kategori.nama') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.kategori.slug') }}</th>
-                                <th class="part-no p-3 text-right font-medium">{{ __('site.admin.kategori.produk') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.kategori.status') }}</th>
+                                <th class="p-3 font-medium"><span class="part-no">Order</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.kategori.nama') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.kategori.slug') }}</span></th>
+                                <th class="p-3 text-right font-medium"><span class="part-no">{{ __('site.admin.kategori.produk') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.kategori.status') }}</span></th>
                                 <th class="p-3"><span class="visually-hidden">{{ __('site.admin.kategori.tindakan') }}</span></th>
                             </tr>
                         </thead>

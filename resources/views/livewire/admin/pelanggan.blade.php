@@ -76,10 +76,10 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-line-soft text-left">
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.pelanggan.nama') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.pelanggan.peran') }}</th>
-                                <th class="part-no p-3 text-right font-medium">{{ __('site.admin.pelanggan.pesanan') }}</th>
-                                <th class="part-no p-3 font-medium">{{ __('site.admin.pelanggan.terakhir_masuk') }}</th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.pelanggan.nama') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.pelanggan.peran') }}</span></th>
+                                <th class="p-3 text-right font-medium"><span class="part-no">{{ __('site.admin.pelanggan.pesanan') }}</span></th>
+                                <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.pelanggan.terakhir_masuk') }}</span></th>
                                 <th class="p-3"><span class="visually-hidden">{{ __('site.admin.pelanggan.tindakan') }}</span></th>
                             </tr>
                         </thead>

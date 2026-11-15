@@ -120,10 +120,10 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-line-soft text-left">
-                            <th class="part-no p-3 font-medium">{{ __('site.admin.keamanan.sidik_jari') }}</th>
-                            <th class="part-no p-3 font-medium">{{ __('site.admin.keamanan.alasan') }}</th>
-                            <th class="part-no p-3 font-medium">{{ __('site.admin.keamanan.sampai') }}</th>
-                            <th class="part-no p-3 font-medium">{{ __('site.admin.keamanan.status') }}</th>
+                            <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.keamanan.sidik_jari') }}</span></th>
+                            <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.keamanan.alasan') }}</span></th>
+                            <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.keamanan.sampai') }}</span></th>
+                            <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.keamanan.status') }}</span></th>
                             <th class="p-3"><span class="visually-hidden">{{ __('site.admin.keamanan.tindakan') }}</span></th>
                         </tr>
                     </thead>
@@ -203,11 +203,11 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-line-soft text-left">
-                            <th class="part-no p-3 font-medium">{{ __('site.admin.keamanan.waktu') }}</th>
-                            <th class="part-no p-3 font-medium">{{ __('site.admin.keamanan.kejadian') }}</th>
-                            <th class="part-no p-3 font-medium">{{ __('site.admin.keamanan.sidik_jari') }}</th>
-                            <th class="part-no p-3 font-medium">{{ __('site.admin.keamanan.rute') }}</th>
-                            <th class="part-no p-3 font-medium">{{ __('site.admin.keamanan.keterangan') }}</th>
+                            <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.keamanan.waktu') }}</span></th>
+                            <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.keamanan.kejadian') }}</span></th>
+                            <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.keamanan.sidik_jari') }}</span></th>
+                            <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.keamanan.rute') }}</span></th>
+                            <th class="p-3 font-medium"><span class="part-no">{{ __('site.admin.keamanan.keterangan') }}</span></th>
                         </tr>
                     </thead>
                     <tbody>
