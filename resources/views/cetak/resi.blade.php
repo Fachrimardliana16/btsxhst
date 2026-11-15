@@ -22,7 +22,7 @@
 
     {{-- Ukuran kertas dinyatakan di sini supaya peramban tidak menyisipkan
          margin bawaan yang membuat label meleset dari kertas label. --}}
-    @include('cetak._gaya', ['margin' => '4mm'])
+    @include('cetak._gaya', ['margin' => '1.5mm'])
 
     <style>
         @media print {

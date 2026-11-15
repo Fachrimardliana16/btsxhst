@@ -18,7 +18,11 @@
     terbaca dan tidak merusak tata letak.
 --}}
 @if ($salinan ?? false)
-    <div style="border:2px solid #b42318;color:#b42318;padding:4px 8px;margin:0 0 8px;font-size:10px;font-weight:700;letter-spacing:.04em;text-align:center">
+    {{-- Satu baris tipis, bukan kotak tinggi: label 100x150 mm sudah penuh
+         oleh blok penerima, dan penanda setinggi 9 mm mendorong catatan serta
+         kalimat penutup ke halaman kedua — label terbelah, lalu ditempel di
+         paket yang salah. --}}
+    <div style="border:1px solid #b42318;color:#b42318;padding:1px 4px;margin:0 0 1.5mm;font-size:8.5px;font-weight:700;letter-spacing:.04em;text-align:center">
         SALINAN &middot; PESANAN INI SUDAH DIBATALKAN
     </div>
 @endif

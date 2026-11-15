@@ -160,7 +160,7 @@ class ResiBanyak
         // menghasilkan lebih lagi. Satu blok di <head> menghasilkan tepat satu
         // halaman per label.
         $html = '<!DOCTYPE html><html lang="id"><head>'
-            .view('cetak._gaya', ['margin' => '4mm'])->render()
+            .view('cetak._gaya', ['margin' => '1.5mm'])->render()
             .'</head><body>'
             .$html
             .'</body></html>';

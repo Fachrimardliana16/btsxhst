@@ -90,79 +90,65 @@
     .nomor-resi { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; }
 
     /* ── Label pengiriman ─────────────────────────────────────────────
-       Susunan mengikuti label kurir yang biasa dilihat penerima: nama
-       kurir paling atas, barcode, lalu penerima sebagai blok terbesar.
-       Kurir memindai barcode dan membaca nama/kota penerima; dua hal itu
-       yang harus paling jelas, bukan nama toko. */
+       Bentuknya mengikuti label kurir 100x150 mm: satu kotak berbingkai,
+       dipisah garis tebal per bagian. Kotak per bagian, bukan flexbox —
+       dompdf mengabaikan `display:flex`, dan dua kolom yang seharusnya
+       bersebelahan akan tercetak bertumpuk. Dua kolom di sini memakai
+       <table> karena itulah yang benar-benar didukung dompdf. */
 
-    .kepala-label { width: 100%; border-bottom: 2px solid #000; table-layout: fixed; }
-    .kepala-label td { padding: 0 0 1.6mm; vertical-align: middle; }
+    .kotak-label { border: 1.5px solid #000; }
+
+    .kepala-label { width: 100%; border-collapse: collapse; }
+    .kepala-label td { padding: 1.4mm 3mm; vertical-align: middle; }
+    .kepala-label .kanan { text-align: right; }
+
+    .logo-toko { max-height: 8mm; max-width: 34mm; }
+    .merek { font-size: 13px; font-weight: 700; line-height: 1.1; }
 
     .kurir {
-        font-size: 19px;
+        font-size: 17px;
         font-weight: 700;
         line-height: 1;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.04em;
         text-transform: uppercase;
     }
 
-    .layanan {
-        display: inline-block;
-        border: 1.5px solid #000;
-        padding: 0.8mm 1.8mm;
-        font-size: 10px;
+    .bagian { border-top: 1.5px solid #000; padding: 1.3mm 3mm; }
+
+    .barcode { text-align: center; }
+    .barcode img { width: 84mm; height: 10mm; display: block; margin: 0 auto; }
+
+    .resi-baris { font-size: 10.5px; font-weight: 700; margin-top: 1mm; }
+
+    .cod-baris { text-align: center; }
+    .cod-besar { font-size: 16px; font-weight: 700; line-height: 1.1; }
+    .layanan-baris { font-size: 10px; font-weight: 700; margin-top: 0.8mm; }
+
+    .dua-kolom { width: 100%; border-collapse: collapse; }
+    .dua-kolom td { width: 50%; padding: 1.4mm 3mm; vertical-align: top; }
+    .dua-kolom td.sisi-kiri { border-right: 1.5px solid #000; }
+
+    .meta-baris { font-size: 9.5px; font-weight: 700; }
+
+    .isi-baris {
+        font-size: 9px;
         font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-    }
-
-    .cod {
-        display: inline-block;
-        margin-top: 1mm;
-        border: 1px solid #000;
-        padding: 0.5mm 1.5mm;
-        font-size: 7.5px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-    }
-
-    .barcode { text-align: center; padding: 1.2mm 0 0.6mm; }
-    .barcode img { width: 84mm; height: 12mm; display: block; margin: 0 auto; }
-
-    .resi-teks {
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        margin-top: 0.8mm;
-    }
-
-    .blok { padding: 1.4mm 0; border-bottom: 1px dashed #000; }
-    .blok-akhir { border-bottom: 0; }
-
-    .judul-kecil {
-        font-size: 7.5px;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-    }
-
-    .nama-penerima { font-size: 14px; font-weight: 700; line-height: 1.15; margin-top: 0.4mm; }
-    .telp-penerima { font-size: 10.5px; font-weight: 700; margin-top: 0.4mm; }
-    .alamat-penerima { font-size: 9.5px; line-height: 1.35; margin-top: 0.6mm; }
-    .kota-penerima { font-size: 10.5px; font-weight: 700; text-transform: uppercase; margin-top: 0.6mm; }
-
-    .pengirim-label { font-size: 8.5px; line-height: 1.35; margin-top: 0.3mm; }
-
-    .meta-label { width: 100%; font-size: 8.5px; table-layout: fixed; }
-    .meta-label td { padding: 0.6mm 0; vertical-align: top; }
-
-    .isi-baris { font-size: 8.5px; line-height: 1.45; }
-    .isi-qty { display: inline-block; width: 7mm; font-weight: 700; }
-
-    .kaki-label {
-        font-size: 7.5px;
-        text-align: center;
-        margin-top: 1mm;
         line-height: 1.35;
+        padding-left: 4mm;
+        text-indent: -4mm;
     }
+
+    .nama-penerima { font-size: 9.5px; font-weight: 700; }
+    .alamat-penerima {
+        font-size: 8.5px;
+        line-height: 1.3;
+        font-weight: 700;
+        margin: 0.8mm 0;
+        word-wrap: break-word;
+    }
+    .telp-penerima { font-size: 9px; font-weight: 700; }
+
+    .catatan-baris { font-size: 9px; line-height: 1.3; }
+
+    .kaki-label { font-size: 7.5px; font-style: italic; line-height: 1.3; }
 </style>
