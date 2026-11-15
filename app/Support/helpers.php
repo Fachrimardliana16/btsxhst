@@ -145,3 +145,28 @@ if (! function_exists('ukuran_berkas')) {
         return Ukuran::berkas((int) $bytes);
     }
 }
+
+/*
+ * mb_split() tidak disediakan symfony/polyfill-mbstring.
+ *
+ * Di server yang PHP-nya dibangun tanpa ekstensi mbstring, polyfill itu
+ * menggantikan hampir semua mb_*, KECUALI mb_split — sementara Laravel 12
+ * masih memakainya di Str::studly() dan Str::headline(). Akibatnya
+ * `php artisan migrate` gagal membaca nama berkas migrasi sebelum satu
+ * migrasi pun berjalan, dengan galat "Call to undefined function
+ * Illuminate\Support\mb_split()".
+ *
+ * Padanan ini memakai preg_split dengan pembatas regex yang sama; pola yang
+ * dipakai Laravel hanya '\s+', jadi perilakunya setara. Diletakkan di berkas
+ * ini karena helpers.php dimuat oleh composer SEBELUM aplikasi dibootstrap —
+ * bukan di AppServiceProvider, yang belum berjalan saat Laravel menyusun
+ * daftar migrasi.
+ */
+if (! function_exists('mb_split')) {
+    function mb_split(string $pattern, string $string, int $limit = -1): array|false
+    {
+        $hasil = preg_split('~'.$pattern.'~u', $string, $limit);
+
+        return $hasil === false ? false : $hasil;
+    }
+}
