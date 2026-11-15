@@ -102,7 +102,7 @@
     .kepala-label td { padding: 1.4mm 3mm; vertical-align: middle; }
     .kepala-label .kanan { text-align: right; }
 
-    .logo-toko { max-height: 8mm; max-width: 34mm; }
+    .logo-toko { height: 7mm; width: auto; }
     .merek { font-size: 13px; font-weight: 700; line-height: 1.1; }
 
     .kurir {

@@ -41,9 +41,10 @@
     $sumberBarcode = $nomorResi !== '' ? $nomorResi : (string) $order->order_number;
     $barcode = \App\Support\Barcode128::dataUri($sumberBarcode, 84, 10);
 
-    // Logo dipakai bila berkasnya benar-benar ada di disk. Path pengaturan
-    // adalah jalur relatif pada disk public; dompdf membaca berkas lokal
-    // (chroot sudah mencakup storage), bukan URL.
+    // Logo toko di kiri atas. Urutannya: logo yang diunggah di Site Settings,
+    // lalu logo bawaan di public/brand, lalu nama toko sebagai teks. Tanpa
+    // cadangan ini label tanpa logo hanya menampilkan nama toko, padahal
+    // perusahaan sudah punya logo.
     $logoJalur = $toko->teks('site_logo_light') ?: $toko->teks('site_logo_dark');
     $logoBerkas = null;
 
@@ -53,6 +54,10 @@
         if (is_file($kandidat)) {
             $logoBerkas = $kandidat;
         }
+    }
+
+    if ($logoBerkas === null && is_file(public_path('brand/logo-gelap.png'))) {
+        $logoBerkas = public_path('brand/logo-gelap.png');
     }
 
     $telepon = $alamat['phone_number'] ?? $order->teleponPenerima();
