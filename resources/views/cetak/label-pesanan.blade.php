@@ -41,25 +41,6 @@
     $sumberBarcode = $nomorResi !== '' ? $nomorResi : (string) $order->order_number;
     $barcode = \App\Support\Barcode128::dataUri($sumberBarcode, 124, 20);
 
-    // Logo toko di kiri atas. Urutannya: logo yang diunggah di Site Settings,
-    // lalu logo bawaan di public/brand, lalu nama toko sebagai teks. Tanpa
-    // cadangan ini label tanpa logo hanya menampilkan nama toko, padahal
-    // perusahaan sudah punya logo.
-    $logoJalur = $toko->teks('site_logo_light') ?: $toko->teks('site_logo_dark');
-    $logoBerkas = null;
-
-    if (filled($logoJalur)) {
-        $kandidat = storage_path('app/public/'.ltrim((string) $logoJalur, '/'));
-
-        if (is_file($kandidat)) {
-            $logoBerkas = $kandidat;
-        }
-    }
-
-    if ($logoBerkas === null && is_file(public_path('brand/logo-gelap.png'))) {
-        $logoBerkas = public_path('brand/logo-gelap.png');
-    }
-
     $telepon = $alamat['phone_number'] ?? $order->teleponPenerima();
     $kota = trim(collect([
         $alamat['city'] ?? null,
@@ -86,11 +67,8 @@
         <table class="kepala-label">
             <tr>
                 <td>
-                    @if ($logoBerkas !== null)
-                        <img class="logo-toko" src="{{ $logoBerkas }}" alt="{{ $toko->teks('site_name', 'Bites Exhaust') }}">
-                    @else
-                        <span class="merek">{{ $toko->teks('site_name', 'Bites Exhaust') }}</span>
-                    @endif
+                    {{-- Logo toko, sumbernya satu dengan invoice dan surat jalan. --}}
+                    @include('cetak._logo-toko')
                 </td>
                 <td class="kanan">
                     <span class="kurir">{{ $order->shipping_courier ?: 'KURIR' }}</span>

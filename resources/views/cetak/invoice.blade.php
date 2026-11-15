@@ -8,79 +8,59 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Invoice {{ $order->order_number }}</title>
+
+    {{-- Gaya dasar yang sama dengan label resi: huruf, warna, dan ketebalan
+         garis. Dokumen-dokumen cetak harus terbaca sebagai satu keluarga. --}}
+    @include('cetak._gaya', ['lebar' => '210mm', 'tinggi' => '297mm', 'margin' => '14mm'])
+
     <style>
-        @page { size: A4; margin: 14mm; }
+        body { font-size: 12px; line-height: 1.4; }
 
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            font-family: 'Barlow', ui-sans-serif, system-ui, sans-serif;
-            font-size: 12px;
-            line-height: 1.5;
-            color: #17171a;
-            background: #fff;
-        }
-
-        .tajuk { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
-        .nama-toko { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
-        .kecil { font-size: 10px; color: #6b6b70; }
-        .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+        .kepala { padding: 3mm 4mm; }
+        .kepala td { padding: 0; vertical-align: middle; }
 
         .judul-dokumen { text-align: right; }
         .judul-dokumen p { margin: 0; }
         .judul-dokumen .judul {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 700;
             letter-spacing: 0.08em;
-            color: #c8102e;
+            line-height: 1;
         }
-
-        .garis { border-top: 2px solid #17171a; margin: 12px 0; }
-        .garis-tipis { border-top: 1px solid #e2e2de; margin: 10px 0; }
-
-        .dua-kolom { display: flex; gap: 28px; }
-        .dua-kolom > div { flex: 1; }
-
-        table { width: 100%; border-collapse: collapse; }
-        thead th {
-            text-align: left;
-            padding: 7px 6px;
-            border-bottom: 1.5px solid #17171a;
-            font-family: 'IBM Plex Mono', ui-monospace, monospace;
-            font-size: 9.5px;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-        tbody td {
-            padding: 7px 6px;
-            border-bottom: 1px solid #e2e2de;
-            vertical-align: top;
-        }
-        .kanan { text-align: right; }
-
-        .ringkasan { margin-left: auto; width: 62mm; margin-top: 8px; }
-        .ringkasan tr td { padding: 3px 6px; border: 0; }
-        .ringkasan .total td {
-            border-top: 1.5px solid #17171a;
-            font-size: 14px;
-            font-weight: 700;
-            padding-top: 6px;
-        }
+        .judul-dokumen .nomor { font-size: 13px; font-weight: 700; margin-top: 1.5mm; }
+        .judul-dokumen .tanggal { font-size: 11px; margin-top: 0.8mm; }
 
         .cap {
             display: inline-block;
-            padding: 4px 10px;
-            border: 2px solid;
-            font-family: 'IBM Plex Mono', ui-monospace, monospace;
-            font-size: 12px;
+            margin-top: 2mm;
+            padding: 0.8mm 3mm;
+            border: 1.5px solid;
+            font-size: 11px;
             font-weight: 700;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.08em;
         }
         .cap-lunas { color: #2f6b3f; border-color: #2f6b3f; }
         .cap-belum { color: #a51c2c; border-color: #a51c2c; }
 
-        .catatan { margin-top: 14px; padding: 10px; background: #f5f5f4; font-size: 10.5px; }
+        .label-kecil {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .isi-kolom { font-size: 11px; line-height: 1.4; margin: 1mm 0 0; }
+        .tegas { font-weight: 700; }
+
+        .ringkasan { margin-left: auto; width: 64mm; }
+        .ringkasan td { padding: 1mm 3mm; border: 0; font-size: 11.5px; }
+        .ringkasan .total td {
+            border-top: 1.5px solid #000;
+            font-size: 14px;
+            font-weight: 700;
+            padding-top: 2mm;
+        }
+
+        .catatan-teks { font-size: 11px; line-height: 1.4; }
 
         @media print {
             .tanpa-cetak { display: none !important; }
@@ -89,162 +69,163 @@
 </head>
 <body>
 
-@include('cetak._salinan')
-
 {{-- dompdf tidak menjalankan @media print, jadi tombol ini harus tidak
      dirender sama sekali saat berkas dibuat untuk diunduh. --}}
 @unless ($pdf ?? false)
-    <div class="tanpa-cetak" style="margin-bottom:12px">
-        <button type="button" onclick="window.print()" style="padding:7px 14px;font:inherit;cursor:pointer">Cetak</button>
+    <div class="tanpa-cetak" style="margin-bottom:4mm;text-align:center">
+        <button type="button" onclick="window.print()" style="padding:2mm 5mm;font:inherit;cursor:pointer">Cetak</button>
         <span class="kecil">atau tekan Ctrl+P</span>
     </div>
 @endunless
 
-<div class="tajuk">
-    <div>
-        <p class="nama-toko">{{ $toko->teks('site_name', 'Bites Exhaust') }}</p>
-        <p class="kecil" style="margin:4px 0 0">{{ $toko->teks('site_tagline') }}</p>
-        <p class="kecil" style="margin:6px 0 0">
-            {{ $toko->teks('address_full') }}<br>
-            {{ $toko->teks('phone_number') }}
-            @if ($toko->teks('contact_email')) · {{ $toko->teks('contact_email') }} @endif
-        </p>
-    </div>
+@include('cetak._salinan')
 
-    <div class="judul-dokumen">
-        <p class="judul">INVOICE</p>
-        <p class="mono" style="font-size:13px;margin-top:4px">{{ $order->order_number }}</p>
-        <p class="kecil" style="margin-top:4px">
-            Diterbitkan {{ $order->created_at->format('d F Y') }}
-        </p>
-        <p style="margin-top:8px">
-            @if ($order->payment_status === \App\Enums\StatusPembayaran::Paid)
-                <span class="cap cap-lunas">LUNAS</span>
-            @else
-                <span class="cap cap-belum">BELUM DIBAYAR</span>
-            @endif
-        </p>
-    </div>
-</div>
+<div class="kotak">
 
-<div class="garis"></div>
-
-<div class="dua-kolom">
-    <div>
-        <p class="kecil" style="margin:0">DITAGIHKAN KEPADA</p>
-        <p style="margin:4px 0 0;font-weight:700">{{ $alamat['recipient_name'] ?? $order->namaPenerima() }}</p>
-        <p class="kecil" style="margin:2px 0 0">
-            {{ $order->emailPenerima() ?? $order->user?->email ?? '' }}<br>
-            {{ $alamat['phone_number'] ?? $order->teleponPenerima() }}
-        </p>
-    </div>
-
-    <div>
-        <p class="kecil" style="margin:0">ALAMAT PENGIRIMAN</p>
-        <p class="kecil" style="margin:4px 0 0;line-height:1.4">
-            {{ $alamat['address_line_1'] ?? '' }}
-            @if (filled($alamat['address_line_2'] ?? null))<br>{{ $alamat['address_line_2'] }}@endif
-            @if (filled($alamat['city'] ?? null))<br>{{ $alamat['city'] }}, {{ $alamat['state_province'] }} {{ $alamat['postal_code'] }}@endif
-        </p>
-    </div>
-
-    <div>
-        <p class="kecil" style="margin:0">PENGIRIMAN</p>
-        <p class="kecil" style="margin:4px 0 0;line-height:1.4">
-            Kurir: {{ $order->shipping_courier ?: '—' }}<br>
-            Layanan: {{ $order->shipping_service ?: '—' }}<br>
-            Resi: <span class="mono">{{ $order->tracking_number ?: '—' }}</span>
-        </p>
-    </div>
-</div>
-
-<div class="garis-tipis"></div>
-
-<table>
-    <thead>
+    <table class="kepala" style="width:100%;border-collapse:collapse">
         <tr>
-            <th style="width:8mm">#</th>
-            <th>Barang</th>
-            <th style="width:24mm">SKU</th>
-            <th class="kanan" style="width:14mm">Jml</th>
-            <th class="kanan" style="width:26mm">Harga</th>
-            <th class="kanan" style="width:28mm">Jumlah</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        @foreach ($order->items as $i => $item)
-            <tr>
-                <td class="mono kecil">{{ $i + 1 }}</td>
-                <td>
-                    {{ $item->product_name }}
-                    @if ($item->variant_name)
-                        <br><span class="kecil">{{ $item->variant_name }}</span>
-                    @endif
-                </td>
-                <td class="mono kecil">{{ $item->sku }}</td>
-                <td class="kanan mono">{{ $item->quantity }}</td>
-                <td class="kanan mono">{{ dolar($item->unit_price) }}</td>
-                <td class="kanan mono">{{ dolar($item->subtotal) }}</td>
-            </tr>
-        @endforeach
-    </tbody>
-</table>
-
-<table class="ringkasan">
-    <tr>
-        <td class="kecil">Subtotal</td>
-        <td class="kanan mono">{{ dolar($order->subtotal) }}</td>
-    </tr>
-
-    @if ((float) $order->discount_amount > 0)
-        <tr>
-            <td class="kecil">
-                Diskon @if ($order->coupon) <span class="mono">({{ $order->coupon->code }})</span> @endif
+            <td>
+                @include('cetak._logo-toko')
             </td>
-            <td class="kanan mono">−{{ dolar($order->discount_amount) }}</td>
+            <td class="judul-dokumen">
+                <p class="judul">INVOICE</p>
+                <p class="nomor">{{ $order->order_number }}</p>
+                <p class="tanggal">Diterbitkan {{ $order->created_at->format('d F Y') }}</p>
+                <p>
+                    @if ($order->payment_status === \App\Enums\StatusPembayaran::Paid)
+                        <span class="cap cap-lunas">LUNAS</span>
+                    @else
+                        <span class="cap cap-belum">BELUM DIBAYAR</span>
+                    @endif
+                </p>
+            </td>
         </tr>
-    @endif
+    </table>
 
-    @if ((float) $order->shipping_cost > 0)
+    <table class="tiga-kolom" style="border-top:1.5px solid #000">
         <tr>
-            <td class="kecil">Ongkos kirim</td>
-            <td class="kanan mono">{{ dolar($order->shipping_cost) }}</td>
+            <td class="sisi-kiri">
+                <p class="rapat label-kecil">Ditagihkan kepada</p>
+                <p class="isi-kolom tegas">{{ $alamat['recipient_name'] ?? $order->namaPenerima() }}</p>
+                <p class="isi-kolom">
+                    {{ $order->emailPenerima() ?? $order->user?->email ?? '' }}<br>
+                    {{ $alamat['phone_number'] ?? $order->teleponPenerima() }}
+                </p>
+            </td>
+
+            <td class="sisi-kiri">
+                <p class="rapat label-kecil">Alamat pengiriman</p>
+                <p class="isi-kolom">
+                    {{ $alamat['address_line_1'] ?? '' }}
+                    @if (filled($alamat['address_line_2'] ?? null))<br>{{ $alamat['address_line_2'] }}@endif
+                    @if (filled($alamat['city'] ?? null))<br>{{ $alamat['city'] }}, {{ $alamat['state_province'] }} {{ $alamat['postal_code'] }}@endif
+                </p>
+            </td>
+
+            <td>
+                <p class="rapat label-kecil">Pengiriman</p>
+                <p class="isi-kolom">
+                    Kurir: {{ $order->shipping_courier ?: '—' }}<br>
+                    Layanan: {{ $order->shipping_service ?: '—' }}<br>
+                    Resi: {{ $order->tracking_number ?: '—' }}
+                </p>
+            </td>
         </tr>
-    @endif
+    </table>
 
-    @if ((float) $order->tax_amount > 0)
-        <tr>
-            <td class="kecil">Pajak</td>
-            <td class="kanan mono">{{ dolar($order->tax_amount) }}</td>
-        </tr>
-    @endif
+    <table class="tabel-isi" style="border-top:1.5px solid #000">
+        <thead>
+            <tr>
+                <th style="width:8mm">#</th>
+                <th>Barang</th>
+                <th style="width:24mm">SKU</th>
+                <th class="kanan" style="width:14mm">Jml</th>
+                <th class="kanan" style="width:26mm">Harga</th>
+                <th class="kanan" style="width:28mm">Jumlah</th>
+            </tr>
+        </thead>
 
-    <tr class="total">
-        <td>Total</td>
-        <td class="kanan mono">{{ dolar($order->grand_total) }}</td>
-    </tr>
-</table>
+        <tbody>
+            @foreach ($order->items as $i => $item)
+                <tr class="{{ $loop->last ? 'baris-akhir' : '' }}">
+                    <td>{{ $i + 1 }}</td>
+                    <td>
+                        {{ $item->product_name }}
+                        @if ($item->variant_name)
+                            <br><span class="kecil">{{ $item->variant_name }}</span>
+                        @endif
+                    </td>
+                    <td>{{ $item->sku }}</td>
+                    <td class="kanan">{{ $item->quantity }}</td>
+                    <td class="kanan">{{ dolar($item->unit_price) }}</td>
+                    <td class="kanan">{{ dolar($item->subtotal) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-<div style="clear:both;height:14px"></div>
+    <div class="bagian">
+        <table class="ringkasan">
+            <tr>
+                <td>Subtotal</td>
+                <td class="kanan">{{ dolar($order->subtotal) }}</td>
+            </tr>
 
-@if ((float) $order->shipping_cost <= 0)
-    <div class="catatan">
-        Ongkos kirim belum ditetapkan pada pesanan ini. Bila pengiriman dikenakan biaya,
-        nominalnya akan muncul di invoice terbitan berikutnya.
+            @if ((float) $order->discount_amount > 0)
+                <tr>
+                    <td>
+                        Diskon @if ($order->coupon) ({{ $order->coupon->code }}) @endif
+                    </td>
+                    <td class="kanan">−{{ dolar($order->discount_amount) }}</td>
+                </tr>
+            @endif
+
+            @if ((float) $order->shipping_cost > 0)
+                <tr>
+                    <td>Ongkos kirim</td>
+                    <td class="kanan">{{ dolar($order->shipping_cost) }}</td>
+                </tr>
+            @endif
+
+            @if ((float) $order->tax_amount > 0)
+                <tr>
+                    <td>Pajak</td>
+                    <td class="kanan">{{ dolar($order->tax_amount) }}</td>
+                </tr>
+            @endif
+
+            <tr class="total">
+                <td>Total</td>
+                <td class="kanan">{{ dolar($order->grand_total) }}</td>
+            </tr>
+        </table>
     </div>
-@endif
 
-<div class="catatan">
-    <strong>Ketentuan.</strong>
-    Pesanan dianggap sah setelah pembayaran diterima. Pesanan yang belum dibayar dalam
-    24 jam dibatalkan otomatis dan stok dikembalikan. Garansi berlaku untuk cacat
-    produksi, bukan kerusakan akibat pemasangan yang salah.
+    @if ((float) $order->shipping_cost <= 0)
+        <div class="bagian">
+            <p class="rapat catatan-teks">
+                Ongkos kirim belum ditetapkan pada pesanan ini. Bila pengiriman dikenakan biaya,
+                nominalnya akan muncul di invoice terbitan berikutnya.
+            </p>
+        </div>
+    @endif
+
+    <div class="bagian">
+        <p class="rapat catatan-teks">
+            <strong>Ketentuan.</strong>
+            Pesanan dianggap sah setelah pembayaran diterima. Pesanan yang belum dibayar dalam
+            24 jam dibatalkan otomatis dan stok dikembalikan. Garansi berlaku untuk cacat
+            produksi, bukan kerusakan akibat pemasangan yang salah.
+        </p>
+    </div>
+
+    <div class="bagian">
+        <p class="rapat kaki-label">
+            Invoice ini diterbitkan secara otomatis oleh sistem. Tidak memerlukan tanda tangan basah.
+        </p>
+    </div>
+
 </div>
-
-<p class="kecil" style="margin-top:14px;text-align:center">
-    Invoice ini diterbitkan secara otomatis oleh sistem. Tidak memerlukan tanda tangan basah.
-</p>
 
 </body>
 </html>

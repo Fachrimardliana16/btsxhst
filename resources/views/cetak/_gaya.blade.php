@@ -130,6 +130,33 @@
 
     .meta-baris { font-size: 12px; font-weight: 700; }
 
+    /* ── Potongan yang dipakai bersama label, invoice, dan surat jalan ──
+       Bingkai dan garis pemisah sama tebalnya dengan label supaya ketiga
+       dokumen terbaca sebagai satu keluarga, bukan tiga gaya berbeda. */
+
+    .kotak { border: 1.5px solid #000; }
+
+    .tiga-kolom { width: 100%; border-collapse: collapse; }
+    .tiga-kolom td { padding: 2.5mm 3mm; vertical-align: top; }
+    .tiga-kolom td.sisi-kiri { border-right: 1.5px solid #000; }
+
+    .tabel-isi { width: 100%; border-collapse: collapse; }
+    .tabel-isi th {
+        text-align: left;
+        padding: 2mm 3mm;
+        border-bottom: 1.5px solid #000;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .tabel-isi td {
+        padding: 2mm 3mm;
+        border-bottom: 1px solid #000;
+        vertical-align: top;
+    }
+    .tabel-isi tr.baris-akhir td { border-bottom: 0; }
+
     .isi-baris {
         font-size: 12px;
         font-weight: 700;

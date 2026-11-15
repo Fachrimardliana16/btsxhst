@@ -11,72 +11,57 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Surat Jalan {{ $order->order_number }}</title>
+
+    {{-- Gaya dasar yang sama dengan label resi dan invoice: huruf, warna,
+         dan ketebalan garis. --}}
+    @include('cetak._gaya', ['lebar' => '210mm', 'tinggi' => '297mm', 'margin' => '14mm'])
+
     <style>
-        @page { size: A4; margin: 10mm; }
+        body { font-size: 12px; line-height: 1.4; }
 
-        * { box-sizing: border-box; }
+        .kepala { padding: 3mm 4mm; }
+        .kepala td { padding: 0; vertical-align: middle; }
 
-        body {
-            margin: 0;
-            font-family: 'Barlow', ui-sans-serif, system-ui, sans-serif;
-            font-size: 12px;
-            line-height: 1.45;
-            color: #17171a;
-            background: #fff;
-        }
-
-        .tajuk { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
-        .nama-toko { font-size: 19px; font-weight: 700; }
-        .kecil { font-size: 10px; color: #6b6b70; }
-        .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
-
-        .judul {
-            font-size: 20px;
+        .judul-dokumen { text-align: right; }
+        .judul-dokumen p { margin: 0; }
+        .judul-dokumen .judul {
+            font-size: 26px;
             font-weight: 700;
             letter-spacing: 0.08em;
-            color: #c8102e;
-            text-align: right;
-            margin: 0;
+            line-height: 1;
         }
+        .judul-dokumen .nomor { font-size: 13px; font-weight: 700; margin-top: 1.5mm; }
+        .judul-dokumen .tanggal { font-size: 11px; margin-top: 0.8mm; }
 
-        .garis { border-top: 2px solid #17171a; margin: 10px 0; }
-
-        .kotak-resi {
-            border: 1.5px solid #17171a;
-            padding: 6px 10px;
-            display: inline-block;
-        }
-
-        table { width: 100%; border-collapse: collapse; }
-        thead th {
-            text-align: left;
-            padding: 6px;
-            border-bottom: 1.5px solid #17171a;
-            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+        .label-kecil {
             font-size: 9.5px;
-            letter-spacing: 0.05em;
+            font-weight: 700;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
         }
-        tbody td {
-            padding: 7px 6px;
-            border-bottom: 1px solid #e2e2de;
-            vertical-align: top;
-        }
-        .kanan { text-align: right; }
+        .isi-kolom { font-size: 11px; line-height: 1.4; margin: 1mm 0 0; }
+        .tegas { font-weight: 700; }
+        .angka { font-size: 13px; font-weight: 700; }
 
-        .tanda-tangan {
-            display: flex;
-            justify-content: space-between;
-            gap: 24px;
-            margin-top: 22px;
+        .kotak-resi {
+            display: inline-block;
+            margin-top: 1mm;
+            padding: 1.5mm 3mm;
+            border: 1.5px solid #000;
+            font-weight: 700;
         }
-        .kolom-ttd { flex: 1; text-align: center; }
+
+        .kaki-isi { font-size: 11px; line-height: 1.4; }
+
+        .tanda-tangan { margin-top: 8mm; }
+        .tanda-tangan td { width: 50%; padding: 0 6mm; vertical-align: bottom; }
+        .tanda-tangan td.sisi-kiri { border-right: 1.5px solid #000; }
+        .tanda-tangan .peran { font-size: 11px; font-weight: 700; margin: 0 0 2mm; }
         .garis-ttd {
-            border-top: 1px solid #17171a;
-            margin-top: 46px;
-            padding-top: 4px;
+            border-top: 1px solid #000;
+            margin-top: 22mm;
+            padding-top: 1.5mm;
             font-size: 10px;
-            color: #6b6b70;
         }
 
         @media print {
@@ -86,119 +71,125 @@
 </head>
 <body>
 
-@include('cetak._salinan')
-
 @unless ($pdf ?? false)
-    <div class="tanpa-cetak" style="margin-bottom:10px">
-        <button type="button" onclick="window.print()" style="padding:7px 14px;font:inherit;cursor:pointer">Cetak</button>
+    <div class="tanpa-cetak" style="margin-bottom:4mm;text-align:center">
+        <button type="button" onclick="window.print()" style="padding:2mm 5mm;font:inherit;cursor:pointer">Cetak</button>
         <span class="kecil">atau tekan Ctrl+P</span>
     </div>
 @endunless
 
-<div class="tajuk">
-    <div>
-        <p class="nama-toko">{{ $toko->teks('site_name', 'Bites Exhaust') }}</p>
-        <p class="kecil" style="margin:3px 0 0">
-            {{ $toko->teks('address_full') }}<br>
-            {{ $toko->teks('phone_number') }}
-        </p>
-    </div>
+@include('cetak._salinan')
 
-    <div>
-        <p class="judul">SURAT JALAN</p>
-        <p class="mono kecil" style="margin:4px 0 0;text-align:right">{{ $order->order_number }}</p>
-        <p class="kecil" style="margin:2px 0 0;text-align:right">{{ $order->created_at->format('d F Y') }}</p>
-    </div>
-</div>
+<div class="kotak">
 
-<div class="garis"></div>
-
-<div style="display:flex;gap:24px;align-items:flex-start">
-    <div style="flex:1.4">
-        <p class="kecil" style="margin:0">KIRIM KEPADA</p>
-        <p style="margin:4px 0 0;font-weight:700">{{ $alamat['recipient_name'] ?? $order->namaPenerima() }}</p>
-        <p class="kecil" style="margin:3px 0 0;line-height:1.4">
-            {{ $alamat['phone_number'] ?? $order->teleponPenerima() }}<br>
-            {{ $alamat['address_line_1'] ?? '' }}
-            @if (filled($alamat['address_line_2'] ?? null))<br>{{ $alamat['address_line_2'] }}@endif
-            @if (filled($alamat['city'] ?? null))<br>{{ $alamat['city'] }}, {{ $alamat['state_province'] }} {{ $alamat['postal_code'] }}@endif
-        </p>
-    </div>
-
-    <div style="flex:1">
-        <p class="kecil" style="margin:0">KURIR</p>
-        <p style="margin:4px 0 0">{{ $order->shipping_courier ?: '—' }} {{ $order->shipping_service ?: '' }}</p>
-
-        <p class="kecil" style="margin:8px 0 0">NOMOR RESI</p>
-        <div class="kotak-resi">
-            <span class="mono" style="font-weight:700">{{ $order->tracking_number ?: '— belum diisi —' }}</span>
-        </div>
-    </div>
-
-    <div style="flex:0.8">
-        <p class="kecil" style="margin:0">BERAT TOTAL</p>
-        <p class="mono" style="margin:4px 0 0">{{ number_format($order->beratTotal() / 1000, 2, ',', '.') }} kg</p>
-
-        <p class="kecil" style="margin:8px 0 0">JUMLAH BARANG</p>
-        <p class="mono" style="margin:4px 0 0">{{ $order->jumlahItem() }} pcs</p>
-    </div>
-</div>
-
-<div style="height:10px"></div>
-
-<table>
-    <thead>
+    <table class="kepala" style="width:100%;border-collapse:collapse">
         <tr>
-            <th style="width:8mm">#</th>
-            <th>Nama barang</th>
-            <th style="width:30mm">SKU</th>
-            <th class="kanan" style="width:16mm">Jml</th>
-            <th class="kanan" style="width:22mm">Berat</th>
+            <td>
+                @include('cetak._logo-toko')
+            </td>
+            <td class="judul-dokumen">
+                <p class="judul">SURAT JALAN</p>
+                <p class="nomor">{{ $order->order_number }}</p>
+                <p class="tanggal">{{ $order->created_at->format('d F Y') }}</p>
+            </td>
         </tr>
-    </thead>
+    </table>
 
-    <tbody>
-        @foreach ($order->items as $i => $item)
+    <table class="tiga-kolom" style="border-top:1.5px solid #000">
+        <tr>
+            <td class="sisi-kiri" style="width:52%">
+                <p class="rapat label-kecil">Kirim kepada</p>
+                <p class="isi-kolom tegas">{{ $alamat['recipient_name'] ?? $order->namaPenerima() }}</p>
+                <p class="isi-kolom">
+                    {{ $alamat['phone_number'] ?? $order->teleponPenerima() }}<br>
+                    {{ $alamat['address_line_1'] ?? '' }}
+                    @if (filled($alamat['address_line_2'] ?? null))<br>{{ $alamat['address_line_2'] }}@endif
+                    @if (filled($alamat['city'] ?? null))<br>{{ $alamat['city'] }}, {{ $alamat['state_province'] }} {{ $alamat['postal_code'] }}@endif
+                </p>
+            </td>
+
+            <td class="sisi-kiri" style="width:26%">
+                <p class="rapat label-kecil">Kurir</p>
+                <p class="isi-kolom tegas">
+                    {{ $order->shipping_courier ?: '—' }} {{ $order->shipping_service ?: '' }}
+                </p>
+
+                <p class="rapat label-kecil" style="margin-top:3mm">Nomor resi</p>
+                <div class="kotak-resi">{{ $order->tracking_number ?: '— belum diisi —' }}</div>
+            </td>
+
+            <td style="width:22%">
+                <p class="rapat label-kecil">Berat total</p>
+                <p class="rapat angka">{{ number_format($order->beratTotal() / 1000, 2, ',', '.') }} kg</p>
+
+                <p class="rapat label-kecil" style="margin-top:3mm">Jumlah barang</p>
+                <p class="rapat angka">{{ $order->jumlahItem() }} pcs</p>
+            </td>
+        </tr>
+    </table>
+
+    <table class="tabel-isi" style="border-top:1.5px solid #000">
+        <thead>
             <tr>
-                <td class="mono kecil">{{ $i + 1 }}</td>
-                <td>
-                    {{ $item->product_name }}
-                    @if ($item->variant_name)
-                        <br><span class="kecil">{{ $item->variant_name }}</span>
-                    @endif
+                <th style="width:8mm">#</th>
+                <th>Nama barang</th>
+                <th style="width:30mm">SKU</th>
+                <th class="kanan" style="width:16mm">Jml</th>
+                <th class="kanan" style="width:22mm">Berat</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach ($order->items as $i => $item)
+                <tr class="{{ $loop->last ? 'baris-akhir' : '' }}">
+                    <td>{{ $i + 1 }}</td>
+                    <td>
+                        {{ $item->product_name }}
+                        @if ($item->variant_name)
+                            <br><span class="kecil">{{ $item->variant_name }}</span>
+                        @endif
+                    </td>
+                    <td>{{ $item->sku }}</td>
+                    <td class="kanan">{{ $item->quantity }}</td>
+                    <td class="kanan">
+                        {{ number_format(($item->weight_gram * $item->quantity) / 1000, 2, ',', '.') }} kg
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    @if (filled($order->customer_note))
+        <div class="bagian">
+            <p class="rapat kaki-isi">
+                <strong>Catatan pembeli:</strong> {{ $order->customer_note }}
+            </p>
+        </div>
+    @endif
+
+    <div class="bagian">
+        <table class="tanda-tangan" style="width:100%;border-collapse:collapse">
+            <tr>
+                <td class="sisi-kiri">
+                    <p class="peran">Diserahkan oleh</p>
+                    <div class="garis-ttd">Nama dan tanda tangan</div>
                 </td>
-                <td class="mono kecil">{{ $item->sku }}</td>
-                <td class="kanan mono">{{ $item->quantity }}</td>
-                <td class="kanan mono">
-                    {{ number_format(($item->weight_gram * $item->quantity) / 1000, 2, ',', '.') }} kg
+                <td>
+                    <p class="peran">Diterima oleh</p>
+                    <div class="garis-ttd">Nama dan tanda tangan penerima</div>
                 </td>
             </tr>
-        @endforeach
-    </tbody>
-</table>
-
-@if (filled($order->customer_note))
-    <p class="kecil" style="margin-top:10px">
-        <strong>Catatan pembeli:</strong> {{ $order->customer_note }}
-    </p>
-@endif
-
-<div class="tanda-tangan">
-    <div class="kolom-ttd">
-        <p class="kecil" style="margin:0">Diserahkan oleh</p>
-        <div class="garis-ttd">Nama dan tanda tangan</div>
+        </table>
     </div>
 
-    <div class="kolom-ttd">
-        <p class="kecil" style="margin:0">Diterima oleh</p>
-        <div class="garis-ttd">Nama dan tanda tangan penerima</div>
+    <div class="bagian">
+        <p class="rapat kaki-label">
+            Barang wajib diperiksa saat diterima. Kerusakan akibat pengiriman harus dilaporkan
+            pada hari yang sama dengan bukti foto.
+        </p>
     </div>
+
 </div>
-
-<p class="kecil" style="margin-top:14px">
-    Barang wajib diperiksa saat diterima. Kerusakan akibat pengiriman harus dilaporkan
-    pada hari yang sama dengan bukti foto.
-</p>
 
 </body>
 </html>
