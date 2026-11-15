@@ -402,10 +402,9 @@ class PengaturanSitus extends KomponenAdmin
      */
     private function barisTampil(GrupPengaturan $grup): Collection
     {
-        return Setting::query()
-            ->where('group_name', $grup->value)
-            ->orderBy('id')
-            ->get()
+        // Lewat KomponenPengaturan supaya ikut tersaring: baris yang definisinya
+        // sudah dibuang dari DefinisiPengaturan tidak boleh muncul lagi di tab.
+        return KomponenPengaturan::barisGrup($grup->value)
             ->map(fn (Setting $s): array => [
                 'kunci' => $s->key,
                 'label' => $s->label,

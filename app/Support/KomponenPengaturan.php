@@ -86,7 +86,7 @@ class KomponenPengaturan
     {
         $hasil = [];
 
-        foreach (self::baris($grup) as $setting) {
+        foreach (self::barisGrup($grup) as $setting) {
             if ($setting->is_encrypted) {
                 // Properti tetap ada dan bernama sama supaya formulir tidak
                 // perlu bercabang, tetapi isinya selalu kosong.
@@ -119,7 +119,7 @@ class KomponenPengaturan
     {
         $aturan = [];
 
-        foreach (self::baris($grup) as $setting) {
+        foreach (self::barisGrup($grup) as $setting) {
             // Rahasia tidak ikut divalidasi: kolomnya selalu kosong di formulir.
             if ($setting->is_encrypted) {
                 continue;
@@ -140,7 +140,7 @@ class KomponenPengaturan
 
         // Kolom rahasia tetap divalidasi panjangnya bila diisi, tanpa pernah
         // dibandingkan dengan nilai tersimpan.
-        foreach (self::baris($grup)->where('is_encrypted', true) as $setting) {
+        foreach (self::barisGrup($grup)->where('is_encrypted', true) as $setting) {
             $aturan[$setting->key] = ['nullable', 'string', 'max:255', 'bail'];
         }
 
@@ -150,7 +150,7 @@ class KomponenPengaturan
     /** Label ramah untuk pesan galat, memakai kolom label. */
     public static function label(string $grup): array
     {
-        return self::baris($grup)->pluck('label', 'key')->all();
+        return self::barisGrup($grup)->pluck('label', 'key')->all();
     }
 
     /**
@@ -184,7 +184,7 @@ class KomponenPengaturan
     /** Apakah grup ini punya setidaknya satu kolom rahasia. */
     public static function punyaRahasia(string $grup): bool
     {
-        return self::baris($grup)->where('is_encrypted', true)->isNotEmpty();
+        return self::barisGrup($grup)->where('is_encrypted', true)->isNotEmpty();
     }
 
     /** Hapus satu kredensial tersimpan. */
@@ -228,11 +228,34 @@ class KomponenPengaturan
         return filled($nilai) ? (string) $nilai : null;
     }
 
-    /** @return Collection<int, Setting> */
-    private static function baris(string $grup): Collection
+    /**
+     * Baris satu grup, HANYA yang masih didefinisikan di DefinisiPengaturan.
+     *
+     * `pastikanSkema()` bersifat menambah: ia membuat baris yang belum ada,
+     * tetapi tidak pernah menghapus baris yang definisinya sudah dibuang dari
+     * kode. Dulu daftar kurir disimpan sebagai dua baris settings
+     * (`shipping_couriers` dan `shipping_courier_default`); setelah pindah ke
+     * tabel `couriers`, barisnya tetap tinggal di basis data produksi dan tab
+     * yang membaca grup itu masih menampilkannya sebagai "Courier list" dan
+     * "Default courier" — kolom tanpa kode yang mengurusinya.
+     *
+     * Menyaring di sini, bukan menghapus barisnya, membuat definisi kode
+     * menjadi satu-satunya sumber kebenaran formulir. Nilai lama tetap utuh
+     * bila suatu saat definisinya dikembalikan.
+     *
+     * @return Collection<int, Setting>
+     */
+    public static function barisGrup(string $grup): Collection
     {
+        $kunci = array_column(DefinisiPengaturan::untukGrup($grup), 0);
+
+        if ($kunci === []) {
+            return collect();
+        }
+
         return Setting::query()
             ->where('group_name', $grup)
+            ->whereIn('key', $kunci)
             ->orderBy('id')
             ->get();
     }
