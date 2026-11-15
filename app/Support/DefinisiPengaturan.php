@@ -95,8 +95,9 @@ class DefinisiPengaturan
             ]), $G(GrupPengaturan::Pembayaran), 'json', 'Manual transfer accounts', true, false],
             ['tax_percent', '0', $G(GrupPengaturan::Pembayaran), 'number', 'Tax (%)', false, false],
             ['shipping_flat_rate', '0', $G(GrupPengaturan::Pembayaran), 'number', 'Flat shipping rate', false, false],
-            ['shipping_couriers', json_encode(['JNE', 'J&T Express', 'SiCepat', 'Pos Indonesia']), $G(GrupPengaturan::Pembayaran), 'json', 'Courier list', false, true],
-            ['shipping_courier_default', 'JNE', $G(GrupPengaturan::Pembayaran), 'text', 'Default courier', false, true],
+            // Daftar kurir dan kurir bawaan tidak lagi di sini: tabel couriers
+            // yang mengaturnya (tautan pelacakan per kurir, urutan, dan status
+            // aktif masing-masing), disunting lewat halaman Couriers.
 
             // ── Tab 6: Email (SMTP) ───────────────────────────────────
             ['mail_mailer', 'smtp', $G(GrupPengaturan::Email), 'select', 'Delivery method', false, false, ['smtp', 'log']],

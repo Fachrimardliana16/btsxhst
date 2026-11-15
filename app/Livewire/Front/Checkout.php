@@ -5,6 +5,7 @@ namespace App\Livewire\Front;
 use App\Enums\MetodePembayaran;
 use App\Enums\TipeKejadianKeamanan;
 use App\Http\Middleware\ZonaPelanggan;
+use App\Models\Courier;
 use App\Models\Order;
 use App\Services\Keranjang;
 use App\Services\Pembayaran\PaypalGateway;
@@ -52,7 +53,7 @@ class Checkout extends Component
     public string $kodePos = '';
 
     #[Validate('required|string|max:40')]
-    public string $kurir = 'JNE';
+    public string $kurir = '';
 
     /**
      * Negara tujuan, kode dua huruf (ISO 3166-1 alpha-2).
@@ -138,10 +139,9 @@ class Checkout extends Component
         // (checklist F7-03), sehingga pembeli tidak perlu menulisnya dua kali.
         $this->catatan = $keranjang->catatan();
 
-        // Kurir mengikuti nilai yang tersimpan di pengaturan, bukan pilihan
-        // bawaan yang ditulis di kode. Tanpa ini, mengubah daftar kurir
-        // menuntut perubahan kode.
-        $this->kurir = (string) (Pengaturan::instance()->teks('shipping_courier_default') ?: 'JNE');
+        // Kurir mengikuti master ekspedisi, bukan pilihan bawaan yang ditulis
+        // di kode. Tanpa ini, mengubah daftar kurir menuntut perubahan kode.
+        $this->kurir = (string) (Courier::bawaan()?->name ?? '');
 
         // Metode pembayaran mengikuti mode yang aktif. Mode "manual" tidak boleh
         // menyodorkan PayPal, dan sebaliknya.
@@ -501,10 +501,10 @@ class Checkout extends Component
 
         $mode = $toko->teks('payment_mode', 'manual');
 
-        // Daftar kurir dari pengaturan, bukan dari kode (PRD Bagian 8 langkah 3
-        // menyebut daftar statis; "statis" berarti tidak dihitung dari berat
-        // atau tujuan, bukan berarti tidak dapat diubah tanpa menyentuh kode).
-        $kurir = $toko->larikTeks('shipping_couriers', ['JNE', 'J&T Express', 'SiCepat', 'Pos Indonesia']);
+        // Daftar kurir dari tabel master (PRD Bagian 8 langkah 3 menyebut
+        // daftar statis; "statis" berarti tidak dihitung dari berat atau
+        // tujuan, bukan berarti tidak dapat diubah tanpa menyentuh kode).
+        $kurir = Courier::aktifNama();
 
         if ($this->kurir !== '' && ! in_array($this->kurir, $kurir, true)) {
             $kurir[] = $this->kurir;

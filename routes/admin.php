@@ -118,6 +118,11 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
 
         Route::get('kupon', Kupon::class)->name('coupons.index');
 
+        // Master ekspedisi. Dulu daftar kurir hanya nilai JSON di halaman
+        // Pengaturan; tautan pelacakan per kurir, urutan, dan status aktif
+        // tidak punya tempat di sana.
+        Route::get('kurir', \App\Livewire\Admin\Kurir::class)->name('couriers.index');
+
         // Performa KOL. Terpisah dari halaman Kupon karena pertanyaannya
         // berbeda: halaman Kupon mengelola aturan diskon, halaman ini menjawab
         // siapa yang menghasilkan penjualan. Menumpuk keduanya membuat salah

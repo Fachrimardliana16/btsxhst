@@ -144,16 +144,13 @@
 
         {{-- Baris pembayaran & ekspedisi.
 
-             Isinya diambil dari pengaturan yang SUDAH ada
-             (`manual_bank_accounts`, `shipping_couriers`), bukan daftar karangan:
-             menuliskan "VISA / Mastercard" padahal toko hanya menerima transfer
-             manual adalah janji yang tidak bisa dipenuhi. Bila pengaturannya
-             kosong, baris ini tidak dirender sama sekali. --}}
+             Isinya diambil dari data yang SUDAH ada (tabel couriers dan
+             `manual_bank_accounts`), bukan daftar karangan: menuliskan
+             "VISA / Mastercard" padahal toko hanya menerima transfer manual
+             adalah janji yang tidak bisa dipenuhi. Bila pengaturannya kosong,
+             baris ini tidak dirender sama sekali. --}}
         @php
-            $daftarEkspedisi = array_values(array_filter(
-                (array) json_decode((string) $toko->teks('shipping_couriers'), true),
-                fn ($v) => is_string($v) && trim($v) !== ''
-            ));
+            $daftarEkspedisi = \App\Models\Courier::aktifNama();
 
             // Rekening manual disimpan sebagai JSON berisi objek {bank, nomor, atas_nama}.
             $daftarBank = [];

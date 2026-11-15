@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Enums\StatusPesanan;
 use App\Jobs\KirimNotifikasiPesanan;
+use App\Models\Courier;
 use App\Models\Order;
 use App\Services\StatusPesananService;
 use App\Support\Galat;
@@ -235,6 +236,7 @@ class PesananDetail extends KomponenAdmin
             'order' => $order,
             'alamat' => $order->alamat(),
             'tujuanSah' => $order->status->transisiSah(),
+            'daftarKurir' => Courier::aktifNama(),
         ])->layout('layouts.admin', ['judul' => 'Order '.$order->order_number, 'bagian' => 'Sales']);
     }
 }

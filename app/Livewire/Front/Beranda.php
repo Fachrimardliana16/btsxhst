@@ -198,11 +198,11 @@ class Beranda extends Component
         $daftar['Apakah bisa pesan tanpa membuat akun?'] =
             'Bisa. Keranjang di situs ini berbasis sesi, jadi pembeli dapat memesan langsung tanpa mendaftar akun.';
 
-        $kurir = $p->teks('shipping_couriers', '');
+        $daftarKurir = \App\Models\Courier::aktifNama();
 
-        if ($kurir !== '') {
-            $bersih = trim(str_replace(['[', ']', '"'], '', $kurir));
-            $daftar['Kurir apa yang tersedia?'] = 'Pengiriman memakai '.$bersih.' ke seluruh Indonesia.';
+        if ($daftarKurir !== []) {
+            $daftar['Kurir apa yang tersedia?'] =
+                'Pengiriman memakai '.implode(', ', $daftarKurir).' ke seluruh Indonesia.';
         }
 
         $transfer = $p->teks('payment_mode', '');

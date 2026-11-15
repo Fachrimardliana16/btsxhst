@@ -224,7 +224,16 @@
                 <div class="mt-3 space-y-3">
                     <label class="block">
                         <span class="text-xs text-muted">{{ __('site.admin.pesanan_detail.kurir') }}</span>
-                        <input type="text" wire:model="kurir" class="field mt-1" placeholder="JNE, J&T, SiCepat" maxlength="60" />
+                        {{-- Datalist, bukan select: pesanan lama boleh menyimpan nama
+                             kurir yang sudah tidak ada di master, dan admin tetap
+                             dapat mengetiknya tanpa kehilangan data. --}}
+                        <input type="text" wire:model="kurir" class="field mt-1" list="daftar-kurir"
+                               placeholder="JNE, J&T, SiCepat" maxlength="60" />
+                        <datalist id="daftar-kurir">
+                            @foreach ($daftarKurir as $namaKurir)
+                                <option value="{{ $namaKurir }}"></option>
+                            @endforeach
+                        </datalist>
                         @error('kurir') <span class="field-error">{{ $message }}</span> @enderror
                     </label>
 

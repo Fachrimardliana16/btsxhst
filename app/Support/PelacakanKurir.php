@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Courier;
 use App\Models\Order;
 use App\Support\Pengaturan;
 use Illuminate\Support\Facades\Http;
@@ -27,7 +28,14 @@ use Throwable;
  */
 class PelacakanKurir
 {
-    /** Tautan pelacakan resmi per kurir, menurut nama yang dipakai di pengaturan. */
+    /**
+     * Pola bawaan untuk pesanan lama.
+     *
+     * Tautan resmi kini disimpan di tabel couriers dan dapat disunting admin.
+     * Peta ini hanya cadangan: pesanan yang dibuat sebelum tabel itu ada
+     * menyimpan nama kurir sebagai teks, dan namanya mungkin sudah tidak
+     * terdaftar lagi di master.
+     */
     private const TAUTAN = [
         'jne' => 'https://www.jne.co.id/id/tracking/trace/%s',
         'j&t express' => 'https://jet.co.id/track?awb=%s',
@@ -44,17 +52,27 @@ class PelacakanKurir
     public static function tautan(Order $pesanan): ?string
     {
         $resi = trim((string) ($pesanan->tracking_number ?? ''));
-        $kurir = mb_strtolower(trim((string) ($pesanan->shipping_courier ?? '')));
+        $nama = trim((string) ($pesanan->shipping_courier ?? ''));
+        $kurir = mb_strtolower($nama);
 
         if ($resi === '') {
             return null;
+        }
+
+        $master = Courier::query()
+            ->whereRaw('lower(name) = ?', [$kurir])
+            ->orWhere('code', $kurir)
+            ->first();
+
+        if ($master !== null) {
+            return $master->tautan($resi);
         }
 
         $pola = self::TAUTAN[$kurir] ?? null;
 
         if ($pola === null) {
             // Kurir tidak dikenal: tautan pencarian umum, bukan tautan kosong.
-            return 'https://www.google.com/search?q='.rawurlencode($kurir.' '.$resi.' lacak resi');
+            return 'https://www.google.com/search?q='.rawurlencode($nama.' '.$resi.' lacak resi');
         }
 
         return sprintf($pola, rawurlencode($resi));

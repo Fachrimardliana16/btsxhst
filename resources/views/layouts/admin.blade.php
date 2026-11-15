@@ -70,6 +70,7 @@
                 ['rute' => 'admin.carts.index', 'pola' => 'admin.carts.*', 'ikon' => 'cart', 'label' => __('site.admin.nav.keranjang'), 'bawah' => false, 'super' => false],
                 ['rute' => 'admin.customers.index', 'pola' => 'admin.customers.*', 'ikon' => 'users', 'label' => __('site.admin.nav.pelanggan'), 'bawah' => false, 'super' => false],
                 ['rute' => 'admin.coupons.index', 'pola' => 'admin.coupons.*', 'ikon' => 'tag', 'label' => __('site.admin.nav.kupon'), 'bawah' => false, 'super' => false],
+                ['rute' => 'admin.couriers.index', 'pola' => 'admin.couriers.*', 'ikon' => 'truck', 'label' => 'Courier', 'bawah' => false, 'super' => false],
                 ['rute' => 'admin.kol.index', 'pola' => 'admin.kol.*', 'ikon' => 'chart', 'label' => __('site.admin.nav.kol'), 'bawah' => false, 'super' => false],
             ],
         ],
