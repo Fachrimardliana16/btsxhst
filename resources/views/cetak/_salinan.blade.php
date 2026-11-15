@@ -23,6 +23,6 @@
          kalimat penutup ke halaman kedua — label terbelah, lalu ditempel di
          paket yang salah. --}}
     <div style="border:1px solid #b42318;color:#b42318;padding:1px 4px;margin:0 0 1.5mm;font-size:8.5px;font-weight:700;letter-spacing:.04em;text-align:center">
-        SALINAN &middot; PESANAN INI SUDAH DIBATALKAN
+        COPY &middot; THIS ORDER HAS BEEN CANCELLED
     </div>
 @endif

@@ -90,12 +90,12 @@
             <td class="judul-dokumen">
                 <p class="judul">INVOICE</p>
                 <p class="nomor">{{ $order->order_number }}</p>
-                <p class="tanggal">Diterbitkan {{ $order->created_at->format('d F Y') }}</p>
+                <p class="tanggal">Issued {{ $order->created_at->format('d F Y') }}</p>
                 <p>
                     @if ($order->payment_status === \App\Enums\StatusPembayaran::Paid)
-                        <span class="cap cap-lunas">LUNAS</span>
+                        <span class="cap cap-lunas">PAID</span>
                     @else
-                        <span class="cap cap-belum">BELUM DIBAYAR</span>
+                        <span class="cap cap-belum">UNPAID</span>
                     @endif
                 </p>
             </td>
@@ -105,7 +105,7 @@
     <table class="tiga-kolom" style="border-top:1.5px solid #000">
         <tr>
             <td class="sisi-kiri">
-                <p class="rapat label-kecil">Ditagihkan kepada</p>
+                <p class="rapat label-kecil">Billed to</p>
                 <p class="isi-kolom tegas">{{ $alamat['recipient_name'] ?? $order->namaPenerima() }}</p>
                 <p class="isi-kolom">
                     {{ $order->emailPenerima() ?? $order->user?->email ?? '' }}<br>
@@ -114,7 +114,7 @@
             </td>
 
             <td class="sisi-kiri">
-                <p class="rapat label-kecil">Alamat pengiriman</p>
+                <p class="rapat label-kecil">Shipping address</p>
                 <p class="isi-kolom">
                     {{ $alamat['address_line_1'] ?? '' }}
                     @if (filled($alamat['address_line_2'] ?? null))<br>{{ $alamat['address_line_2'] }}@endif
@@ -123,11 +123,11 @@
             </td>
 
             <td>
-                <p class="rapat label-kecil">Pengiriman</p>
+                <p class="rapat label-kecil">Shipping</p>
                 <p class="isi-kolom">
-                    Kurir: {{ $order->shipping_courier ?: '—' }}<br>
-                    Layanan: {{ $order->shipping_service ?: '—' }}<br>
-                    Resi: {{ $order->tracking_number ?: '—' }}
+                    Courier: {{ $order->shipping_courier ?: '—' }}<br>
+                    Service: {{ $order->shipping_service ?: '—' }}<br>
+                    Tracking: {{ $order->tracking_number ?: '—' }}
                 </p>
             </td>
         </tr>
@@ -137,11 +137,11 @@
         <thead>
             <tr>
                 <th style="width:8mm">#</th>
-                <th>Barang</th>
+                <th>Item</th>
                 <th style="width:24mm">SKU</th>
-                <th class="kanan" style="width:14mm">Jml</th>
-                <th class="kanan" style="width:26mm">Harga</th>
-                <th class="kanan" style="width:28mm">Jumlah</th>
+                <th class="kanan" style="width:14mm">Qty</th>
+                <th class="kanan" style="width:26mm">Price</th>
+                <th class="kanan" style="width:28mm">Amount</th>
             </tr>
         </thead>
 
@@ -174,7 +174,7 @@
             @if ((float) $order->discount_amount > 0)
                 <tr>
                     <td>
-                        Diskon @if ($order->coupon) ({{ $order->coupon->code }}) @endif
+                        Discount @if ($order->coupon) ({{ $order->coupon->code }}) @endif
                     </td>
                     <td class="kanan">−{{ dolar($order->discount_amount) }}</td>
                 </tr>
@@ -182,14 +182,14 @@
 
             @if ((float) $order->shipping_cost > 0)
                 <tr>
-                    <td>Ongkos kirim</td>
+                    <td>Shipping</td>
                     <td class="kanan">{{ dolar($order->shipping_cost) }}</td>
                 </tr>
             @endif
 
             @if ((float) $order->tax_amount > 0)
                 <tr>
-                    <td>Pajak</td>
+                    <td>Tax</td>
                     <td class="kanan">{{ dolar($order->tax_amount) }}</td>
                 </tr>
             @endif
@@ -204,24 +204,24 @@
     @if ((float) $order->shipping_cost <= 0)
         <div class="bagian">
             <p class="rapat catatan-teks">
-                Ongkos kirim belum ditetapkan pada pesanan ini. Bila pengiriman dikenakan biaya,
-                nominalnya akan muncul di invoice terbitan berikutnya.
+                Shipping cost has not been set for this order. If shipping is charged,
+                the amount will appear on the next invoice.
             </p>
         </div>
     @endif
 
     <div class="bagian">
         <p class="rapat catatan-teks">
-            <strong>Ketentuan.</strong>
-            Pesanan dianggap sah setelah pembayaran diterima. Pesanan yang belum dibayar dalam
-            24 jam dibatalkan otomatis dan stok dikembalikan. Garansi berlaku untuk cacat
-            produksi, bukan kerusakan akibat pemasangan yang salah.
+            <strong>Terms.</strong>
+            An order is valid once payment is received. Orders unpaid within 24 hours are
+            cancelled automatically and stock is returned. Warranty covers manufacturing
+            defects, not damage caused by incorrect installation.
         </p>
     </div>
 
     <div class="bagian">
         <p class="rapat kaki-label">
-            Invoice ini diterbitkan secara otomatis oleh sistem. Tidak memerlukan tanda tangan basah.
+            This invoice is generated automatically by the system. No wet signature is required.
         </p>
     </div>
 

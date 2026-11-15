@@ -81,10 +81,10 @@
                 <img src="{{ $barcode }}" alt="Barcode {{ $sumberBarcode }}">
             @endif
             <p class="rapat resi-baris">
-                RESI : {{ $sumberBarcode }}@if ($totalLabel > 1) <span class="kecil">({{ $nomorSeri }}/{{ $totalLabel }})</span>@endif
+                TRACKING : {{ $sumberBarcode }}@if ($totalLabel > 1) <span class="kecil">({{ $nomorSeri }}/{{ $totalLabel }})</span>@endif
             </p>
             @if ($nomorResi === '')
-                <p class="rapat kecil">Nomor resi belum diisi — ini nomor pesanan.</p>
+                <p class="rapat kecil">Tracking number not set — using order number.</p>
             @endif
         </div>
 
@@ -95,17 +95,17 @@
             <p class="rapat cod-besar">NON-COD</p>
             <p class="rapat layanan-baris">
                 {{ $order->order_number }}
-                &nbsp;|&nbsp; Layanan: {{ $order->shipping_service ?: '—' }}
+                &nbsp;|&nbsp; Service: {{ $order->shipping_service ?: '—' }}
             </p>
         </div>
 
         <table class="dua-kolom" style="border-top:1.5px solid #000">
             <tr>
                 <td class="sisi-kiri">
-                    <span class="meta-baris">Berat: {{ $berat > 0 ? number_format($berat, 0, ',', '.') : '—' }} gr</span>
+                    <span class="meta-baris">Weight: {{ $berat > 0 ? number_format($berat) : '—' }} g</span>
                 </td>
                 <td>
-                    <span class="meta-baris">Tanggal: {{ $order->created_at?->format('d/m/Y') }}</span>
+                    <span class="meta-baris">Date: {{ $order->created_at?->format('d M Y') }}</span>
                 </td>
             </tr>
         </table>
@@ -122,14 +122,14 @@
             @endforeach
 
             @if ($order->items->count() > 2)
-                <p class="rapat isi-baris">&bull; +{{ $order->items->count() - 2 }} barang lainnya</p>
+                <p class="rapat isi-baris">&bull; +{{ $order->items->count() - 2 }} more items</p>
             @endif
         </div>
 
         <table class="dua-kolom" style="border-top:1.5px solid #000">
             <tr>
                 <td class="sisi-kiri">
-                    <p class="rapat nama-penerima">Penerima:</p>
+                    <p class="rapat nama-penerima">Recipient:</p>
                     <p class="rapat nama-penerima">{{ $alamat['recipient_name'] ?? $order->namaPenerima() }}</p>
 
                     <p class="alamat-penerima">
@@ -145,16 +145,16 @@
                         @endif
                     </p>
 
-                    <p class="rapat telp-penerima">Nomor Telepon:</p>
+                    <p class="rapat telp-penerima">Phone:</p>
                     <p class="rapat telp-penerima">{{ $telepon ?: '—' }}</p>
                 </td>
                 <td>
-                    <p class="rapat nama-penerima">Pengirim:</p>
+                    <p class="rapat nama-penerima">Sender:</p>
                     <p class="rapat nama-penerima">{{ $toko->teks('site_name', 'Bites Exhaust') }}</p>
 
                     <p class="alamat-penerima">{{ $toko->teks('address_full') ?: '—' }}</p>
 
-                    <p class="rapat telp-penerima">Nomor Telepon:</p>
+                    <p class="rapat telp-penerima">Phone:</p>
                     <p class="rapat telp-penerima">{{ $toko->teks('phone_number') ?: '—' }}</p>
                 </td>
             </tr>
@@ -162,7 +162,7 @@
 
         @if (filled($order->customer_note))
             <div class="bagian">
-                <p class="rapat catatan-baris">Catatan:</p>
+                <p class="rapat catatan-baris">Note:</p>
                 {{-- Dipotong 120 huruf: sekitar dua baris pada 9,5px. Catatan
                      yang lebih panjang mendorong label ke halaman kedua. --}}
                 <p class="rapat catatan-baris">{{ \Illuminate\Support\Str::limit($order->customer_note, 120) }}</p>
@@ -170,7 +170,7 @@
         @endif
 
         <div class="bagian">
-            <p class="rapat kaki-label">*Pengirim wajib meminta bukti serah terima paket ke kurir.</p>
+            <p class="rapat kaki-label">*Sender must obtain proof of handover from the courier.</p>
         </div>
 
     </div>

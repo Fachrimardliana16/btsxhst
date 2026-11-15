@@ -88,7 +88,7 @@
                 @include('cetak._logo-toko')
             </td>
             <td class="judul-dokumen">
-                <p class="judul">SURAT JALAN</p>
+                <p class="judul">DELIVERY NOTE</p>
                 <p class="nomor">{{ $order->order_number }}</p>
                 <p class="tanggal">{{ $order->created_at->format('d F Y') }}</p>
             </td>
@@ -98,7 +98,7 @@
     <table class="tiga-kolom" style="border-top:1.5px solid #000">
         <tr>
             <td class="sisi-kiri" style="width:52%">
-                <p class="rapat label-kecil">Kirim kepada</p>
+                <p class="rapat label-kecil">Ship to</p>
                 <p class="isi-kolom tegas">{{ $alamat['recipient_name'] ?? $order->namaPenerima() }}</p>
                 <p class="isi-kolom">
                     {{ $alamat['phone_number'] ?? $order->teleponPenerima() }}<br>
@@ -109,20 +109,20 @@
             </td>
 
             <td class="sisi-kiri" style="width:26%">
-                <p class="rapat label-kecil">Kurir</p>
+                <p class="rapat label-kecil">Courier</p>
                 <p class="isi-kolom tegas">
                     {{ $order->shipping_courier ?: '—' }} {{ $order->shipping_service ?: '' }}
                 </p>
 
-                <p class="rapat label-kecil" style="margin-top:3mm">Nomor resi</p>
-                <div class="kotak-resi">{{ $order->tracking_number ?: '— belum diisi —' }}</div>
+                <p class="rapat label-kecil" style="margin-top:3mm">Tracking number</p>
+                <div class="kotak-resi">{{ $order->tracking_number ?: '— not set —' }}</div>
             </td>
 
             <td style="width:22%">
-                <p class="rapat label-kecil">Berat total</p>
-                <p class="rapat angka">{{ number_format($order->beratTotal() / 1000, 2, ',', '.') }} kg</p>
+                <p class="rapat label-kecil">Total weight</p>
+                <p class="rapat angka">{{ number_format($order->beratTotal() / 1000, 2) }} kg</p>
 
-                <p class="rapat label-kecil" style="margin-top:3mm">Jumlah barang</p>
+                <p class="rapat label-kecil" style="margin-top:3mm">Total items</p>
                 <p class="rapat angka">{{ $order->jumlahItem() }} pcs</p>
             </td>
         </tr>
@@ -132,10 +132,10 @@
         <thead>
             <tr>
                 <th style="width:8mm">#</th>
-                <th>Nama barang</th>
+                <th>Item name</th>
                 <th style="width:30mm">SKU</th>
-                <th class="kanan" style="width:16mm">Jml</th>
-                <th class="kanan" style="width:22mm">Berat</th>
+                <th class="kanan" style="width:16mm">Qty</th>
+                <th class="kanan" style="width:22mm">Weight</th>
             </tr>
         </thead>
 
@@ -152,7 +152,7 @@
                     <td>{{ $item->sku }}</td>
                     <td class="kanan">{{ $item->quantity }}</td>
                     <td class="kanan">
-                        {{ number_format(($item->weight_gram * $item->quantity) / 1000, 2, ',', '.') }} kg
+                        {{ number_format(($item->weight_gram * $item->quantity) / 1000, 2) }} kg
                     </td>
                 </tr>
             @endforeach
@@ -162,7 +162,7 @@
     @if (filled($order->customer_note))
         <div class="bagian">
             <p class="rapat kaki-isi">
-                <strong>Catatan pembeli:</strong> {{ $order->customer_note }}
+                <strong>Buyer note:</strong> {{ $order->customer_note }}
             </p>
         </div>
     @endif
@@ -171,12 +171,12 @@
         <table class="tanda-tangan" style="width:100%;border-collapse:collapse">
             <tr>
                 <td class="sisi-kiri">
-                    <p class="peran">Diserahkan oleh</p>
-                    <div class="garis-ttd">Nama dan tanda tangan</div>
+                    <p class="peran">Handed over by</p>
+                    <div class="garis-ttd">Name and signature</div>
                 </td>
                 <td>
-                    <p class="peran">Diterima oleh</p>
-                    <div class="garis-ttd">Nama dan tanda tangan penerima</div>
+                    <p class="peran">Received by</p>
+                    <div class="garis-ttd">Recipient name and signature</div>
                 </td>
             </tr>
         </table>
@@ -184,8 +184,8 @@
 
     <div class="bagian">
         <p class="rapat kaki-label">
-            Barang wajib diperiksa saat diterima. Kerusakan akibat pengiriman harus dilaporkan
-            pada hari yang sama dengan bukti foto.
+            Goods must be inspected upon receipt. Shipping damage must be reported
+            on the same day with photo evidence.
         </p>
     </div>
 
