@@ -49,7 +49,9 @@
         @endif
     </div>
 
-    <div class="grid gap-5 lg:grid-cols-[1fr_380px]">
+    {{-- Kolom kedua hanya dipakai saat panel form terbuka. Tanpa syarat ini,
+         tabel berhenti di 1fr dan menyisakan 380px kosong di kanannya. --}}
+    <div @class(['grid gap-5', 'lg:grid-cols-[1fr_380px]' => $formTerbuka])>
 
         {{-- ── Tabel ───────────────────────────────────────────────── --}}
         <div class="plate overflow-hidden">

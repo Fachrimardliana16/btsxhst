@@ -864,6 +864,16 @@
         gap: 0.5rem;
     }
 
+    /* `.part-no` di atas memakai inline-flex. Pada <th> itu MENGGANTI display
+       table-cell, sehingga judul kolom keluar dari kolomnya: tabel admin
+       merender satu sel anonim berisi label yang berdesakan (dan membungkus
+       ke baris baru bila labelnya panjang, seperti "Tracking URL"), sementara
+       isi baris tetap mengikuti kolom aslinya. Kembalikan ke table-cell agar
+       judul dan isi sejajar di SEMUA tabel panel, bukan hanya satu halaman. */
+    th.part-no {
+        display: table-cell;
+    }
+
     /* Torque stripe: tiga batang bertingkat. Mengganti eyebrow uppercase. */
     .torque-stripe {
         display: inline-flex;
