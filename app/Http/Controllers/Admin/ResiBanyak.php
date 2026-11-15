@@ -20,7 +20,7 @@ use Illuminate\Validation\Rule;
  * "resi", dua puluh unduhan, lalu menempel dua puluh label. Skrip ini
  * menyatukan semuanya menjadi satu unduhan.
  *
- * Bentuk hasilnya: SATU PDF, dua puluh label 100x150 mm berturut-turut, satu
+ * Bentuk hasilnya: SATU PDF, dua puluh label A5 berturut-turut, satu
  * halaman per label (bukan 4-per-A4). Alasannya format yang diminta: label
  * dicetak pada printer label, dan satu label meleset dari kotaknya berarti
  * menempel di paket yang salah.
@@ -32,7 +32,7 @@ use Illuminate\Validation\Rule;
 class ResiBanyak
 {
     /** Bentuk yang diterima: satu atau beberapa ULID, dipisah koma. */
-    private const KERTAS = '100mm 150mm';
+    private const KERTAS = 'A5';
 
     /**
      * Batas jumlah label dalam satu berkas.
@@ -160,7 +160,7 @@ class ResiBanyak
         // menghasilkan lebih lagi. Satu blok di <head> menghasilkan tepat satu
         // halaman per label.
         $html = '<!DOCTYPE html><html lang="id"><head>'
-            .view('cetak._gaya', ['margin' => '1.5mm'])->render()
+            .view('cetak._gaya', ['margin' => '6mm'])->render()
             .'</head><body>'
             .$html
             .'</body></html>';

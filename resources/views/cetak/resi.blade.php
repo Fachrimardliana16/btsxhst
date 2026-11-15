@@ -2,7 +2,7 @@
     /** @var \App\Support\Pengaturan $toko */
     /** @var \App\Models\Order $order */
 
-    // Resi tunggal: satu label pengiriman 100x150 mm.
+    // Resi tunggal: satu label pengiriman A5 (148x210 mm).
     //
     // Isi label tinggal di cetak/label-pesanan.blade.php, yang juga dipakai
     // cetak resi banyak. Satu sumber berarti perbaikan tata letak tidak perlu
@@ -22,7 +22,7 @@
 
     {{-- Ukuran kertas dinyatakan di sini supaya peramban tidak menyisipkan
          margin bawaan yang membuat label meleset dari kertas label. --}}
-    @include('cetak._gaya', ['margin' => '1.5mm'])
+    @include('cetak._gaya', ['margin' => '6mm'])
 
     <style>
         @media print {

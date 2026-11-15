@@ -8,7 +8,7 @@
 
     SEBUAH blok, sependek mungkin, dan berada DI DALAM aliran dokumen.
 
-    Terukur pada label 100x150 mm: dua blok berturut-turut (pita merah lalu
+    Terukur pada label A5: dua blok berturut-turut (pita merah lalu
     cakram "SALINAN") cukup mendorong label yang sudah berisi empat barang
     meluap menjadi dua halaman. Dalam berkas resi banyak, itu berarti setiap
     pesanan batal menghasilkan satu halaman berisi label dan satu halaman
@@ -18,7 +18,7 @@
     terbaca dan tidak merusak tata letak.
 --}}
 @if ($salinan ?? false)
-    {{-- Satu baris tipis, bukan kotak tinggi: label 100x150 mm sudah penuh
+    {{-- Satu baris tipis, bukan kotak tinggi: label A5 sudah penuh
          oleh blok penerima, dan penanda setinggi 9 mm mendorong catatan serta
          kalimat penutup ke halaman kedua — label terbelah, lalu ditempel di
          paket yang salah. --}}

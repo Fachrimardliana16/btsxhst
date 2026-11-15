@@ -1,4 +1,4 @@
-{{-- Satu label pengiriman 100x150 mm.
+{{-- Satu label pengiriman A5 (148x210 mm).
 
      Bentuknya mengikuti label kurir: satu kotak berbingkai, dipisah garis
      tebal per bagian — kepala (logo toko + kurir), barcode, status bayar,
@@ -24,7 +24,7 @@
        $gaya         — false bila pemanggil sudah menyediakan <style> sendiri
                        (dipakai ResiBanyak: satu berkas, banyak label) --}}
 @if ($gaya ?? true)
-    @include('cetak._gaya', ['margin' => '1.5mm'])
+    @include('cetak._gaya', ['margin' => '6mm'])
 @endif
 
 @php
@@ -39,7 +39,7 @@
     // dan baris kecil di bawah barcode menyebut bahwa resi resmi belum ada.
     $nomorResi = trim((string) $order->tracking_number);
     $sumberBarcode = $nomorResi !== '' ? $nomorResi : (string) $order->order_number;
-    $barcode = \App\Support\Barcode128::dataUri($sumberBarcode, 84, 10);
+    $barcode = \App\Support\Barcode128::dataUri($sumberBarcode, 124, 20);
 
     // Logo toko di kiri atas. Urutannya: logo yang diunggah di Site Settings,
     // lalu logo bawaan di public/brand, lalu nama toko sebagai teks. Tanpa
@@ -132,7 +132,7 @@
             </tr>
         </table>
 
-        {{-- Daftar isi dibatasi DUA baris. Terukur pada label 100x150 mm:
+        {{-- Daftar isi dibatasi DUA baris. Terukur pada label A5:
              tiga baris sudah cukup untuk mendorong label meluap menjadi
              halaman kedua, apalagi bila pesanan juga membawa tanda air
              SALINAN dan catatan pembeli. --}}

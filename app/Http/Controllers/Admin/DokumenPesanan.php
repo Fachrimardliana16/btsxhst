@@ -28,8 +28,8 @@ use Illuminate\Http\Response;
  */
 class DokumenPesanan
 {
-    /** Resi / label pengiriman: 100x150 mm, ukuran label yang dicetak kurir. */
-    private const KERTAS_RESI = '100mm 150mm';
+    /** Resi / label pengiriman: A5 (148x210 mm). */
+    private const KERTAS_RESI = 'A5';
 
     private const KERTAS_A4 = 'A4';
 

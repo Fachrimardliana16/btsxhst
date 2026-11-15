@@ -61,7 +61,7 @@ class DokumenPdf
      * [x1, y1, x2, y2] — bukan pasangan lebar-tinggi. Memberinya dua angka
      * membuat dompdf membaca indeks 2 dan 3 yang tidak ada, dan permintaannya
      * berakhir 500 tanpa menyebut ukuran kertas sebagai penyebabnya. Kertas
-     * khusus seperti label 100x150 mm harus lewat jalur ini, karena namanya
+     * khusus seperti label A5 harus lewat jalur ini, karena namanya
      * tidak ada di daftar kertas bawaan dan akan jatuh ke "letter".
      *
      * @return string|array{0: float, 1: float, 2: float, 3: float}
