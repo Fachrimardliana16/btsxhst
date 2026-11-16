@@ -290,10 +290,17 @@ class ProdukDaftar extends KomponenAdmin
         $daftar = Product::query()->whereIn('id', $this->terpilih)->with('media')->get();
 
         foreach ($daftar as $produk) {
-            // Produk yang pernah dipesan ikut dihapus. order_items menyimpan
-            // salinan nama, SKU, harga, dan berat, jadi dokumen lama tetap
-            // utuh; kolom product_id-nya menjadi NULL (lihat migrasi
-            // 2026_11_16_000100).
+            // Produk yang pernah dipesan tidak dihapus. Baris pesanan lama
+            // menyimpan product_id; menghapus produknya membuat riwayat pesanan
+            // kehilangan keterangan barang dan laporan penjualan jadi salah.
+            $pernahDipesan = DB::table('order_items')->where('product_id', $produk->id)->exists();
+
+            if ($pernahDipesan) {
+                $this->catatan[] = $produk->title_id.' skipped: it has already been ordered. Remove it from the catalog instead.';
+
+                continue;
+            }
+
             DB::transaction(function () use ($produk, $pengunggah): void {
                 foreach ($produk->media as $media) {
                     $pengunggah->hapusBerkas($media);
@@ -319,6 +326,14 @@ class ProdukDaftar extends KomponenAdmin
     public function hapus(int $id): void
     {
         $pengunggah = app(PengunggahMediaProduk::class);
+
+        $pernahDipesan = DB::table('order_items')->where('product_id', $id)->exists();
+
+        if ($pernahDipesan) {
+            $this->addError('umum', __('site.msg2.produk.sudah_dipesan'));
+
+            return;
+        }
 
         $produk = Product::query()->with('media')->findOrFail($id);
 
