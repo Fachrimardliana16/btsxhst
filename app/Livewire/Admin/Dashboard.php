@@ -175,8 +175,12 @@ class Dashboard extends KomponenAdmin
         $modeBayar = (string) $toko->teks('payment_mode', 'manual');
 
         if (in_array($modeBayar, ['paypal', 'both'], true)) {
-            $idPaypal = strtoupper(trim((string) $toko->teks('paypal_client_id', '')));
-            $rahasiaPaypal = strtoupper(trim((string) $toko->teks('paypal_client_secret', '')));
+            // Kredensial PayPal ditandai terenkripsi, dan Pembaca sengaja tidak
+            // pernah memuat baris terenkripsi ke cache publiknya. Membacanya
+            // lewat teks() karena itu SELALU mengembalikan string kosong —
+            // peringatan ini menyala walau Client ID dan Secret sudah diisi.
+            $idPaypal = strtoupper(trim((string) \App\Support\KomponenPengaturan::mentah('paypal_client_id')));
+            $rahasiaPaypal = strtoupper(trim((string) \App\Support\KomponenPengaturan::mentah('paypal_client_secret')));
 
             // Placeholder bawaan seeder juga dianggap belum diisi: secara
             // teknis ada isinya, tetapi PayPal akan menolaknya.

@@ -153,8 +153,12 @@
             $daftarEkspedisi = \App\Models\Courier::aktifNama();
 
             // Rekening manual disimpan sebagai JSON berisi objek {bank, nomor, atas_nama}.
+            // Dibaca lewat model, bukan teks(): barisnya terenkripsi dan Pembaca
+            // sengaja tidak memuat baris terenkripsi, jadi teks() selalu kosong.
+            $rekening = \App\Models\Setting::query()->where('key', 'manual_bank_accounts')->first()?->larik() ?? [];
+
             $daftarBank = [];
-            foreach ((array) json_decode((string) $toko->teks('manual_bank_accounts'), true) as $b) {
+            foreach ($rekening as $b) {
                 if (is_array($b) && filled($b['bank'] ?? null)) {
                     $daftarBank[] = (string) $b['bank'];
                 }
