@@ -1288,7 +1288,6 @@ return [
             "ditarik" => "product removed from the catalog.",
             "tidak_unggulan" => "product is no longer featured.",
             "kategori_tidak_ada" => "Destination category not found.",
-            "dilewati_sudah_dipesan" => "skipped: already ordered. Just unpublish it from the catalog.",
             "dihapus" => "product deleted.",
             "massal_dihapus" => "products deleted",
             "kategori_tidak_ditemukan" => "The selected category does not exist.",
@@ -1342,7 +1341,6 @@ return [
             "bantuan_push" => "Panel notifications appear in the browser even when the panel is closed. Requires browser permission, once per device.",
         ],
         "produk" => [
-            "sudah_dipesan" => "This product has already been ordered, so it is not deleted. Just unpublish it from the catalog.",
             "ditarik_singkat" => "Product removed from the catalog.",
             "tanpa_varian_terbit" => "The product has no variants yet, so it cannot be published.",
             "berat_wajib" => "Weight is required because it is used to calculate shipping.",
