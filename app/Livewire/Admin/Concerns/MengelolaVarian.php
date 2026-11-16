@@ -72,12 +72,11 @@ trait MengelolaVarian
             }
         }
 
-        if (count($this->varian) <= 1) {
-            $this->addError('varian', 'A product must have at least one variant.');
-
-            return;
-        }
-
+        // Baris terakhir BOLEH dihapus: produk tanpa varian memang tidak bisa
+        // dibeli dan tidak bisa diterbitkan (dijaga di ubahTerbit()), tetapi
+        // menyusun ulang daftar varian dari nol adalah keadaan kerja yang sah.
+        // Menahan baris terakhir justru memaksa admin menyunting nama varian
+        // lama satu per satu.
         unset($this->varian[$indeks]);
         $this->varian = array_values($this->varian);
         $this->pesanTab = null;
@@ -102,11 +101,9 @@ trait MengelolaVarian
             return;
         }
 
-        if ($this->varian === []) {
-            $this->addError('varian', 'A product must have at least one variant.');
-
-            return;
-        }
+        // Daftar kosong sah: seluruh varian dihapus. Produk seperti itu tetap
+        // tersimpan sebagai draf dan tidak bisa diterbitkan sampai varian baru
+        // ditambahkan — lihat ubahTerbit().
 
         // Aturan diperiksa per baris dengan indeks, sehingga pesan galatnya
         // menunjuk ke baris yang salah — bukan satu pesan umum di atas tabel.
@@ -129,7 +126,11 @@ trait MengelolaVarian
             $pesan["varian.$i.stok.min"] = 'Stock for row '.($i + 1).' cannot be negative.';
         }
 
-        $this->validate($aturan, $pesan);
+        // validate() dengan aturan kosong melempar MissingRulesException —
+        // daftar varian yang sengaja dikosongkan bukan galat.
+        if ($aturan !== []) {
+            $this->validate($aturan, $pesan);
+        }
 
         // Nama varian harus berbeda satu sama lain. Dua varian bernama sama
         // membuat pembeli tidak tahu mana yang dipilih, dan membuat baris
