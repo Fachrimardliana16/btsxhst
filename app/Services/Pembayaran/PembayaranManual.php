@@ -222,7 +222,7 @@ class PembayaranManual
                     $pesanan,
                     StatusPesanan::Paid,
                     $olehId === null ? null : \App\Models\User::query()->find($olehId),
-                    'Pembayaran manual diverifikasi',
+                    'Manual payment verified.',
                 );
             }
 

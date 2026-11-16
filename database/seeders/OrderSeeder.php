@@ -243,12 +243,12 @@ class OrderSeeder extends Seeder
                 'from_status' => $sebelum?->value,
                 'to_status' => $tahap->value,
                 'note' => match ($tahap) {
-                    StatusPesanan::Pending => 'Pesanan dibuat dari halaman checkout.',
-                    StatusPesanan::Paid => 'Pembayaran diterima.',
-                    StatusPesanan::Processing => 'Pesanan sedang disiapkan di bengkel.',
-                    StatusPesanan::Shipped => 'Paket diserahkan ke kurir.',
-                    StatusPesanan::Completed => 'Paket diterima pelanggan.',
-                    StatusPesanan::Cancelled => 'Dibatalkan karena pembayaran tidak diterima dalam 24 jam.',
+                    StatusPesanan::Pending => 'Order placed from the checkout page.',
+                    StatusPesanan::Paid => 'Payment received.',
+                    StatusPesanan::Processing => 'Order is being prepared.',
+                    StatusPesanan::Shipped => 'Package handed to the courier.',
+                    StatusPesanan::Completed => 'Package received by the customer.',
+                    StatusPesanan::Cancelled => 'Cancelled because payment was not received within 24 hours.',
                 },
                 'created_at' => $dibuat->copy()->addHours($i * 6),
             ]);

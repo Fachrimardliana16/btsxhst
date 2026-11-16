@@ -381,7 +381,7 @@ class PaypalGateway
                 $pesanan->fresh(),
                 StatusPesanan::Paid,
                 null,
-                'Pembayaran PayPal diterima',
+                'PayPal payment received.',
             );
 
             KirimNotifikasiPesanan::dispatch($pesanan->id, KirimNotifikasiPesanan::KEJADIAN_DIBAYAR);

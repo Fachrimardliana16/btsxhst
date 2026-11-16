@@ -47,7 +47,7 @@
                             <dd class="tech mt-1">{{ dolar($data['total']) }}</dd>
                         </div>
                         <div>
-                            <dt class="part-no">Item</dt>
+                            <dt class="part-no">{{ __('site.order.item') }}</dt>
                             <dd class="tech mt-1">{{ $data['item'] }}</dd>
                         </div>
                         <div>
@@ -55,14 +55,14 @@
                             <dd class="tech mt-1">{{ $data['kurir'] ?? '-' }}</dd>
                         </div>
                         <div>
-                            <dt class="part-no">Resi</dt>
+                            <dt class="part-no">{{ __('site.order.tracking_number') }}</dt>
                             <dd class="tech mt-1">{{ $data['resi'] ?? '-' }}</dd>
                         </div>
                     </dl>
 
                     @if (count($data['riwayat']) > 0)
                         <div class="measure-line my-5"></div>
-                        <p class="part-no">Riwayat</p>
+                        <p class="part-no">{{ __('site.order.history') }}</p>
 
                         <ol class="mt-3 space-y-3">
                             @foreach ($data['riwayat'] as $riwayat)

@@ -183,7 +183,7 @@ class PesananService
             $order->statusHistory()->create([
                 'from_status' => null,
                 'to_status' => StatusPesanan::Pending->value,
-                'note' => 'Pesanan dibuat dari halaman checkout.',
+                'note' => 'Order placed from the checkout page.',
             ]);
 
             if ($kupon !== null) {

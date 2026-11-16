@@ -60,7 +60,7 @@ class BatalkanKedaluwarsa extends Command
                     $order,
                     StatusPesanan::Cancelled,
                     null,
-                    'Dibatalkan otomatis: belum dibayar sampai batas waktu.',
+                    'Cancelled automatically: payment was not received before the deadline.',
                 );
             } catch (RuntimeException|Throwable $e) {
                 // Satu pesanan yang gagal tidak boleh menghentikan sisanya.
