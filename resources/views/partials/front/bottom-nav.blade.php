@@ -54,10 +54,6 @@
                     </span>
 
                     <span class="nav-bawah__label">{{ $slot['label'] }}</span>
-
-                    @if ($isAktif)
-                        <span class="nav-bawah__titik" aria-hidden="true"></span>
-                    @endif
                 </a>
             @endforeach
         </div>
