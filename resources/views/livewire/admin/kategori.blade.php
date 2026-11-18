@@ -130,7 +130,9 @@
                                                 <span class="visually-hidden">{{ __('site.admin.kategori.sunting') }}</span>
                                             </button>
                                             <button type="button" wire:click="hapus({{ $kategori->id }})"
-                                                    wire:confirm="{{ __('site.admin.kategori.hapus') }} category &quot;{{ $kategori->name_en ?: $kategori->name_id }}&quot;?"
+                                                    wire:confirm="{{ $kategori->products_count > 0
+                                                        ? __('site.admin.kategori.hapus_dengan_produk', ['nama' => $kategori->name_en ?: $kategori->name_id, 'jumlah' => $kategori->products_count])
+                                                        : __('site.admin.kategori.hapus').' category &quot;'.($kategori->name_en ?: $kategori->name_id).'&quot;?' }}"
                                                     class="btn-icon btn-icon-sm hover:text-danger" title="{{ __('site.admin.kategori.hapus') }}">
                                                 <x-ikon name="trash" :size="15" />
                                                 <span class="visually-hidden">{{ __('site.admin.kategori.hapus') }}</span>

@@ -262,28 +262,43 @@ class Kategori extends KomponenAdmin
         });
     }
 
+    /**
+     * Menghapus kategori, melepas produknya lebih dulu.
+     *
+     * Dulu penghapusan ditolak selama masih ada produk yang menunjuk ke
+     * kategori ini. Itu memaksa pemilik toko memindahkan produk satu per satu
+     * hanya untuk membuang kategori yang sudah tidak dipakai. Sekarang produk
+     * dilepas (category_id menjadi kosong) di dalam transaksi yang sama,
+     * sehingga tidak pernah ada saat kategori sudah hilang tetapi produknya
+     * masih menunjuk ke sana.
+     */
     public function hapus(int $id): void
     {
         $kategori = Category::query()->findOrFail($id);
 
-        $terpakai = Product::query()->where('category_id', $kategori->id)->count();
+        $dilepas = DB::transaction(function () use ($kategori): int {
+            $jumlah = Product::query()->where('category_id', $kategori->id)->count();
 
-        if ($terpakai > 0) {
-            $this->addError(
-                'umum',
-                "Category \"{$kategori->name_id}\" is still used by {$terpakai} products. Move them first.",
-            );
+            if ($jumlah > 0) {
+                Product::query()->where('category_id', $kategori->id)
+                    ->update(['category_id' => null]);
+            }
 
-            return;
-        }
+            CatatanAktivitas::catat('kategori.dihapus', [
+                'slug' => $kategori->slug,
+                'produk_dilepas' => $jumlah,
+            ], auth()->id(), $kategori);
 
-        CatatanAktivitas::catat('kategori.dihapus', ['slug' => $kategori->slug], auth()->id(), $kategori);
+            $kategori->delete();
 
-        $kategori->delete();
+            return $jumlah;
+        });
 
         CacheKatalog::tandaiBerubah('kategori dihapus');
 
-        $this->pesan = 'Kategori "'.$kategori->name_id.' deleted.';
+        $this->pesan = $dilepas > 0
+            ? "Category \"{$kategori->name_id}\" deleted; {$dilepas} products now have no category."
+            : "Category \"{$kategori->name_id}\" deleted.";
     }
 
     private function slugUnik(string $teks, ?int $kecualiId): string

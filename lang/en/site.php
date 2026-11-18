@@ -589,6 +589,7 @@ return [
             'menyimpan' => 'Saving…',
             'sunting' => 'Edit',
             'hapus' => 'Delete',
+            'hapus_dengan_produk' => 'Delete category ":nama"? :jumlah products will be left without a category.',
             'naikkan' => 'Move up',
             'turunkan' => 'Move down',
             'tutup' => 'Close',
