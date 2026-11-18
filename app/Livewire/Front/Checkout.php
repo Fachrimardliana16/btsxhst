@@ -15,6 +15,7 @@ use App\Support\Internasional;
 use App\Support\Keamanan;
 use App\Support\Pengaturan;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
@@ -133,6 +134,11 @@ class Checkout extends Component
 
         $this->dimulaiPada = now()->timestamp;
         $this->segel = bin2hex(random_bytes(24));
+
+        // Yang dibandingkan nanti adalah hash di sesi, bukan nilai segel yang
+        // dikirim klien. Dengan begitu segel tidak dapat dibuat-buat dari sisi
+        // peramban: hanya segel yang diterbitkan mount() ini yang sah.
+        session(['checkout.segel_hash' => hash('sha256', $this->segel)]);
         $this->capTingkat = 'rendah';
 
         // Catatan yang sudah ditulis di halaman keranjang diteruskan ke sini
@@ -141,7 +147,7 @@ class Checkout extends Component
 
         // Kurir mengikuti master ekspedisi, bukan pilihan bawaan yang ditulis
         // di kode. Tanpa ini, mengubah daftar kurir menuntut perubahan kode.
-        $this->kurir = (string) (Courier::bawaan()?->name ?? '');
+        $this->kurir = (string) (Courier::bawaan()->name ?? '');
 
         // Metode pembayaran mengikuti mode yang aktif. Mode "manual" tidak boleh
         // menyodorkan PayPal, dan sebaliknya.
@@ -216,11 +222,11 @@ class Checkout extends Component
     private const CIRI_PENYALAHGUNAAN = [
         // Alamat luar negeri yang salah ketik: "Jalan", "Nusa", dll dalam
         // huruf Latin; aksara Asia lain muncul sebagai tak terbaca.
-        'campur_aksara' => 'Alamat dalam huruf Latin saja, ya.',
-        'tautan_terlalu_banyak' => 'Alamat tidak perlu memuat tautan.',
-        'nama_kelabu' => 'Nama penerima tampak tidak wajar. Ketik nama Anda.',
-        'telepon_patokan' => 'Nomor telepon tidak sah. Periksa kembali.',
-        'segel_ulang' => 'Formulir sudah dipakai. Muat ulang halaman checkout.',
+        'campur_aksara' => 'Please use Latin characters only in the address.',
+        'tautan_terlalu_banyak' => 'The address does not need to contain links.',
+        'nama_kelabu' => 'The recipient name does not look valid. Please type your name.',
+        'telepon_patokan' => 'That phone number is not valid. Please check it.',
+        'segel_ulang' => 'This form has already been used. Reload the checkout page.',
     ];
 
     /**
@@ -269,11 +275,14 @@ class Checkout extends Component
         // 1) Jebakan bot dan waktu minimum. Tanpa CAPTCHA, ini yang menyaring
         //    pengiriman otomatis.
         if ($this->situs !== '' || now()->timestamp - $this->dimulaiPada < config('iksan.brute_force.min_form_seconds')) {
-            $this->galat = 'Formulir dikirim terlalu cepat. Muat ulang halaman lalu coba lagi.';
+            $this->galat = 'The form was submitted too quickly. Reload the page and try again.';
 
             return;
         }
 
+        // Kunci TIDAK memuat id sesi: cookie sesi dapat dihapus untuk mendapat
+        // kuota baru. Alamat IP kini berasal dari proxy yang dipercaya (lihat
+        // PercayaiProxy), bukan lagi 127.0.0.1 untuk semua pengunjung.
         $kunci = self::KUNCI_BATAS.':'.request()->ip();
 
         // 5 percobaan per 10 menit (PRD Bagian 11.1), dijawab sebagai 429 —
@@ -296,35 +305,29 @@ class Checkout extends Component
         // mengisi kuota — kalau tidak, ia bisa mengulang tanpa batas justru
         // lewat penolakan. Diperiksa SEBELUM hit supaya percobaan keenam
         // mendapat 429, bukan 200.
-        if (RateLimiter::tooManyAttempts($kunci.'|'.session()->getId(), config('iksan.rate_limits.checkout')[0])) {
-            abort(429, 'Terlalu banyak percobaan checkout. Coba lagi beberapa menit lagi.');
+        if (RateLimiter::tooManyAttempts($kunci, config('iksan.rate_limits.checkout')[0])) {
+            abort(429, 'Too many checkout attempts. Try again in a few minutes.');
         }
 
-        RateLimiter::hit($kunci.'|'.session()->getId(), config('iksan.rate_limits.checkout')[1] * 60);
+        RateLimiter::hit($kunci, config('iksan.rate_limits.checkout')[1] * 60);
 
         // Segel. Satu muat halaman = satu pesanan.
         //
-        // Nilainya tak terlihat oleh manusia (bukan angka, bukan jebakan) dan
-        // paling murah untuk bot: mereka mencari field yang mereka isi lalu
-        // mengirim ulang nilai itu ratusan kali tanpa memuat ulang halaman.
-        // Menuntut harga benar membatalkan kekuatan utama mereka — mengirim
-        // beruntun tanpa biaya.
+        // Nilai yang dibandingkan adalah hash yang disimpan mount() di sesi.
+        // Segel yang dikirim klien hanya dicocokkan; klien tidak dapat membuat
+        // hash baru karena hash tidak pernah dikirim ke peramban.
         //
-        // Sengaja berada SESUDAH hit(): batas laju pembatasan terakhir yang
-        // tetap berlaku, bila segel dan ciri penyalahgunaan dilewati.
-        if ($this->segel === '' || ! is_string($this->segel)) {
-            $this->galat = 'Formulir harus dimuat ulang sebelum dipakai lagi.';
+        // Segel BELUM dihapus di sini. Menghapusnya sebelum validasi berarti
+        // satu galat kolom membuat kiriman ulang berikutnya ditolak dan pembeli
+        // harus memuat ulang halaman, kehilangan seluruh isian.
+        $segelSah = session('checkout.segel_hash');
+
+        if (! is_string($segelSah) || $this->segel === ''
+            || ! hash_equals($segelSah, hash('sha256', $this->segel))) {
+            $this->galat = 'The form must be reloaded before it can be used again.';
 
             return;
         }
-
-        if (session()->pull('checkout.segel') === $this->segel) {
-            $this->galat = 'Formulir ini sudah dipakai. Muat ulang halaman checkout.';
-
-            return;
-        }
-
-        session()->put('checkout.segel', $this->segel);
 
         // Validasi atribut dulu: nama, email, telepon, alamat, dll.
         $this->validate();
@@ -340,9 +343,19 @@ class Checkout extends Component
             ['negara' => $this->negara],
             ['negara' => ['required', 'string', 'size:2', Rule::in(array_keys(Internasional::NEGARA))]],
             [
-                'negara.required' => 'Pilih negara tujuan pengiriman.',
-                'negara.in' => 'Negara tujuan tidak dikenal.',
+                'negara.required' => 'Choose a destination country.',
+                'negara.in' => 'That destination country is not recognised.',
             ],
+        )->validate();
+
+        // Kurir harus salah satu yang aktif. Atribut #[Validate] hanya
+        // memeriksa panjang teks, sehingga nilai yang disisipkan lewat
+        // permintaan langsung akan lolos dan tersimpan sebagai nama kurir
+        // yang tidak pernah ada di daftar toko.
+        Validator::make(
+            ['kurir' => $this->kurir],
+            ['kurir' => ['required', 'string', Rule::in(Courier::aktifNama())]],
+            ['kurir.in' => 'That courier is not available.'],
         )->validate();
 
         // Ciri penyalahgunaan. Dijalankan SETELAH validasi kolom dasar agar
@@ -406,11 +419,25 @@ class Checkout extends Component
                 metode: MetodePembayaran::from($this->metode),
                 user: auth()->user(),
             );
+        } catch (QueryException $e) {
+            // Galat basis data tidak pernah ditampilkan apa adanya: pesannya
+            // memuat SQL dan nama kolom. Pembeli cukup diberi tahu bahwa
+            // pesanan belum tersimpan; rinciannya masuk log.
+            Log::error('Checkout gagal menyimpan pesanan.', ['galat' => $e->getMessage()]);
+            $this->galat = 'We could not create your order. Please try again in a moment.';
+
+            return;
         } catch (\RuntimeException $e) {
             $this->galat = $e->getMessage();
 
             return;
         }
+
+        // Pesanan sudah tersimpan: segel ini tidak boleh dipakai lagi. Bila
+        // PayPal kemudian gagal dihubungi, pesanan tetap ada dan pembeli
+        // melanjutkan lewat tombol di halaman sukses — bukan dengan mengirim
+        // formulir checkout sekali lagi (yang akan membuat pesanan kedua).
+        session()->forget('checkout.segel_hash');
 
         /* ═══ PAYPAL: pembeli harus BENAR-BENAR pergi ke PayPal ═══════════
          *
@@ -438,7 +465,7 @@ class Checkout extends Component
                 if (filled($hasil['setuju_url'] ?? null)) {
                     CatatanAktivitas::catat('paypal.pesanan-dibuat', [
                         'pesanan' => $order->order_number,
-                        'paypal_id' => $hasil['id'] ?? null,
+                        'paypal_id' => $hasil['id'],
                     ]);
 
                     // Langsung ke PayPal: pembeli tidak perlu singgah di

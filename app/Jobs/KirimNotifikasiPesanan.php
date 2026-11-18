@@ -2,9 +2,11 @@
 
 namespace App\Jobs;
 
-use App\Enums\StatusPesanan;
+use App\Enums\MetodePembayaran;
+use App\Mail\PesananPembeli;
 use App\Models\Order;
 use App\Services\Pembayaran\PembayaranManual;
+use App\Support\KomponenPengaturan;
 use App\Support\Pengaturan;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -44,7 +46,9 @@ class KirimNotifikasiPesanan implements ShouldQueue
      * lebih banyak pesan daripada perubahan yang berarti baginya.
      */
     public const KEJADIAN_DIBUAT = 'dibuat';
+
     public const KEJADIAN_DIBAYAR = 'dibayar';
+
     public const KEJADIAN_DIKIRIM = 'dikirim';
 
     /** Penutup transaksi: barang sudah diterima pembeli. */
@@ -66,8 +70,31 @@ class KirimNotifikasiPesanan implements ShouldQueue
         $surel = $this->surelPembeli($pesanan);
         $telepon = $this->teleponPembeli($pesanan);
 
-        $surel === null || $this->kirimSurel($pesanan, $surel);
-        $telepon === null || $this->kirimWhatsapp($pesanan, $telepon);
+        $galat = [];
+
+        // Kedua kanal tetap dicoba, tetapi kegagalannya TIDAK ditelan. Job yang
+        // selesai tanpa exception dianggap berhasil oleh antrean, sehingga
+        // $tries dan $backoff tidak pernah berjalan dan notifikasi yang gagal
+        // hilang diam-diam.
+        if ($surel !== null) {
+            try {
+                $this->kirimSurel($pesanan, $surel);
+            } catch (Throwable $e) {
+                $galat[] = 'email: '.$e->getMessage();
+            }
+        }
+
+        if ($telepon !== null) {
+            try {
+                $this->kirimWhatsapp($pesanan, $telepon);
+            } catch (Throwable $e) {
+                $galat[] = 'WhatsApp: '.$e->getMessage();
+            }
+        }
+
+        if ($galat !== []) {
+            throw new \RuntimeException('Notifikasi pesanan gagal dikirim — '.implode(' | ', $galat));
+        }
     }
 
     private function kirimSurel(Order $pesanan, string $tujuan): void
@@ -83,19 +110,22 @@ class KirimNotifikasiPesanan implements ShouldQueue
              * Kelasnya dipilih dari kejadian: PesananPembeli menangani keempat
              * tahap, jadi satu perubahan tata letak berlaku untuk semuanya.
              */
-            Mail::to($tujuan)->send(new \App\Mail\PesananPembeli($pesanan, $this->kejadian));
+            Mail::to($tujuan)->send(new PesananPembeli($pesanan, $this->kejadian));
 
             Log::info('Notifikasi pesanan terkirim lewat surel', [
                 'pesanan' => $pesanan->order_number,
                 'kejadian' => $this->kejadian,
             ]);
         } catch (Throwable $e) {
-            // Dicatat, bukan dilempar: kegagalan surel tidak boleh menggagalkan
-            // pengiriman WhatsApp yang mungkin berhasil.
+            // Dicatat lalu diteruskan: handle() tetap mencoba kanal lain, dan
+            // baru melempar setelah keduanya selesai. Dengan begitu antrean
+            // mengulang job ini alih-alih menganggapnya berhasil.
             Log::warning('Notifikasi surel gagal', [
                 'pesanan' => $pesanan->order_number,
                 'sebab' => $e->getMessage(),
             ]);
+
+            throw $e;
         }
     }
 
@@ -109,7 +139,7 @@ class KirimNotifikasiPesanan implements ShouldQueue
      */
     private function kirimWhatsapp(Order $pesanan, string $tujuan): void
     {
-        $token = (string) \App\Support\KomponenPengaturan::mentah('fonnte_token');
+        $token = (string) KomponenPengaturan::mentah('fonnte_token');
 
         if (blank($token)) {
             return;
@@ -126,29 +156,19 @@ class KirimNotifikasiPesanan implements ShouldQueue
                 ]);
 
             if (! $respons->successful() || $respons->json('status') === false) {
-                Log::warning('Notifikasi WhatsApp ditolak penyedia', [
-                    'pesanan' => $pesanan->order_number,
-                    'status' => $respons->status(),
-                    'balasan' => mb_substr((string) $respons->body(), 0, 200),
-                ]);
+                throw new \RuntimeException(
+                    'WhatsApp ditolak penyedia (HTTP '.$respons->status().'): '
+                    .mb_substr((string) $respons->body(), 0, 200)
+                );
             }
         } catch (Throwable $e) {
             Log::warning('Notifikasi WhatsApp gagal', [
                 'pesanan' => $pesanan->order_number,
                 'sebab' => $e->getMessage(),
             ]);
-        }
-    }
 
-    private function judulSurel(string $namaToko): string
-    {
-        return match ($this->kejadian) {
-            self::KEJADIAN_DIBUAT => 'Pesanan diterima · '.$namaToko,
-            self::KEJADIAN_DIBAYAR => 'Pembayaran diterima · '.$namaToko,
-            self::KEJADIAN_DIKIRIM => 'Pesanan dikirim · '.$namaToko,
-            self::KEJADIAN_SELESAI => 'Pesanan selesai · '.$namaToko,
-            default => 'Kabar pesanan · '.$namaToko,
-        };
+            throw $e;
+        }
     }
 
     /**
@@ -165,23 +185,23 @@ class KirimNotifikasiPesanan implements ShouldQueue
         $nama = $this->namaPembeli($pesanan);
 
         $awal = match ($this->kejadian) {
-            self::KEJADIAN_DIBUAT => "Halo {$nama}, pesanan Anda sudah kami terima.",
-            self::KEJADIAN_DIBAYAR => "Halo {$nama}, pembayaran pesanan Anda sudah kami terima dan pesanan akan segera diproses.",
-            self::KEJADIAN_DIKIRIM => "Halo {$nama}, pesanan Anda sudah dikirim.",
-            default => "Halo {$nama}, ada kabar untuk pesanan Anda.",
+            self::KEJADIAN_DIBUAT => "Hello {$nama}, we have received your order.",
+            self::KEJADIAN_DIBAYAR => "Hello {$nama}, we have received your payment and will process the order shortly.",
+            self::KEJADIAN_DIKIRIM => "Hello {$nama}, your order has been shipped.",
+            default => "Hello {$nama}, there is an update on your order.",
         };
 
         $baris = [
             $awal,
             '',
-            'Nomor pesanan: '.$pesanan->order_number,
+            'Order number: '.$pesanan->order_number,
             'Status: '.$pesanan->status->label(),
             'Total: '.dolar($pesanan->grand_total),
         ];
 
         if ($untukSurel && $pesanan->items->isNotEmpty()) {
             $baris[] = '';
-            $baris[] = 'Rincian:';
+            $baris[] = 'Items:';
 
             foreach ($pesanan->items as $item) {
                 $baris[] = sprintf(
@@ -196,23 +216,23 @@ class KirimNotifikasiPesanan implements ShouldQueue
         // Instruksi pembayaran hanya untuk pesanan yang belum dibayar, dan
         // hanya bila rekeningnya memang sudah diisi. Menyebut rekening kosong
         // membuat pembeli bingung.
-        if ($this->kejadian === self::KEJADIAN_DIBUAT && $pesanan->payment_method === \App\Enums\MetodePembayaran::Manual) {
+        if ($this->kejadian === self::KEJADIAN_DIBUAT && $pesanan->payment_method === MetodePembayaran::Manual) {
             $manual = app(PembayaranManual::class);
 
             if ($manual->rekeningLengkap()) {
                 $r = $manual->rekeningTujuan();
 
                 $baris[] = '';
-                $baris[] = 'Transfer ke:';
+                $baris[] = 'Transfer to:';
                 $baris[] = $r['bank'].' '.$r['nomor'];
                 $baris[] = 'a.n. '.$r['atas_nama'];
-                $baris[] = 'Setelah transfer, unggah bukti lewat halaman pesanan Anda.';
+                $baris[] = 'After transferring, upload the receipt from your order page.';
             }
         }
 
         if ($this->kejadian === self::KEJADIAN_DIKIRIM) {
             $baris[] = '';
-            $baris[] = 'Lacak pesanan: '.route('front.order.track', ['kode' => $pesanan->order_number]);
+            $baris[] = 'Track order: '.route('front.order.track', ['kode' => $pesanan->order_number]);
         }
 
         $baris[] = '';
@@ -230,7 +250,7 @@ class KirimNotifikasiPesanan implements ShouldQueue
         $snapshot = (array) $pesanan->shipping_address_snapshot;
         $nama = $snapshot['recipient_name'] ?? $snapshot['name'] ?? null;
 
-        return filled($nama) ? (string) $nama : ($pesanan->user?->name ?? 'Pelanggan');
+        return filled($nama) ? (string) $nama : ($pesanan->user->name ?? 'Customer');
     }
 
     private function surelPembeli(Order $pesanan): ?string

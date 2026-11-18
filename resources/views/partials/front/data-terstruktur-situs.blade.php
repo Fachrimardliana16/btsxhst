@@ -13,11 +13,8 @@
 @php
     $grafik = \App\Support\DataTerstruktur::untuk([], $produk ?? null);
 
-    $json = $grafik === null
-        ? null
-        : json_encode($grafik, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-
-    $json = $json === null ? null : str_replace(['</', '<!--'], ['<\/', '<\!--'], $json);
+    $json = json_encode($grafik, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    $json = $json === false ? null : str_replace(['</', '<!--'], ['<\/', '<\!--'], $json);
 @endphp
 
 @if ($json !== null)

@@ -18,8 +18,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->buat('Bites Exhaust (Super Admin)', 'admin@bitesexhaust.test', '628123456789', PeranPengguna::SuperAdmin, true);
-        $this->buat('Staf Toko', 'staff@bitesexhaust.test', '628123456790', PeranPengguna::Admin, true);
+        $this->buat('Bites Exhaust (Super Admin)', 'admin@bitesexhaust.test', '628123456789', PeranPengguna::SuperAdmin);
+        $this->buat('Staf Toko', 'staff@bitesexhaust.test', '628123456790', PeranPengguna::Admin);
 
         $pelanggan = [
             ['Budi Santoso', 'budi@example.test', '628120000001', 'Rumah', 'Jl. Kaliurang KM 5 No. 12', 'Sleman', 'DI Yogyakarta', '55581'],
@@ -28,7 +28,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($pelanggan as $i => [$nama, $email, $telepon, $label, $alamat, $kota, $provinsi, $pos]) {
-            $user = $this->buat($nama, $email, $telepon, PeranPengguna::Customer, false);
+            $user = $this->buat($nama, $email, $telepon, PeranPengguna::Customer);
 
             if ($label === null) {
                 continue;
@@ -65,7 +65,6 @@ class UserSeeder extends Seeder
         string $email,
         string $telepon,
         PeranPengguna $peran,
-        bool $duaFaktor,
     ): User {
         $user = User::query()
             ->where('email_bidx', BlindIndex::buat($email, 'email_bidx'))
@@ -87,10 +86,10 @@ class UserSeeder extends Seeder
             $user->password = 'password';
         }
 
-        if ($duaFaktor && $user->two_factor_confirmed_at === null) {
-            $user->two_factor_confirmed_at = now();
-        }
-
+        // Dua faktor TIDAK dipalsukan di sini. Sebelumnya seeder mengisi
+        // `two_factor_confirmed_at` tanpa secret, sehingga panel melaporkan 2FA
+        // aktif padahal login hanya memakai kata sandi. Aktifkan lewat
+        // `php artisan iksan:dua-faktor`, yang benar-benar menyimpan secret.
         $user->save();
 
         return $user;

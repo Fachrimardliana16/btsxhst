@@ -72,6 +72,33 @@ enum StatusPesanan: string
         return in_array($this, [self::Completed, self::Cancelled], true);
     }
 
+    /**
+     * Status yang dihitung sebagai pendapatan.
+     *
+     * Satu definisi dipakai dashboard, laporan, dan performa KOL. Sebelumnya
+     * ketiganya memakai daftar berbeda, sehingga angka yang tampak di panel
+     * tidak sama dengan yang diunduh dari laporan.
+     */
+    public function terhitungPendapatan(): bool
+    {
+        return in_array($this, [self::Paid, self::Processing, self::Shipped, self::Completed], true);
+    }
+
+    /** @return array<int, self> */
+    public static function pendapatan(): array
+    {
+        return array_values(array_filter(
+            self::cases(),
+            fn (self $s): bool => $s->terhitungPendapatan(),
+        ));
+    }
+
+    /** @return array<int, string> */
+    public static function valuesPendapatan(): array
+    {
+        return array_map(fn (self $s): string => $s->value, self::pendapatan());
+    }
+
     /** @return array<int, string> */
     public static function values(): array
     {

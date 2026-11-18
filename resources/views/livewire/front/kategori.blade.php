@@ -1,50 +1,50 @@
 <div>
     <div class="container-page py-8 lg:py-12">
 
-        {{-- Remah: juga jalur bagi pembaca layar, bukan hiasan. --}}
+        {{-- Breadcrumb: also the path for screen readers, not decoration. --}}
         <nav class="part-no mb-6" aria-label="Breadcrumb">
-            <a href="{{ route('front.home') }}" wire:navigate class="hover:text-accent">Beranda</a>
+            <a href="{{ route('front.home') }}" wire:navigate class="hover:text-accent">{{ __('site.nav.home') }}</a>
             <span class="mx-2">/</span>
-            <a href="{{ route('front.products.index') }}" wire:navigate class="hover:text-accent">Produk</a>
+            <a href="{{ route('front.products.index') }}" wire:navigate class="hover:text-accent">{{ __('site.nav.products') }}</a>
             <span class="mx-2">/</span>
             <span aria-current="page">{{ $kategori->nama() }}</span>
         </nav>
 
-        {{-- Kepala kategori.
-             H1 di sini satu-satunya <h1> di halaman; sebelumnya judul produk
-             di kartu memakai h3 sehingga halaman kategori tidak punya judul
-             utama sama sekali dan mesin pencari harus menebak topiknya. --}}
+        {{-- Category header.
+             The H1 here is the only <h1> on the page; previously product titles
+             in the cards used h3, leaving the category page with no main heading
+             at all and forcing search engines to guess the topic. --}}
         <header class="max-w-3xl">
             <h1 class="text-2xl font-semibold leading-tight lg:text-4xl">{{ $kategori->nama() }}</h1>
 
             <p class="mt-3 text-sm leading-relaxed text-muted lg:text-base">{{ $deskripsi }}</p>
 
             <p class="part-no mt-3">
-                {{ $jumlah }} {{ __('site.product.variant') === 'Varian' ? 'produk' : 'produk' }}
+                {{ __('site.catalog.result_count', ['count' => $jumlah]) }}
             </p>
         </header>
 
         <div class="mt-8 flex flex-wrap items-center gap-3">
-            <label class="part-no" for="urut">Urutkan</label>
+            <label class="part-no" for="urut">{{ __('site.catalog.sort') }}</label>
 
             <select id="urut" class="field !w-auto !min-h-[44px]" wire:model.live="urut">
-                <option value="terbaru">Terbaru</option>
-                <option value="termurah">Termurah</option>
-                <option value="termahal">Termahal</option>
-                <option value="populer">Terpopuler</option>
+                <option value="terbaru">{{ __('site.catalog.sort_newest') }}</option>
+                <option value="termurah">{{ __('site.catalog.sort_price_asc') }}</option>
+                <option value="termahal">{{ __('site.catalog.sort_price_desc') }}</option>
+                <option value="populer">{{ __('site.catalog.sort_popular') }}</option>
             </select>
 
             <a href="{{ route('front.products.index') }}" wire:navigate
                class="ml-auto text-sm text-muted underline underline-offset-4 hover:text-accent">
-                Lihat semua produk
+                {{ __('site.catalog.view_all') }}
             </a>
         </div>
 
         @if ($produk->isEmpty())
             <div class="plate mt-8 p-8 text-center">
-                <p class="text-muted">Belum ada produk pada kategori ini.</p>
+                <p class="text-muted">{{ __('site.catalog.empty_category', ['kategori' => $kategori->nama()]) }}</p>
                 <a href="{{ route('front.products.index') }}" wire:navigate class="btn btn-outline mt-4 inline-flex">
-                    Lihat katalog
+                    {{ __('site.catalog.title') }}
                 </a>
             </div>
         @else

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\TipeKejadianKeamanan;
 use App\Support\Keamanan;
 use Closure;
 use Illuminate\Http\Request;
@@ -38,7 +39,7 @@ class BlokirIp
 
         if ($user !== null) {
             Keamanan::catat(
-                \App\Enums\TipeKejadianKeamanan::IpDiblokir,
+                TipeKejadianKeamanan::IpDiblokir,
                 $request,
                 $user->email,
                 $user->id,

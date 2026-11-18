@@ -1,7 +1,12 @@
 <?php
 
+use App\Models\LoginAttempt;
+use App\Models\MediaUploadLog;
+use App\Models\SecurityLog;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -31,7 +36,11 @@ Artisan::command('inspire', function () {
 Schedule::command('iksan:backup')
     ->dailyAt('02:00')
     ->withoutOverlapping()
-    ->onFailure(fn () => null);
+    ->onFailure(function (): void {
+        // Perintah sudah mencatat sebabnya di catatan aktivitas; baris ini
+        // memastikan kegagalan penjadwalan juga masuk log aplikasi.
+        Log::error('Cadangan harian gagal dijalankan.');
+    });
 
 /*
 | Pembersihan berkas karantina (checklist F3-12).
@@ -51,27 +60,30 @@ Schedule::command('iksan:bersihkan-karantina')
 | tabelnya tumbuh paling cepat — setiap percobaan masuk yang gagal menulis
 | satu baris — sementara nilainya untuk penyelidikan hanya beberapa pekan.
 */
-Schedule::command('cache:prune-stale-tags')->hourly()->withoutOverlapping();
+/* Catatan: `cache:prune-stale-tags` sengaja TIDAK dijadwalkan. Perintah itu
+ * hanya menyentuh cache bertag (database/redis); toko ini memakai penyimpan
+ * `file`, jadi menjadwalkannya hanya membuang satu proses tiap jam tanpa
+ * membersihkan apa pun. Entri cache file kedaluwarsa sendiri sesuai TTL-nya. */
 
 Artisan::command('iksan:pangkas-data-lama {--hari=90 : Umur catatan keamanan yang disimpan}', function () {
     $hari = (int) $this->option('hari');
     $batas = now()->subDays($hari);
 
     // Sesi kedaluwarsa
-    $sesi = \Illuminate\Support\Facades\DB::table('sessions')
+    $sesi = DB::table('sessions')
         ->where('last_activity', '<', now()->subHours(24)->getTimestamp())
         ->delete();
 
     // Catatan keamanan lama
-    $keamanan = \App\Models\SecurityLog::query()->where('created_at', '<', $batas)->delete();
+    $keamanan = SecurityLog::query()->where('created_at', '<', $batas)->delete();
 
     // Percobaan masuk yang sudah selesai dan tidak relevan lagi
-    $percobaan = \App\Models\LoginAttempt::query()
+    $percobaan = LoginAttempt::query()
         ->where('last_attempt_at', '<', $batas)
         ->delete();
 
     // Catatan unggahan yang sudah tidak diperlukan
-    $unggahan = \App\Models\MediaUploadLog::query()
+    $unggahan = MediaUploadLog::query()
         ->whereIn('status', ['rejected', 'failed', 'deduplicated'])
         ->where('created_at', '<', $batas)
         ->delete();

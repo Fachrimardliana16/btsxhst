@@ -42,7 +42,6 @@ class ProdukForm extends KomponenAdmin
        Tidak ada logika yang diubah saat pemecahan ini — method dipindahkan apa
        adanya. Test KatalogAdminTest dan SkenarioAdminTest menjaga perilakunya. */
     use Concerns\MengelolaInformasiDasar;
-
     use Concerns\MengelolaMedia;
     use Concerns\MengelolaVarian;
     use WithFileUploads;
@@ -200,7 +199,7 @@ class ProdukForm extends KomponenAdmin
             'nama_id' => '',
             'nama_en' => '',
             'selisih' => '0',
-        'selisih_usd' => '0',
+            'selisih_usd' => '0',
             'stok' => 0,
             'ditahan' => 0,
             'berat' => '',

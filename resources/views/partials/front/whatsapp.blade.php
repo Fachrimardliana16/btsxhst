@@ -7,10 +7,10 @@
     $template = $toko->teks('whatsapp_message_template');
 
     $pesan = match (true) {
-        $produk instanceof \App\Models\Product => "Halo {$toko->teks('site_name')}, saya tertarik dengan {$produk->judul()} ({$produk->sku}). Stoknya masih ada?",
-        request()->routeIs('front.cart') => "Halo, saya ingin menanyakan pesanan saya dengan ".app(\App\Services\Keranjang::class)->jumlahItem().' item.',
-        request()->routeIs('front.products.*') => 'Halo, saya sedang melihat katalog. Boleh minta rekomendasi?',
-        default => $template ?: "Halo {$toko->teks('site_name')}, saya ingin bertanya tentang knalpot.",
+        $produk instanceof \App\Models\Product => "Hello {$toko->teks('site_name')}, I am interested in {$produk->judul()} ({$produk->sku}). Is it still in stock?",
+        request()->routeIs('front.cart') => 'Hello, I would like to ask about my order with '.app(\App\Services\Keranjang::class)->jumlahItem().' item(s).',
+        request()->routeIs('front.products.*') => 'Hello, I am browsing the catalog. Could you recommend something?',
+        default => $template ?: "Hello {$toko->teks('site_name')}, I would like to ask about your exhausts.",
     };
 @endphp
 
@@ -47,6 +47,8 @@
              class="flex flex-col items-end">
 
             <div x-show="buka" x-transition.opacity
+                 x-ref="panelWhatsapp"
+                 @keydown.tab="jebakFokus($event, $refs.panelWhatsapp)"
                  class="plate-up plate-besar mb-3 w-[min(78vw,19rem)] p-4"
                  role="dialog" aria-label="{{ __('site.home.cta_primary') }}">
                 <div class="flex items-start justify-between gap-2">

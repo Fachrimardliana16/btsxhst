@@ -2,9 +2,10 @@
 
 namespace App\Livewire\Admin;
 
+use App\Enums\StatusPesanan;
 use App\Models\Coupon;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\WithPagination;
@@ -51,7 +52,7 @@ class KolPerforma extends KomponenAdmin
      * Pesanan yang dibatalkan atau kedaluwarsa ikut dihitung akan membuat KOL
      * tampak menghasilkan padahal uangnya tidak pernah masuk.
      */
-    public function daftarKol(): \Illuminate\Contracts\Pagination\Paginator
+    public function daftarKol(): Paginator
     {
         $kata = trim($this->cari);
 
@@ -63,14 +64,14 @@ class KolPerforma extends KomponenAdmin
                     ->orWhere('code', 'like', '%'.$kata.'%');
             }))
             ->withCount([
-                'orders as pesanan_sah' => fn ($q) => $q->whereIn('status', ['paid', 'completed']),
+                'orders as pesanan_sah' => fn ($q) => $q->whereIn('status', StatusPesanan::valuesPendapatan()),
                 'orders as pesanan_total',
             ])
             ->withSum([
-                'orders as nilai_penjualan' => fn ($q) => $q->whereIn('status', ['paid', 'completed']),
+                'orders as nilai_penjualan' => fn ($q) => $q->whereIn('status', StatusPesanan::valuesPendapatan()),
             ], 'grand_total')
             ->withSum([
-                'orders as potongan_diberikan' => fn ($q) => $q->whereIn('status', ['paid', 'completed']),
+                'orders as potongan_diberikan' => fn ($q) => $q->whereIn('status', StatusPesanan::valuesPendapatan()),
             ], 'discount_amount');
 
         match ($this->urut) {
@@ -88,10 +89,10 @@ class KolPerforma extends KomponenAdmin
         $baris = Coupon::query()
             ->whereNotNull('kol_slug')
             ->withCount([
-                'orders as pesanan_sah' => fn ($q) => $q->whereIn('status', ['paid', 'completed']),
+                'orders as pesanan_sah' => fn ($q) => $q->whereIn('status', StatusPesanan::valuesPendapatan()),
             ])
             ->withSum([
-                'orders as nilai_penjualan' => fn ($q) => $q->whereIn('status', ['paid', 'completed']),
+                'orders as nilai_penjualan' => fn ($q) => $q->whereIn('status', StatusPesanan::valuesPendapatan()),
             ], 'grand_total')
             ->get();
 

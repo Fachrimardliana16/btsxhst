@@ -35,7 +35,7 @@ class KeranjangHalaman extends Component
 
     public function mount(Keranjang $keranjang): void
     {
-        $this->kodeKupon = $keranjang->kupon()?->code ?? '';
+        $this->kodeKupon = $keranjang->kupon()->code ?? '';
         $this->catatan = $keranjang->catatan();
 
         // Tautan berbagi KOL: ?kupon=KODE.

@@ -84,8 +84,19 @@ Isi kredensial SMTP asli di `.env.production` sebelum mengandalkan notifikasi.
 ### 4. Kata sandi admin masih default
 
 `admin@bitesexhaust.test` dan `staff@bitesexhaust.test` memakai sandi bawaan
-seeder. **Ganti sebelum toko menerima pesanan sungguhan.** Keduanya sudah
-punya 2FA aktif.
+seeder. **Ganti sebelum toko menerima pesanan sungguhan.**
+
+Dua faktor **belum aktif** pada akun yang dibuat seeder. Seeder dulu mengisi
+`two_factor_confirmed_at` tanpa secret, sehingga panel melaporkan 2FA aktif
+padahal login hanya memakai kata sandi. Aktifkan dari server:
+
+```powershell
+& "$env:LOCALAPPDATA\php85\php.exe" artisan iksan:dua-faktor admin@bitesexhaust.com --env=production
+```
+
+Perintah ini menampilkan secret, meminta satu kode dari aplikasi authenticator
+sebagai bukti, lalu menyimpan secret dan sepuluh kode pemulihan. Panel juga
+menampilkan peringatan selama akun yang sedang masuk belum punya 2FA.
 
 ### 5. "Always Use HTTPS" belum aktif
 

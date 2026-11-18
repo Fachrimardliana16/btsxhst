@@ -1,21 +1,20 @@
-{{-- Halaman unggah bukti transfer.
+{{-- Transfer receipt upload page.
 
-     Satu halaman, tiga keadaan: belum bayar (tampilkan rekening + formulir),
-     menunggu verifikasi (tampilkan keterangan), dan lunas (tidak ada formulir).
-     Menampilkan formulir pada keadaan yang pasti ditolak hanya membuat pembeli
-     mengunggah berkas untuk kemudian ditolak. --}}
+     One page, three states: unpaid (show account + form), awaiting verification
+     (show status), and paid (no form). Showing the form in a state that will
+     certainly be rejected only makes the buyer upload a file that gets refused. --}}
 
 <div class="container-page py-8">
 
     <div class="mx-auto max-w-2xl space-y-5">
 
         <div>
-            <p class="part-no">Pembayaran · transfer manual</p>
+            <p class="part-no">{{ __('site.proof.eyebrow') }}</p>
             <h1 class="mt-1 font-display text-2xl font-semibold">
-                Bukti transfer
+                {{ __('site.proof.title') }}
             </h1>
             <p class="mt-1 text-sm text-muted">
-                Pesanan <span class="tech">{{ $pesanan->order_number }}</span> ·
+                {{ __('site.order.number') }} <span class="tech">{{ $pesanan->order_number }}</span> ·
                 {{ dolar($pesanan->grand_total) }}
             </p>
         </div>
@@ -28,30 +27,29 @@
             <div class="plate border-l-2 border-danger p-3 text-sm" role="alert">{{ $galat }}</div>
         @endif
 
-        {{-- Keadaan: sudah lunas --}}
+        {{-- State: already paid --}}
         @if ($sudahLunas)
             <div class="plate p-5 text-center">
                 <x-ikon name="check" :size="32" class="mx-auto text-ok" />
-                <p class="mt-3 font-display text-lg font-semibold">Pembayaran sudah diterima</p>
+                <p class="mt-3 font-display text-lg font-semibold">{{ __('site.proof.paid') }}</p>
                 <p class="mt-1 text-sm text-muted">
-                    Pesanan ini sudah lunas dan sedang kami proses. Tidak perlu mengunggah apa pun lagi.
+                    {{ __('site.proof.paid_body') }}
                 </p>
                 <a href="{{ route('front.order.track', ['kode' => $pesanan->order_number]) }}"
-                   class="btn btn-primary mt-4">Lacak pesanan</a>
+                   class="btn btn-primary mt-4">{{ __('site.proof.track') }}</a>
             </div>
 
-        {{-- Keadaan: menunggu verifikasi --}}
+        {{-- State: awaiting verification --}}
         @elseif ($menunggu)
             <div class="plate border-l-2 border-warn p-4">
-                <p class="font-medium">Bukti sudah kami terima</p>
+                <p class="font-medium">{{ __('site.proof.received') }}</p>
                 <p class="mt-1 text-sm text-muted">
-                    Bukti transfer Anda sedang diperiksa. Kami kabari lewat surel atau WhatsApp
-                    setelah pembayaran terverifikasi, biasanya dalam 1×24 jam kerja.
+                    {{ __('site.proof.received_body') }}
                 </p>
             </div>
 
             <div class="plate p-4">
-                <p class="part-no">Bukti yang sudah diunggah</p>
+                <p class="part-no">{{ __('site.proof.uploaded') }}</p>
                 <ul class="mt-2 space-y-1 text-sm">
                     @foreach ($pembayaran as $p)
                         <li class="flex items-center justify-between gap-2">
@@ -60,7 +58,7 @@
                             </span>
                             <span class="rounded-full px-2 py-0.5 text-xs
                                          {{ $p->provider_status === 'terverifikasi' ? 'bg-ok/12 text-ok' : 'bg-warn/12 text-warn' }}">
-                                {{ $p->provider_status === 'terverifikasi' ? 'terverifikasi' : 'menunggu' }}
+                                {{ $p->provider_status === 'terverifikasi' ? __('site.proof.status_verified') : __('site.proof.status_pending') }}
                             </span>
                         </li>
                     @endforeach
@@ -69,16 +67,15 @@
 
             <div class="plate p-4 text-sm">
                 <p class="text-muted">
-                    Unggah ulang hanya diperlukan bila kami meminta perbaikan. Batasnya tiga kali
-                    per jam per pesanan.
+                    {{ __('site.proof.reupload_hint') }}
                 </p>
             </div>
         @endif
 
-        {{-- Keadaan: belum bayar --}}
+        {{-- State: unpaid --}}
         @unless ($sudahLunas)
             <div class="plate p-5">
-                <p class="part-no">Transfer ke</p>
+                <p class="part-no">{{ __('site.proof.transfer_to') }}</p>
 
                 @if ($rekeningLengkap)
                     <div class="mt-3 space-y-3">
@@ -86,55 +83,53 @@
                             <div class="space-y-1">
                                 <p class="font-display text-lg font-semibold">{{ $r['bank'] }}</p>
                                 <p class="tech text-xl">{{ $r['nomor'] }}</p>
-                                <p class="text-sm text-muted">a.n. {{ $r['atas_nama'] }}</p>
+                                <p class="text-sm text-muted">{{ __('site.proof.account_name', ['nama' => $r['atas_nama']]) }}</p>
                             </div>
                         @endforeach
                     </div>
 
                     <div class="mt-4 rounded-lg bg-sunken p-3 text-sm">
                         <p class="flex items-center justify-between">
-                            <span class="text-muted">Nominal</span>
+                            <span class="text-muted">{{ __('site.proof.amount') }}</span>
                             <span class="tech font-medium">{{ dolar($pesanan->grand_total) }}</span>
                         </p>
                         <p class="mt-2 text-xs text-dim">
-                            Transfer tepat sebesar nominal di atas agar pembayaran mudah dicocokkan.
-                            Cantumkan nomor pesanan pada berita transfer bila dimungkinkan.
+                            {{ __('site.proof.amount_hint') }}
                         </p>
                     </div>
                 @else
                     <div class="mt-3 rounded-lg border border-danger/30 bg-danger/5 p-3 text-sm">
-                        <p class="font-medium text-danger">Rekening belum diatur</p>
+                        <p class="font-medium text-danger">{{ __('site.proof.no_account') }}</p>
                         <p class="mt-1 text-muted">
-                            Toko belum mengisi nomor rekening tujuan. Hubungi kami lewat halaman kontak
-                            untuk menyelesaikan pembayaran pesanan ini.
+                            {{ __('site.proof.no_account_body') }}
                         </p>
-                        <a href="{{ route('front.contact') }}" class="btn btn-outline btn-sm mt-3">Hubungi kami</a>
+                        <a href="{{ route('front.contact') }}" class="btn btn-outline btn-sm mt-3">{{ __('site.proof.contact') }}</a>
                     </div>
                 @endif
             </div>
 
             <form wire:submit="unggah" class="plate p-5">
-                <p class="font-display text-lg font-semibold">Unggah bukti transfer</p>
+                <p class="font-display text-lg font-semibold">{{ __('site.proof.upload_title') }}</p>
                 <p class="mt-1 text-sm text-muted">
-                    Tangkapan layar atau foto bukti transfer. JPG, PNG, WebP, atau PDF, maksimum 5 MB.
+                    {{ __('site.proof.upload_hint') }}
                 </p>
 
                 <div class="mt-4 space-y-3">
                     <div>
-                        <label for="bukti" class="part-no">Berkas bukti <span class="text-danger">*</span></label>
+                        <label for="bukti" class="part-no">{{ __('site.proof.file_label') }} <span class="text-danger">*</span></label>
                         <x-file-upload model="bukti" id="bukti"
                                        accept="image/jpeg,image/png,image/webp,application/pdf"
-                                       title="Pilih berkas bukti atau seret ke sini"
-                                       hint="JPG, PNG, WebP, atau PDF · maksimum 5 MB"
-                                       loading="Mengunggah berkas…"
+                                       title="{{ __('site.proof.pick_file') }}"
+                                       hint="{{ __('site.proof.file_hint') }}"
+                                       loading="{{ __('site.proof.uploading') }}"
                                        class="mt-1" />
                         @error('bukti') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label for="catatan" class="part-no">Catatan (opsional)</label>
+                        <label for="catatan" class="part-no">{{ __('site.proof.note_label') }}</label>
                         <textarea id="catatan" wire:model="catatan" class="field mt-1" rows="2"
-                                  placeholder="Misalnya: transfer dari rekening a.n. Budi"></textarea>
+                                  placeholder="{{ __('site.proof.note_placeholder') }}"></textarea>
                         @error('catatan') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -142,18 +137,18 @@
                 <button type="submit" class="btn btn-primary mt-4 w-full" wire:loading.attr="disabled">
                     <span wire:loading.remove wire:target="unggah">
                         <x-ikon name="upload" :size="16" class="inline" />
-                        Kirim bukti
+                        {{ __('site.proof.submit') }}
                     </span>
-                    <span wire:loading wire:target="unggah">Mengirim…</span>
+                    <span wire:loading wire:target="unggah">{{ __('site.proof.submitting') }}</span>
                 </button>
             </form>
 
             <p class="text-center text-xs text-dim">
-                Butuh bantuan?
-                <a href="{{ route('front.contact') }}" class="text-accent hover:underline">Hubungi kami</a>
-                atau lacak pesanan di
+                {{ __('site.proof.help') }}
+                <a href="{{ route('front.contact') }}" class="text-accent hover:underline">{{ __('site.proof.contact') }}</a>
+                ·
                 <a href="{{ route('front.order.track', ['kode' => $pesanan->order_number]) }}"
-                   class="text-accent hover:underline">halaman pelacakan</a>.
+                   class="text-accent hover:underline">{{ __('site.proof.help_track') }}</a>
             </p>
         @endunless
     </div>

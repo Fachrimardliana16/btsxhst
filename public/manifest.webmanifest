@@ -1,13 +1,13 @@
 {
     "name": "Bites Exhaust",
     "short_name": "Bites Exhaust",
-    "description": "Knalpot racing dan sparepart — katalog, pesanan, dan pelacakan.",
+    "description": "Racing exhausts and spare parts — catalog, orders, and tracking.",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
     "background_color": "#111114",
     "theme_color": "#111114",
-    "lang": "id",
+    "lang": "en",
     "dir": "ltr",
     "orientation": "portrait-primary",
     "icons": [
@@ -32,19 +32,19 @@
     ],
     "shortcuts": [
         {
-            "name": "Katalog",
+            "name": "Catalog",
             "url": "/produk",
-            "description": "Lihat seluruh produk"
+            "description": "Browse all products"
         },
         {
-            "name": "Keranjang",
+            "name": "Cart",
             "url": "/keranjang",
-            "description": "Lanjutkan pesanan"
+            "description": "Continue your order"
         },
         {
-            "name": "Lacak pesanan",
+            "name": "Track order",
             "url": "/lacak",
-            "description": "Cek status kiriman"
+            "description": "Check shipment status"
         }
     ]
 }

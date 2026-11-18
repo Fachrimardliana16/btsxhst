@@ -3,7 +3,6 @@
 namespace App\Livewire\Front;
 
 use App\Models\Order;
-use App\Support\BlindIndex;
 use App\Support\Pengaturan;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\RateLimiter;
@@ -41,8 +40,8 @@ class LacakPesanan extends Component
             'nomor' => 'required|string|max:40',
             'email' => 'required|email|max:120',
         ], [
-            'nomor.required' => 'Nomor pesanan wajib diisi.',
-            'email.required' => 'Email wajib diisi.',
+            'nomor.required' => 'Order number is required.',
+            'email.required' => 'Email is required.',
         ]);
 
         $order = Order::query()
@@ -79,6 +78,7 @@ class LacakPesanan extends Component
         $toko = Pengaturan::instance();
 
         return view('livewire.front.lacak-pesanan')
-            ->title(__('site.order.track').' · '.$toko->teks('site_name'));
+            ->title(__('site.order.track').' · '.$toko->teks('site_name'))
+            ->layoutData(['tanpaIndeks' => true]);
     }
 }

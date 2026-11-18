@@ -202,12 +202,10 @@ class PetaSitus
         $fakta[] = '- Pengiriman: seluruh Indonesia dan mancanegara';
         $fakta[] = '- Situs: '.url('/');
 
-        if ($fakta !== []) {
-            $baris[] = '## Fakta';
-            $baris[] = '';
-            $baris = array_merge($baris, $fakta);
-            $baris[] = '';
-        }
+        $baris[] = '## Fakta';
+        $baris[] = '';
+        $baris = array_merge($baris, $fakta);
+        $baris[] = '';
 
         // Kategori aktif: inilah "topik yang dikuasai" toko untuk mesin jawaban.
         $kategori = Category::query()->aktif()->terurut()->take(12)->get();

@@ -4,6 +4,7 @@ namespace App\Livewire\Front;
 
 use App\Enums\MetodePembayaran;
 use App\Enums\StatusPembayaran;
+use App\Enums\StatusPesanan;
 use App\Models\Order;
 use App\Services\Pembayaran\PaypalGateway;
 use App\Support\CatatanAktivitas;
@@ -59,7 +60,7 @@ class PaypalKembali extends Component
 
         if ($pesanan === null) {
             $this->keadaan = 'gagal';
-            $this->pesan = 'Pesanan tidak ditemukan.';
+            $this->pesan = 'Order not found.';
 
             return;
         }
@@ -69,14 +70,22 @@ class PaypalKembali extends Component
         // membingungkan pembeli yang sebenarnya sudah berhasil.
         if ($pesanan->payment_status === StatusPembayaran::Paid) {
             $this->keadaan = 'lunas';
-            $this->pesan = 'Pembayaran sudah tercatat. Terima kasih.';
+            $this->pesan = 'Your payment is already recorded. Thank you.';
+
+            return;
+        }
+
+        if ($pesanan->status === StatusPesanan::Cancelled) {
+            $this->keadaan = 'gagal';
+            $this->pesan = 'This order has been cancelled, so the payment cannot be processed. '
+                .'If funds were already taken, contact us with order number '.$pesanan->order_number.'.';
 
             return;
         }
 
         if ($this->token === '') {
             $this->keadaan = 'gagal';
-            $this->pesan = 'PayPal tidak mengirim kode pesanan. Pembayaran tidak dapat dilanjutkan.';
+            $this->pesan = 'PayPal did not return an order code. The payment cannot continue.';
 
             return;
         }
@@ -90,7 +99,7 @@ class PaypalKembali extends Component
             ]);
 
             $this->keadaan = 'lunas';
-            $this->pesan = 'Pembayaran berhasil. Pesanan Anda sedang kami proses.';
+            $this->pesan = 'Payment successful. We are processing your order.';
         } catch (Throwable $e) {
             /* Gagal menangkap TIDAK berarti pembayaran gagal.
              *
@@ -107,11 +116,11 @@ class PaypalKembali extends Component
 
             if ($pesanan->payment_status === StatusPembayaran::Paid) {
                 $this->keadaan = 'lunas';
-                $this->pesan = 'Pembayaran sudah tercatat. Terima kasih.';
+                $this->pesan = 'Your payment is already recorded. Thank you.';
             } else {
                 $this->keadaan = 'gagal';
-                $this->pesan = 'Pembayaran belum dapat kami pastikan. Bila dana sudah terpotong, '
-                    .'hubungi kami dengan nomor pesanan '.$pesanan->order_number.'.';
+                $this->pesan = 'We could not confirm your payment yet. If funds were already taken, '
+                    .'contact us with order number '.$pesanan->order_number.'.';
             }
         }
     }
@@ -133,6 +142,7 @@ class PaypalKembali extends Component
     {
         return view('livewire.front.paypal-kembali', [
             'pesanan' => $this->pesanan(),
-        ])->title(__('site.checkout.title').' · BITESExhaust');
+        ])->title(__('site.checkout.title').' · BITESExhaust')
+            ->layoutData(['tanpaIndeks' => true]);
     }
 }

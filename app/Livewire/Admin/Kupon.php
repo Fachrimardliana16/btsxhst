@@ -58,6 +58,9 @@ class Kupon extends KomponenAdmin
 
     public string $quota = '';
 
+    /** Berapa kali satu pelanggan boleh memakai kupon ini. Kosong = tanpa batas. */
+    public string $limit_per_customer = '';
+
     public string $starts_at = '';
 
     public string $ends_at = '';
@@ -110,8 +113,8 @@ class Kupon extends KomponenAdmin
         $this->value_usd = $kupon->type === TipeKupon::Persen
             ? (string) $kupon->value
             : (string) (HargaDolar::dariRupiah($kupon->value) ?? '');
-        $this->min_spend = $kupon->min_spend === null ? '' : (string) $kupon->min_spend;
-        $this->min_spend_usd = $kupon->min_spend === null || (float) $kupon->min_spend <= 0
+        $this->min_spend = (string) $kupon->min_spend;
+        $this->min_spend_usd = (float) $kupon->min_spend <= 0
             ? ''
             : (string) (HargaDolar::dariRupiah($kupon->min_spend) ?? '');
         $this->max_discount = $kupon->max_discount === null ? '' : (string) $kupon->max_discount;
@@ -119,6 +122,9 @@ class Kupon extends KomponenAdmin
             ? (string) (HargaDolar::dariRupiah($kupon->max_discount) ?? '')
             : '';
         $this->quota = $kupon->quota === null ? '' : (string) $kupon->quota;
+        $this->limit_per_customer = $kupon->limit_per_customer === null
+            ? ''
+            : (string) $kupon->limit_per_customer;
         $this->starts_at = $kupon->starts_at?->format('Y-m-d\TH:i') ?? '';
         $this->ends_at = $kupon->ends_at?->format('Y-m-d\TH:i') ?? '';
         $this->is_active = (bool) $kupon->is_active;
@@ -157,6 +163,7 @@ class Kupon extends KomponenAdmin
             'max_discount' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
             'max_discount_usd' => ['nullable', 'numeric', 'min:0', 'max:999999'],
             'quota' => ['nullable', 'integer', 'min:1', 'max:1000000'],
+            'limit_per_customer' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
             'is_active' => ['boolean'],
@@ -238,6 +245,9 @@ class Kupon extends KomponenAdmin
                 ? HargaDolar::keRupiah($maksUsd)
                 : ($bersih['max_discount'] === null || $bersih['max_discount'] === '' ? null : $bersih['max_discount']),
             'quota' => $bersih['quota'] === null || $bersih['quota'] === '' ? null : (int) $bersih['quota'],
+            'limit_per_customer' => $bersih['limit_per_customer'] === null || $bersih['limit_per_customer'] === ''
+                ? null
+                : (int) $bersih['limit_per_customer'],
             'starts_at' => $bersih['starts_at'] ?: null,
             'ends_at' => $bersih['ends_at'] ?: null,
             'is_active' => $bersih['is_active'],
@@ -262,7 +272,7 @@ class Kupon extends KomponenAdmin
             // Kuota tidak boleh diturunkan di bawah jumlah pemakaian. Kalau
             // diizinkan, kupon tampak tersedia padahal sudah melewati batasnya,
             // dan pemeriksaan di checkout akan menolaknya tanpa sebab jelas.
-            if (array_key_exists('quota', $data) && $data['quota'] !== null && $data['quota'] < $kupon->used_count) {
+            if ($data['quota'] !== null && $data['quota'] < $kupon->used_count) {
                 $this->addError(
                     'quota',
                     'The usage limit cannot be lower than '.$kupon->used_count.' because it has already been used that many times.',
@@ -352,6 +362,7 @@ class Kupon extends KomponenAdmin
         $this->max_discount = '';
         $this->max_discount_usd = '';
         $this->quota = '';
+        $this->limit_per_customer = '';
         $this->starts_at = '';
         $this->ends_at = '';
         $this->is_active = true;

@@ -2,8 +2,9 @@
 
 namespace App\Livewire\Front;
 
-use App\Models\Order;
+use App\Models\Category;
 use App\Models\Product;
+use App\Services\Keranjang;
 use App\Support\Pengaturan;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\On;
@@ -38,7 +39,7 @@ class Pencarian extends Component
                 ->take(5)
                 ->get();
 
-            $kategori = \App\Models\Category::query()
+            $kategori = Category::query()
                 ->aktif()
                 ->where('name_id', 'like', '%'.trim($this->kata).'%')
                 ->take(4)
@@ -48,7 +49,7 @@ class Pencarian extends Component
         return view('livewire.front.pencarian', [
             'produk' => $produk,
             'kategori' => $kategori,
-            'jumlahKeranjang' => app(\App\Services\Keranjang::class)->jumlahItem(),
+            'jumlahKeranjang' => app(Keranjang::class)->jumlahItem(),
         ]);
     }
 }

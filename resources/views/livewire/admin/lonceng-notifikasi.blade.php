@@ -43,7 +43,9 @@
              Fixed + right-0 + left-0 membuat panel menempel pada tepi layar
              dan tetap terpusat di ponsel, sedangkan di desktop `max-w-md`
              menahannya supaya tidak selebar layar. --}}
-        <div class="fixed inset-x-0 top-full z-50 mx-auto mt-2 w-[min(92vw,22rem)] px-4 sm:px-0"
+        <div x-ref="panelNotifikasi"
+             @keydown.tab="jebakFokus($event, $refs.panelNotifikasi)"
+             class="fixed inset-x-0 top-full z-50 mx-auto mt-2 w-[min(92vw,22rem)] px-4 sm:px-0"
              role="dialog" aria-label="{{ __('site.admin.lonceng_notif.notifikasi') }}">
             <div class="plate-up">
 

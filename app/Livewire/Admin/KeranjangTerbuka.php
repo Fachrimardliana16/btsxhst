@@ -105,11 +105,10 @@ class KeranjangTerbuka extends KomponenAdmin
             ->paginate(15);
 
         return view('livewire.admin.keranjang-terbuka', [
-            __('site.admin.keranjang_terbuka.judul'),
             'bagian' => 'Sales',
             'keranjang' => $keranjang,
             'ringkas' => $this->ringkasan(),
-        ])->layout('layouts.admin', [__('site.admin.keranjang_terbuka.judul'), 'bagian' => 'Sales']);
+        ])->layout('layouts.admin', ['judul' => __('site.admin.keranjang_terbuka.judul'), 'bagian' => 'Sales']);
     }
 
     /**
@@ -168,7 +167,7 @@ class KeranjangTerbuka extends KomponenAdmin
     /** Nama ringkas pemilik keranjang, atau penanda tamu. */
     public function pemilik(Cart $cart): string
     {
-        return $cart->user?->name ?? 'Tamu';
+        return $cart->user->name ?? 'Guest';
     }
 
     /** Selisih waktu dalam bahasa yang mudah dibaca. */

@@ -8,15 +8,17 @@ use App\Jobs\KirimNotifikasiPesanan;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Setting;
+use App\Models\User;
 use App\Services\StatusPesananService;
 use App\Support\CatatanAktivitas;
 use App\Support\HargaDolar;
-use App\Support\KomponenPengaturan;
 use App\Support\Pengaturan;
+use App\Support\SakelarNotifikasi;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -116,7 +118,7 @@ class PembayaranManual
     {
         $jalur = $berkas->getRealPath() ?: $berkas->getPathname();
 
-        if (! is_string($jalur) || ! is_file($jalur)) {
+        if ($jalur === '' || ! is_file($jalur)) {
             throw ValidationException::withMessages(['bukti' => 'Berkas gagal diterima server.']);
         }
 
@@ -208,6 +210,13 @@ class PembayaranManual
             return $pesanan;
         }
 
+        // Pesanan batal tidak dapat dipulihkan: completed dan cancelled adalah
+        // status akhir. Uang yang masuk setelah pembatalan harus
+        // diselesaikan di luar pesanan ini (refund atau pesanan baru).
+        if ($pesanan->status === StatusPesanan::Cancelled) {
+            throw new RuntimeException('This order was cancelled and cannot be marked as paid. Refund the payment or create a new order.');
+        }
+
         DB::transaction(function () use ($pembayaran, $pesanan, $olehId): void {
             $pembayaran->update([
                 'provider_status' => 'terverifikasi',
@@ -221,7 +230,7 @@ class PembayaranManual
                 app(StatusPesananService::class)->pindah(
                     $pesanan,
                     StatusPesanan::Paid,
-                    $olehId === null ? null : \App\Models\User::query()->find($olehId),
+                    $olehId === null ? null : User::query()->find($olehId),
                     'Manual payment verified.',
                 );
             }
@@ -234,7 +243,7 @@ class PembayaranManual
         $pesanan->refresh();
 
         // Dikirim setelah transaksi selesai, bukan di dalamnya.
-        if (\App\Support\SakelarNotifikasi::kirimAktif('kirim_saat_dibayar')) {
+        if (SakelarNotifikasi::kirimAktif('kirim_saat_dibayar')) {
             KirimNotifikasiPesanan::dispatch(
                 $pesanan->id,
                 KirimNotifikasiPesanan::KEJADIAN_DIBAYAR,
@@ -254,24 +263,39 @@ class PembayaranManual
         }
 
         DB::transaction(function () use ($pembayaran, $pesanan, $alasan, $olehId): void {
+            // `verified_at` TIDAK diisi: kolom itu menandai pembayaran sah.
+            // Mengisinya pada penolakan membuat bukti yang ditolak terbaca
+            // sebagai bukti terverifikasi di panel dan di model.
             $pembayaran->update([
                 'provider_status' => 'ditolak',
-                'verified_by' => $olehId ?? auth()->id(),
-                'verified_at' => now(),
                 'payload_json' => array_merge((array) $pembayaran->payload_json, [
                     'alasan_penolakan' => $alasan,
+                    'ditolak_oleh' => $olehId ?? auth()->id(),
+                    'ditolak_pada' => now()->toIso8601String(),
                 ]),
             ]);
 
-            // Hanya dikembalikan ke belum bayar bila tidak ada bukti lain yang
-            // masih menunggu. Kalau ada, pesanan tetap menunggu verifikasi.
+            // Turunkan status pembayaran hanya bila benar-benar tidak ada lagi
+            // dasar untuk menyebut pesanan ini terbayar: tidak ada bukti lain
+            // yang menunggu, tidak ada pembayaran terverifikasi, dan pesanan
+            // sendiri belum berstatus lunas.
             $masihMenunggu = Payment::query()
                 ->where('order_id', $pesanan->id)
                 ->where('id', '!=', $pembayaran->id)
                 ->where('provider_status', 'menunggu-verifikasi')
                 ->exists();
 
-            if (! $masihMenunggu) {
+            $adaTerbayar = Payment::query()
+                ->where('order_id', $pesanan->id)
+                ->where('id', '!=', $pembayaran->id)
+                ->where('provider_status', 'terverifikasi')
+                ->whereNotNull('verified_at')
+                ->exists();
+
+            if (! $masihMenunggu
+                && ! $adaTerbayar
+                && $pesanan->payment_status !== StatusPembayaran::Paid
+                && $pesanan->status === StatusPesanan::Pending) {
                 $pesanan->update(['payment_status' => StatusPembayaran::Unpaid]);
             }
 
@@ -361,7 +385,7 @@ class PembayaranManual
             return null;
         }
 
-        return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+        return URL::temporarySignedRoute(
             'admin.payments.proof',
             now()->addMinutes(15),
             ['payment' => $pembayaran->ulid],

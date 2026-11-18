@@ -40,7 +40,7 @@ class TambahKeranjangCepat extends Component
     {
         $varian = ProductVariant::query()->with('product')->find($this->varianId);
 
-        if ($varian === null || ! $varian->is_active) {
+        if ($varian === null || ! $varian->is_active || ! ($varian->product->is_published ?? false)) {
             $this->nada = 'danger';
             $this->pesanKunci = 'site.product.out_of_stock';
 

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Payment;
-use App\Services\Pembayaran\PembayaranManual;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -30,7 +30,7 @@ class BuktiPembayaran
 
         abort_if(blank($payment->proof_path), 404, 'No proof uploaded for this payment.');
 
-        $disk = \Illuminate\Support\Facades\Storage::disk('local');
+        $disk = Storage::disk('local');
 
         abort_unless($disk->exists($payment->proof_path), 404, 'The proof file is missing from storage.');
 

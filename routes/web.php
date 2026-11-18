@@ -2,6 +2,7 @@
 
 use App\Enums\MetodePembayaran;
 use App\Enums\StatusPembayaran;
+use App\Enums\StatusPesanan;
 use App\Http\Controllers\WebhookPaypal;
 use App\Http\Middleware\BlokirIp;
 use App\Http\Middleware\SetLocale;
@@ -21,6 +22,7 @@ use App\Livewire\Front\UnggahBukti;
 use App\Models\Order;
 use App\Services\Pembayaran\PaypalGateway;
 use App\Support\PetaSitus;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -95,6 +97,15 @@ Route::middleware([SetLocale::class, BlokirIp::class])->group(function (): void 
             return redirect()->route('front.order.success', $pesanan);
         }
 
+        // Pesanan batal sudah melepas stoknya. Membuat pesanan PayPal baru di
+        // sini hanya akan menghasilkan pembayaran untuk barang yang tidak akan
+        // dikirim.
+        if ($pesanan->status !== StatusPesanan::Pending) {
+            return redirect()
+                ->route('front.order.success', $pesanan)
+                ->with('galat', 'This order is no longer awaiting payment.');
+        }
+
         try {
             $hasil = app(PaypalGateway::class)->buatPesanan($pesanan);
 
@@ -145,7 +156,7 @@ Route::middleware([SetLocale::class, BlokirIp::class])->group(function (): void 
      * Dipertahankan sebagai rute yang mengarah ke beranda (bukan 404) supaya
      * tautan lama atau bookmark /lang/id tidak berakhir di halaman galat.
      */
-    Route::get('/lang/{locale}', function (): \Illuminate\Http\RedirectResponse {
+    Route::get('/lang/{locale}', function (): RedirectResponse {
         return redirect()->route('front.home');
     })->name('front.lang');
 

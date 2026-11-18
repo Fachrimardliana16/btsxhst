@@ -3,6 +3,7 @@
 namespace App\Livewire\Front;
 
 use App\Models\Category;
+use App\Models\Courier;
 use App\Models\Faq;
 use App\Models\HeroSlide;
 use App\Models\Order;
@@ -198,7 +199,7 @@ class Beranda extends Component
         $daftar['Apakah bisa pesan tanpa membuat akun?'] =
             'Bisa. Keranjang di situs ini berbasis sesi, jadi pembeli dapat memesan langsung tanpa mendaftar akun.';
 
-        $daftarKurir = \App\Models\Courier::aktifNama();
+        $daftarKurir = Courier::aktifNama();
 
         if ($daftarKurir !== []) {
             $daftar['Kurir apa yang tersedia?'] =

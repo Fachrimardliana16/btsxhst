@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductMedia;
 use App\Models\ProductVariant;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -36,10 +37,10 @@ class DataTerstruktur
     /**
      * Grafik JSON-LD untuk satu halaman.
      *
-     * @param  array{judul?: string, deskripsi?: string, kanonikal?: string, tipe?: string}  $meta
-     * @return array<string, mixed>|null
+     * @param  array{judul?: string, deskripsi?: string, kanonikal?: string, tipe?: string, faq?: array<array-key, mixed>}  $meta
+     * @return array<string, mixed>
      */
-    public static function untuk(array $meta = [], ?Product $produk = null): ?array
+    public static function untuk(array $meta = [], ?Product $produk = null): array
     {
         $simpul = [];
 
@@ -55,12 +56,8 @@ class DataTerstruktur
             $simpul[] = self::remah($produk);
         }
 
-        if (isset($meta['faq']) && is_array($meta['faq']) && $meta['faq'] !== []) {
+        if (isset($meta['faq']) && $meta['faq'] !== []) {
             $simpul[] = self::faq($meta['faq']);
-        }
-
-        if ($simpul === []) {
-            return null;
         }
 
         return [
@@ -149,7 +146,7 @@ class DataTerstruktur
 
                 $data['logo'] = str_starts_with($logo, 'http')
                     ? $logo
-                    : url(\App\Models\ProductMedia::urlMedia($logo) ?: '/brand/logo-gelap.png');
+                    : url(ProductMedia::urlMedia($logo) ?: '/brand/logo-gelap.png');
                 $data['image'] = $data['logo'];
 
                 $telepon = $p->teks('phone_number', '');
@@ -247,7 +244,7 @@ class DataTerstruktur
                     'struktur.topik',
                     ['bahasa' => app()->getLocale()],
                     600,
-                    fn () => Category::query()->aktif()->terurut()->pluck('name_id')->take(8)->all(),
+                    fn () => Category::query()->aktif()->terurut()->limit(8)->pluck('name_id')->all(),
                 );
 
                 if ($topik !== []) {

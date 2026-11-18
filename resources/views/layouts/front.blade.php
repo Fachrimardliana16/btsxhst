@@ -51,14 +51,14 @@
 
     <meta name="robots" content="{{ isset($tanpaIndeks) ? 'noindex, nofollow' : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1' }}">
 
-    <?php /* Bahasa alternatif: halaman yang sama tersedia dalam dua bahasa
-             lewat cookie, bukan lewat URL terpisah. Untuk mesin pencari, satu
-             URL dengan dua bahasa dinyatakan sebagai dua hreflang pada URL
-             yang sama — itu cara yang sah menyatakan "isi ini juga tersedia
-             dalam bahasa lain" tanpa membuat isi ganda. */ ?>
-    <link rel="alternate" hreflang="id" href="{{ url()->current() }}">
-    <link rel="alternate" hreflang="en" href="{{ url()->current() }}">
-    <link rel="alternate" hreflang="x-default" href="{{ url()->current() }}">
+    {{-- Bahasa alternatif TIDAK dinyatakan lewat hreflang.
+     *
+     * Situs ini memilih bahasa dengan cookie pada URL yang sama. Dulu ketiga
+     * tag hreflang (id, en, x-default) menunjuk `url()->current()` yang
+     * identik — pasangan seperti itu diabaikan mesin pencari, dan yang
+     * terindeks hanya satu versi bahasa. Menyatakan dua bahasa pada satu URL
+     * bukan pilihan yang sah; kalau nanti bahasa perlu diindeks terpisah,
+     * buat URL berprefiks bahasa lebih dulu. --}}
 
     @isset($metaOg)
         <meta property="og:type" content="{{ $metaOg['tipe'] ?? 'website' }}">
@@ -185,9 +185,20 @@
         $pixelId = trim((string) $toko->teks('meta_pixel_id', ''));
         $gaSah = preg_match('/^[A-Za-z0-9\-]+$/', $gaId) === 1;
         $pixelSah = preg_match('/^[0-9]+$/', $pixelId) === 1;
+
+        // Analitik hanya dipasang setelah pembeli menerimanya lewat banner
+        // cookie. Sebelum ini skrip berjalan pada kunjungan pertama, sebelum
+        // ada izin apa pun.
+        //
+        // Halaman ber-ULID pesanan tetap dikecualikan walau sudah menerima:
+        // URL-nya setara token akses pesanan, dan skrip analitik mengirim URL
+        // halaman ke pihak ketiga.
+        $halamanSensitif = request()->is('pesanan/*', 'lacak');
+        $analitikDisetujui = request()->cookie('iksan_analitik') === '1'
+            && ! $halamanSensitif;
     @endphp
 
-    @if ($gaSah)
+    @if ($gaSah && $analitikDisetujui)
         <script nonce="{{ csp_nonce() }}" async src="https://www.googletagmanager.com/gtag/js?id={{ $gaId }}"></script>
         <script nonce="{{ csp_nonce() }}">
             window.dataLayer = window.dataLayer || [];
@@ -197,7 +208,7 @@
         </script>
     @endif
 
-    @if ($pixelSah)
+    @if ($pixelSah && $analitikDisetujui)
         <script nonce="{{ csp_nonce() }}">
             !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
             n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
@@ -245,7 +256,7 @@
 
     <a href="#konten-utama"
        class="visually-hidden focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-surface focus:px-4 focus:py-2 focus:text-ink">
-        {{ __('site.common.search') }}
+        {{ __('site.common.skip_to_content') }}
     </a>
 
     @include('partials.front.navbar')

@@ -30,7 +30,8 @@ class StatusPesananService
      * - Dibayar: tidak menyentuh stok, hanya menandai pembayaran.
      * - Selesai: stok fisik dikurangi dan reserved dilepas, karena barang
      *   benar-benar keluar dari gudang.
-     * - Dibatalkan: seluruh reserved dilepas, stok kembali dapat dijual.
+     * - Dibatalkan: tahanan dilepas. Bila barang sudah dikirim, stok fisik
+     *   ikut berkurang karena barangnya sudah keluar dari gudang.
      */
     public function pindah(
         Order $order,
@@ -40,13 +41,26 @@ class StatusPesananService
     ): Order {
         if (! $order->status->bisaKe($tujuan)) {
             throw new RuntimeException(sprintf(
-                'Status tidak dapat berpindah dari %s ke %s.',
+                'Status cannot move from %s to %s.',
                 $order->status->value,
                 $tujuan->value,
             ));
         }
 
         $hasil = DB::transaction(function () use ($order, $tujuan, $oleh, $catatan): Order {
+            // Baca ulang di dalam transaksi. Pemeriksaan di atas memakai objek
+            // yang mungkin sudah basi — pembayaran atau pembatalan lain dapat
+            // tersimpan di antaranya.
+            $order->refresh();
+
+            if (! $order->status->bisaKe($tujuan)) {
+                throw new RuntimeException(sprintf(
+                    'Status cannot move from %s to %s.',
+                    $order->status->value,
+                    $tujuan->value,
+                ));
+            }
+
             $asal = $order->status;
 
             // Varian dimuat bersama produknya.
@@ -59,9 +73,20 @@ class StatusPesananService
 
             match ($tujuan) {
                 StatusPesanan::Completed => $this->selesaikanStok($order),
-                StatusPesanan::Cancelled => $this->lepaskanStok($order),
+                StatusPesanan::Cancelled => $this->lepaskanStok($order, $asal),
                 default => null,
             };
+
+            // Kuota kupon dipakai saat pesanan dibuat. Pesanan yang batal
+            // tidak pernah menghasilkan penjualan, jadi kuotanya harus kembali
+            // — kalau tidak, beberapa pembatalan dapat menghabiskan kuota
+            // kupon tanpa satu pun pembelian.
+            if ($tujuan === StatusPesanan::Cancelled && $order->coupon_id !== null) {
+                DB::table('coupons')
+                    ->where('id', $order->coupon_id)
+                    ->where('used_count', '>', 0)
+                    ->update(['used_count' => DB::raw('used_count - 1')]);
+            }
 
             $order->status = $tujuan;
 
@@ -151,11 +176,24 @@ class StatusPesananService
             $varian->reserved_quantity = max(0, $varian->reserved_quantity);
             $varian->stock_quantity = max(0, $varian->stock_quantity);
             $varian->save();
+
+            // Angka "terjual" dipakai sortir terlaris di katalog dan panel.
+            // Tanpa ini kolomnya tetap 0 selamanya dan sortir tidak bermakna.
+            DB::table('products')
+                ->where('id', $item->product_id)
+                ->update(['sold_count' => DB::raw('sold_count + '.(int) $item->quantity)]);
         }
     }
 
-    /** Pesanan batal: tahanan dilepas, stok fisik tidak pernah tersentuh. */
-    private function lepaskanStok(Order $order): void
+    /**
+     * Pesanan batal: tahanan dilepas.
+     *
+     * Stok fisik hanya tersentuh bila barang sudah dikirim. Pembatalan dari
+     * status Dikirim berarti barang sudah keluar dari gudang: stoknya harus
+     * ikut berkurang, bukan dikembalikan utuh. Sebelum ini stok kembali penuh
+     * dan barang yang sama dapat terjual lagi.
+     */
+    private function lepaskanStok(Order $order, StatusPesanan $asal): void
     {
         foreach ($order->items as $item) {
             $varian = $item->variant;
@@ -165,8 +203,14 @@ class StatusPesananService
             }
 
             $varian->decrement('reserved_quantity', $item->quantity);
+
+            if ($asal === StatusPesanan::Shipped) {
+                $varian->increment('stock_quantity', -$item->quantity);
+            }
+
             $varian->refresh();
             $varian->reserved_quantity = max(0, $varian->reserved_quantity);
+            $varian->stock_quantity = max(0, $varian->stock_quantity);
             $varian->save();
         }
     }

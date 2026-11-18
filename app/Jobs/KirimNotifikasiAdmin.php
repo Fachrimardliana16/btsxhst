@@ -87,12 +87,15 @@ class KirimNotifikasiAdmin implements ShouldQueue
                 'tujuan' => count($tujuan),
             ]);
         } catch (Throwable $e) {
-            // Dicatat, tidak dilempar: pesanan sudah tersimpan, dan gagal
-            // mengirim email tidak boleh membuat pesanan tampak gagal dibuat.
+            // Dicatat LALU diteruskan. Menelannya membuat antrean menganggap
+            // job berhasil dan melewati seluruh percobaan ulang; pesanan tetap
+            // tersimpan, dan kegagalan email tidak pernah mengubah statusnya.
             Log::warning('Notifikasi admin gagal terkirim', [
                 'pesanan' => $pesanan->order_number,
                 'sebab' => $e->getMessage(),
             ]);
+
+            throw $e;
         }
     }
 

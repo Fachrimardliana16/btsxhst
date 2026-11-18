@@ -2,7 +2,7 @@
 
 namespace App\Services\Gambar;
 
-use App\Support\GambarContoh;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 /**
@@ -56,11 +56,11 @@ class PengecilGambar
                 $isi = $this->potongTengah($kanvas, $w, $h, $kualitas);
 
                 $relatif = trim($folder, '/').'/'.$namaDasar.'-'.$nama.'.webp';
-                \Illuminate\Support\Facades\Storage::disk('public')->put($relatif, $isi);
+                Storage::disk('public')->put($relatif, $isi);
                 $paths[$nama] = $relatif;
             }
 
-            $isiUtama = \Illuminate\Support\Facades\Storage::disk('public')->get($paths['full']);
+            $isiUtama = Storage::disk('public')->get($paths['full']);
 
             return [
                 'paths' => $paths,

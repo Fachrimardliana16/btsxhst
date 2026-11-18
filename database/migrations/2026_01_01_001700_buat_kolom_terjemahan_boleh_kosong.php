@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -56,7 +57,7 @@ return new class extends Migration
             ['products', 'description_en'],
             ['product_variants', 'variant_name_en'],
         ] as [$tabel, $kolom]) {
-            \Illuminate\Support\Facades\DB::table($tabel)
+            DB::table($tabel)
                 ->whereNull($kolom)
                 ->update([$kolom => '']);
         }

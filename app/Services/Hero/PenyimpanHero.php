@@ -2,10 +2,10 @@
 
 namespace App\Services\Hero;
 
+use App\Models\HeroSlide;
 use App\Services\Gambar\PengecilGambar;
 use App\Services\Video\PembacaDurasiVideo;
 use App\Support\CatatanAktivitas;
-use App\Models\HeroSlide;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -28,7 +28,7 @@ class PenyimpanHero
     /**
      * @return array{path: string, mobile: string|null, poster: string|null}
      */
-    public function simpanGambar(HeroSlide $slide, UploadedFile $berkas, UploadedFile|null $ponsel = null): array
+    public function simpanGambar(HeroSlide $slide, UploadedFile $berkas, ?UploadedFile $ponsel = null): array
     {
         $konfig = config('iksan.hero');
 

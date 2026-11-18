@@ -166,7 +166,7 @@ class ProsesGambarProduk implements ShouldQueue
 
             throw $e;
         } finally {
-            if (is_string($memoriAwal) && $memoriAwal !== '') {
+            if ($memoriAwal !== '') {
                 @ini_set('memory_limit', $memoriAwal);
             }
         }
@@ -210,7 +210,7 @@ class ProsesGambarProduk implements ShouldQueue
         string $status,
         ?string $alasan,
         ?float $mulai,
-        ?string $hash,
+        ?string $hash = null,
         ?ProductMedia $media = null,
     ): void {
         try {

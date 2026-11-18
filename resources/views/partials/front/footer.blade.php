@@ -69,9 +69,9 @@
             {{-- Di desktop: blok terbuka seperti kolom biasa. Di mobile:
                  <details> yang menumpuk dan baru terbuka saat disentuh, agar
                  footer tidak mendorong halaman menjadi dua layar panjang.
-                 Atribut `open` dipasang pada lebar besar lewat CSS, bukan
-                 JavaScript, supaya tetap benar walau skrip gagal dimuat. --}}
-            <details class="footer-akordeon hidden lg:block" open>
+                 Di desktop isinya dipaksa tampil oleh CSS, bukan atribut
+                 `open`, supaya di ponsel semuanya sudah tertutup sejak awal. --}}
+            <details class="footer-akordeon hidden lg:block">
                 <summary class="part-no cursor-pointer list-none lg:cursor-default">{{ __('site.footer.navigation') }}</summary>
                 <ul class="mt-3 space-y-2 text-sm">
                     <li><a href="{{ route('front.home') }}" class="footer-tautan hover:text-white">{{ __('site.nav.home') }}</a></li>
@@ -82,7 +82,7 @@
                 </ul>
             </details>
 
-            <details class="footer-akordeon" open>
+            <details class="footer-akordeon">
                 <summary class="part-no cursor-pointer list-none lg:cursor-default">{{ __('site.footer.categories') }}</summary>
                 <ul class="mt-3 space-y-2 text-sm lg:mt-3">
                     @foreach ($kategoriFooter as $kat)
@@ -96,7 +96,7 @@
 
             {{-- Kontak: di mobile juga bisa ditutup, karena isinya panjang
                  (WhatsApp, surel, jam, ikon sosial). --}}
-            <details class="footer-akordeon" open>
+            <details class="footer-akordeon">
                 <summary class="part-no cursor-pointer list-none lg:cursor-default">{{ __('site.footer.contact') }}</summary>
                 {{-- `space-y-0` pada versi lama, sementara dua kolom lain memakai
                      `space-y-2`. Di ponsel ketiga kolom bertumpuk vertikal, jadi

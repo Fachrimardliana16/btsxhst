@@ -34,7 +34,17 @@
 
                  Tanpa blok ini, pembeli buntu: pesanan sudah ada, stok sudah
                  ditahan, dan tidak ada satu pun tombol untuk membayar. --}}
-            @if ($order->payment_method?->value === 'paypal' && $order->payment_status->value === 'unpaid')
+            @if ($order->status->value === 'cancelled')
+                <div class="plate mt-6 p-5 lg:p-6">
+                    <p class="part-no">{{ __('site.order.status') }}</p>
+                    <p class="mt-3 text-sm text-muted">
+                        This order was cancelled because payment was not received in time.
+                        It can no longer be paid online. Please place a new order.
+                    </p>
+                </div>
+            @endif
+
+            @if ($order->status->value === 'pending' && $order->payment_method?->value === 'paypal' && $order->payment_status->value === 'unpaid')
                 <div class="plate mt-6 p-5 lg:p-6">
                     <p class="part-no">02 / PEMBAYARAN PAYPAL</p>
 
@@ -57,7 +67,7 @@
                 </div>
             @endif
 
-            @if ($order->payment_method?->value === 'manual' && $order->payment_status->value === 'unpaid' && count($rekening) > 0)
+            @if ($order->status->value === 'pending' && $order->payment_method?->value === 'manual' && $order->payment_status->value === 'unpaid' && count($rekening) > 0)
                 <div class="plate mt-6 p-5 lg:p-6">
                     <p class="part-no">02 / {{ __('site.order.manual_instructions') }}</p>
 

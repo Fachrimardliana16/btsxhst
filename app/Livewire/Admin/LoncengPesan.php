@@ -3,7 +3,9 @@
 namespace App\Livewire\Admin;
 
 use App\Models\ContactMessage;
+use App\Support\CatatanAktivitas;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
 
 /**
@@ -45,9 +47,9 @@ class LoncengPesan extends KomponenAdmin
      * — urutannya memakai id (baris terbaru lebih dulu), sama seperti halaman
      * Pesan.
      *
-     * @return \Illuminate\Support\Collection<int, ContactMessage>
+     * @return Collection<int, ContactMessage>
      */
-    public function terbaru(): \Illuminate\Support\Collection
+    public function terbaru(): Collection
     {
         return ContactMessage::query()
             ->orderByDesc('id')
@@ -73,7 +75,7 @@ class LoncengPesan extends KomponenAdmin
         if (! $pesan->is_read) {
             $pesan->update(['is_read' => true]);
 
-            \App\Support\CatatanAktivitas::catat('pesan.dibaca', ['id' => $pesan->id], auth()->id(), $pesan);
+            CatatanAktivitas::catat('pesan.dibaca', ['id' => $pesan->id], auth()->id(), $pesan);
         }
 
         $this->buka = false;

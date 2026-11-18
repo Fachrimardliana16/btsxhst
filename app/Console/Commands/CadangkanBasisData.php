@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Support\CatatanAktivitas;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 /**
@@ -78,8 +77,8 @@ class CadangkanBasisData extends Command
         $basisData = (string) ($this->option('basis-data')
             ?: config('database.connections.'.config('database.default').'.database'));
 
-        if (! is_string($basisData) || ! is_file($basisData)) {
-            $this->error('Berkas basis data tidak ditemukan: '.(string) $basisData);
+        if ($basisData === '' || ! is_file($basisData)) {
+            $this->error('Berkas basis data tidak ditemukan: '.$basisData);
 
             return self::FAILURE;
         }
@@ -91,7 +90,7 @@ class CadangkanBasisData extends Command
         // "sisakan 14" — persis yang pernah terjadi di mesin ini.
         $kepala = (string) @file_get_contents($basisData, false, null, 0, 16);
 
-        if (filesize($basisData) < 1024 || ! str_starts_with($kepala, "SQLite format 3")) {
+        if (filesize($basisData) < 1024 || ! str_starts_with($kepala, 'SQLite format 3')) {
             $this->error('Berkas basis data tampak rusak ('.filesize($basisData).' bita). Cadangan dibatalkan.');
 
             CatatanAktivitas::catat('backup.gagal', [
@@ -103,12 +102,13 @@ class CadangkanBasisData extends Command
         }
 
         try {
-            // Salinan mentah berkas, bukan dump SQL. Untuk SQLite ini justru
-            // lebih aman: dump yang dijalankan sambil ada penulisan dapat
-            // menghasilkan berkas yang tidak konsisten.
-            if (! @copy($basisData, $tujuan)) {
-                throw new \RuntimeException('Penyalinan berkas gagal.');
-            }
+            // `VACUUM INTO`, bukan copy(). Menyalin berkas SQLite yang sedang
+            // ditulis (produksi memakai WAL dan beberapa pekerja PHP) dapat
+            // menghasilkan cadangan yang tampak sah tetapi tidak konsisten.
+            // VACUUM INTO meminta SQLite sendiri menulis salinan yang utuh
+            // pada satu titik waktu.
+            $this->salinKonsisten($basisData, $tujuan);
+            $this->periksaIntegritas($tujuan);
 
             $ukuranMb = round(filesize($tujuan) / 1024 / 1024, 2);
 
@@ -139,6 +139,50 @@ class CadangkanBasisData extends Command
         ]);
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Menulis salinan SQLite yang konsisten dengan `VACUUM INTO`.
+     *
+     * `VACUUM INTO` tidak menerima parameter terikat, jadi jalurnya
+     * dimasukkan sebagai literal dengan tanda kutip tunggal digandakan.
+     */
+    private function salinKonsisten(string $sumber, string $tujuan): void
+    {
+        if (file_exists($tujuan)) {
+            throw new \RuntimeException('Berkas tujuan sudah ada: '.$tujuan);
+        }
+
+        $pdo = new \PDO('sqlite:'.$sumber, null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_TIMEOUT => 30,
+        ]);
+
+        try {
+            $literal = str_replace("'", "''", $tujuan);
+            $pdo->exec("VACUUM INTO '".$literal."'");
+        } finally {
+            $pdo = null;
+        }
+    }
+
+    /** Memastikan hasil salinan benar-benar dapat dibuka dan utuh. */
+    private function periksaIntegritas(string $berkas): void
+    {
+        $pdo = new \PDO('sqlite:'.$berkas, null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_TIMEOUT => 30,
+        ]);
+
+        try {
+            $hasil = (string) $pdo->query('PRAGMA integrity_check')->fetchColumn();
+        } finally {
+            $pdo = null;
+        }
+
+        if (strtolower(trim($hasil)) !== 'ok') {
+            throw new \RuntimeException('Cadangan gagal pemeriksaan integritas: '.mb_substr($hasil, 0, 200));
+        }
     }
 
     /**

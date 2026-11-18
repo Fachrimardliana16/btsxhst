@@ -5,9 +5,12 @@ namespace App\Livewire\Admin;
 use App\Enums\StatusPembayaran;
 use App\Enums\StatusPesanan;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Services\StatusPesananService;
 use App\Support\BlindIndex;
+use App\Support\Galat;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
@@ -101,10 +104,45 @@ class PesananDaftar extends KomponenAdmin
         }
 
         try {
-            $layanan->pindah($order, StatusPesanan::Paid, auth()->user(), __('site.msg.pesanan.lunas_dari_daftar'));
+            DB::transaction(function () use ($order, $layanan): void {
+                // Status lunas harus punya baris pembayaran TERVERIFIKASI.
+                // Memeriksa "ada baris apa pun" membuat bukti transfer yang
+                // pernah ditolak memblokir pembuatan baris sah: pesanan
+                // ditandai lunas tanpa satu pun pembayaran yang terverifikasi.
+                $ada = Payment::query()
+                    ->where('order_id', $order->id)
+                    ->where('provider_status', 'terverifikasi')
+                    ->whereNotNull('verified_at')
+                    ->exists();
+
+                if (! $ada) {
+                    Payment::query()->create([
+                        'order_id' => $order->id,
+                        'provider' => $order->payment_method->value ?? 'manual',
+                        'provider_status' => 'terverifikasi',
+                        'amount' => $order->grand_total,
+                        'currency' => $order->currency,
+                        'payload_json' => ['sumber' => 'tandai-dibayar-admin'],
+                        'verified_by' => auth()->id(),
+                        'verified_at' => now(),
+                    ]);
+                }
+
+                $layanan->pindah($order, StatusPesanan::Paid, auth()->user(), __('site.msg.pesanan.lunas_dari_daftar'));
+            });
+
             session()->flash('pesan-admin', 'Order '.$order->order_number.' marked as paid.');
         } catch (RuntimeException $e) {
-            session()->flash('galat-admin', $e->getMessage());
+            // Pesan bisnis dari service boleh tampil apa adanya. Exception
+            // teknis (PDO, TypeError) tidak: pesannya memuat SQL dan nama
+            // tabel, jadi disaring lebih dulu oleh Galat.
+            $pesan = $e instanceof QueryException
+                ? Galat::denganKode($e, 'Could not mark this order as paid.')
+                : $e->getMessage();
+
+            session()->flash('galat-admin', $pesan);
+        } catch (\Throwable $e) {
+            session()->flash('galat-admin', Galat::denganKode($e, 'Could not mark this order as paid.'));
         }
     }
 
@@ -226,7 +264,7 @@ class PesananDaftar extends KomponenAdmin
     /** Nama pembeli, baik dari akun maupun dari checkout tamu. */
     public function pembeli(Order $order): string
     {
-        return $order->namaPenerima() ?: ($order->user?->name ?? 'Customer');
+        return $order->namaPenerima() ?: ($order->user->name ?? 'Customer');
     }
 
     public function kontak(Order $order): ?string

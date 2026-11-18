@@ -40,8 +40,8 @@ class Keamanan
             'event_type' => $tipe,
             'user_id' => $userId ?? auth()->id(),
             'email_attempted' => $email,
-            'route' => $request?->path(),
-            'user_agent' => mb_substr((string) $request?->userAgent(), 0, 255),
+            'route' => $request->path(),
+            'user_agent' => mb_substr((string) $request->userAgent(), 0, 255),
             'payload_summary' => $ringkasan,
         ]);
     }

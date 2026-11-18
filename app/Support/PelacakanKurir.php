@@ -4,7 +4,6 @@ namespace App\Support;
 
 use App\Models\Courier;
 use App\Models\Order;
-use App\Support\Pengaturan;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -88,7 +87,7 @@ class PelacakanKurir
         $kosong = ['tersedia' => false, 'ringkas' => '', 'diperbarui' => null];
 
         $resi = trim((string) ($pesanan->tracking_number ?? ''));
-        $kunci = (string) (Pengaturan::instance()?->teks('tracking_api_key') ?? '');
+        $kunci = (string) Pengaturan::instance()->teks('tracking_api_key');
 
         if ($resi === '' || $kunci === '') {
             return $kosong;

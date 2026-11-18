@@ -244,6 +244,13 @@
                         @error('quota') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
 
+                    <div>
+                        <label for="limit_per_customer" class="part-no">{{ __('site.admin.kupon.batas_per_pelanggan') }}</label>
+                        <input id="limit_per_customer" type="text" inputmode="numeric" wire:model="limit_per_customer" class="field tech mt-1">
+                        <p class="mt-1 text-xs text-dim">{{ __('site.admin.kupon.kosong_tanpa_batas_pelanggan') }}</p>
+                        @error('limit_per_customer') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label for="starts_at" class="part-no">{{ __('site.admin.kupon.mulai') }}</label>

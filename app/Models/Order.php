@@ -7,6 +7,7 @@ use App\Enums\StatusPembayaran;
 use App\Enums\StatusPesanan;
 use App\Models\Concerns\PunyaIndeksButa;
 use App\Models\Concerns\PunyaUlid;
+use App\Support\BlindIndex;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -54,10 +55,13 @@ class Order extends Model
         'expires_at',
     ];
 
-    /** @var array<string, string> */
-    protected array $indeksButa = [
-        'guest_email' => 'guest_email_bidx',
-    ];
+    /** @return array<string, string> */
+    protected function petaIndeksButa(): array
+    {
+        return [
+            'guest_email' => 'guest_email_bidx',
+        ];
+    }
 
     protected function casts(): array
     {
@@ -82,6 +86,8 @@ class Order extends Model
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'expires_at' => 'datetime',
+            'shipping_quoted_at' => 'datetime',
+            'shipping_is_intl' => 'boolean',
         ];
     }
 
@@ -151,32 +157,60 @@ class Order extends Model
             return $query;
         }
 
-        $pola = '%'.str_replace(['%', '_'], ['\%', '\_'], $kata).'%';
+        $pola = '%'.$kata.'%';
 
-        return $query->where(function (Builder $q) use ($pola): void {
+        return $query->where(function (Builder $q) use ($pola, $kata): void {
             $q->where('order_number', 'like', $pola)
-                ->orWhere('tracking_number', 'like', $pola)
-                ->orWhere('guest_email_bidx', 'like', $pola);
+                ->orWhere('tracking_number', 'like', $pola);
+
+            // Blind index adalah HMAC penuh; LIKE atasnya tidak pernah cocok.
+            // Alamat email dicari sebagai kesamaan persis, dan hanya bila
+            // kata kuncinya memang berbentuk alamat email.
+            if (filter_var(trim($kata), FILTER_VALIDATE_EMAIL) !== false) {
+                $q->orWhere(
+                    'guest_email_bidx',
+                    BlindIndex::buat(trim($kata), 'guest_email_bidx'),
+                );
+            }
         });
     }
 
     // ── Turunan ─────────────────────────────────────────────────────
 
+    /** @return array<string, mixed> */
     public function alamat(): array
     {
-        return is_array($this->shipping_address_snapshot)
-            ? $this->shipping_address_snapshot
-            : [];
+        return $this->shipping_address_snapshot;
+    }
+
+    /**
+     * Baris lokasi untuk dokumen cetak: "Bandung, Jawa Barat, 40111".
+     *
+     * Setiap bagian bersifat opsional. Snapshot lama yang dibuat sebelum
+     * sebuah kolom ada, dan alamat luar negeri yang tidak mengenal provinsi
+     * atau kode pos, tetap harus tercetak. Tanpa ini, tampilan detail pesanan
+     * dan invoice gagal dengan "Undefined array key" hanya karena satu kolom
+     * tidak ikut tersimpan.
+     */
+    public function barisKota(): string
+    {
+        $alamat = $this->alamat();
+
+        return trim(collect([
+            $alamat['city'] ?? null,
+            $alamat['state_province'] ?? null,
+            $alamat['postal_code'] ?? null,
+        ])->filter(fn ($bagian) => filled($bagian))->implode(', '));
     }
 
     public function namaPenerima(): string
     {
-        return $this->alamat()['recipient_name'] ?? $this->user?->name ?? 'Pelanggan';
+        return $this->alamat()['recipient_name'] ?? $this->user->name ?? 'Customer';
     }
 
     public function emailPenerima(): ?string
     {
-        return $this->user?->email ?? $this->guest_email;
+        return $this->user->email ?? $this->guest_email;
     }
 
     public function teleponPenerima(): ?string

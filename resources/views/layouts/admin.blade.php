@@ -27,6 +27,11 @@
 </head>
 <body class="min-h-screen bg-bg text-ink">
 
+<a href="#konten-admin"
+   class="visually-hidden focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-surface focus:px-4 focus:py-2 focus:text-ink">
+    Skip to content
+</a>
+
 @php
     // Sidebar admin.
     //
@@ -324,10 +329,12 @@
     </aside>
 
     {{-- ── Drawer tablet dan mobile ───────────────────────────────── --}}
-    <div x-show="drawer" x-cloak class="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+    <div x-show="drawer" x-cloak class="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true"
+         @keydown.tab="jebakFokus($event, $refs.drawerPanelAdmin)">
         <div class="absolute inset-0 bg-black/50" @click="drawer = false" x-transition.opacity></div>
 
-        <div class="absolute inset-y-0 left-0 flex w-[86%] max-w-xs flex-col bg-surface"
+        <div x-ref="drawerPanelAdmin"
+             class="absolute inset-y-0 left-0 flex w-[86%] max-w-xs flex-col bg-surface"
              x-transition:enter="transition-transform duration-200"
              x-transition:enter-start="-translate-x-full"
              x-transition:leave="transition-transform duration-150"
@@ -545,7 +552,24 @@
     </header>
 
     {{-- ── Isi ────────────────────────────────────────────────────── --}}
-    <main class="px-3 py-4 pb-24 lg:px-6 lg:py-6 lg:pb-8">
+    <main id="konten-admin" class="px-3 py-4 pb-24 lg:px-6 lg:py-6 lg:pb-8">
+        {{-- Peringatan jujur: 2FA hanya aktif bila secret benar-benar
+             tersimpan. Seeder dulu mengisi `two_factor_confirmed_at` tanpa
+             secret, sehingga panel tampak aman padahal login hanya memakai
+             kata sandi. --}}
+        @if ($penggunaPanel instanceof \App\Models\User
+            && $penggunaPanel->admin()
+            && ! $penggunaPanel->punyaDuaFaktor())
+            <div class="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[var(--r-card)] border border-warn/40 bg-warn/10 px-3 py-2 text-sm">
+                <x-ikon name="shield" :size="16" class="text-warn" />
+                <span>
+                    <strong>Two-factor authentication is off.</strong>
+                    This account can read customer data. Enable it from the server with
+                    <code class="rounded bg-sunken px-1">php artisan iksan:dua-faktor {{ $penggunaPanel->email }}</code>.
+                </span>
+            </div>
+        @endif
+
         {{ $slot }}
     </main>
 

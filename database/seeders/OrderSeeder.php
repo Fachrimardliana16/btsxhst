@@ -14,6 +14,8 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * 30 pesanan contoh tersebar pada seluruh status dan 90 hari terakhir.
@@ -169,7 +171,7 @@ class OrderSeeder extends Seeder
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, Product>  $produk
+     * @param  Collection<int, Product>  $produk
      * @return array{0: float, 1: array<int, array<string, mixed>>, 2: int}
      */
     private function buatItem($produk, int $jumlah, int $seed): array
@@ -224,7 +226,7 @@ class OrderSeeder extends Seeder
         };
     }
 
-    private function catatRiwayat(Order $pesanan, StatusPesanan $status, \Illuminate\Support\Carbon $dibuat): void
+    private function catatRiwayat(Order $pesanan, StatusPesanan $status, Carbon $dibuat): void
     {
         $alur = match ($status) {
             StatusPesanan::Pending => [StatusPesanan::Pending],
@@ -257,7 +259,7 @@ class OrderSeeder extends Seeder
         }
     }
 
-    private function catatPembayaran(Order $pesanan, StatusPesanan $status, \Illuminate\Support\Carbon $dibuat, ?User $user): void
+    private function catatPembayaran(Order $pesanan, StatusPesanan $status, Carbon $dibuat, ?User $user): void
     {
         if ($pesanan->payment_status === StatusPembayaran::Unpaid || $pesanan->payment_method === null) {
             return;

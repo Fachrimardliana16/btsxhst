@@ -165,6 +165,8 @@ class PengaturanSitus extends KomponenAdmin
      */
     public function ujiKoneksiPaypal(KlienPaypal $klien): void
     {
+        $this->authorize('aturSitus', User::class);
+
         $this->bersihkanPesan();
         $this->sedangUji = true;
 
@@ -398,7 +400,7 @@ class PengaturanSitus extends KomponenAdmin
      * Metadata kolom untuk tab aktif. Nilai rahasia diganti penanda kosong dan
      * tidak pernah ikut ke tampilan.
      *
-     * @return Collection<int, array<string, mixed>>
+     * @return Collection<int, array{kunci: string, label: string|null, tipe: string, opsi: array<mixed>, rahasia: bool, terisi: bool, bantuan: string|null}>
      */
     private function barisTampil(GrupPengaturan $grup): Collection
     {

@@ -26,9 +26,6 @@ class Kurs
 {
     private const KUNCI = 'kurs:usd-idr';
 
-    /** Nilai cadangan bila sumber tidak dapat dihubungi sama sekali. */
-    private const CADANGAN = 16000.0;
-
     /** Mata uang yang ditampilkan sebagai perkiraan di samping rupiah. */
     public const TAMPIL = ['USD'];
 

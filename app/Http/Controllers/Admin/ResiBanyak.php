@@ -7,10 +7,9 @@ use App\Models\Order;
 use App\Support\CatatanAktivitas;
 use App\Support\DokumenPdf;
 use App\Support\Pengaturan;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Validation\Rule;
 
 /**
  * Cetak resi untuk BANYAK pesanan sekaligus.

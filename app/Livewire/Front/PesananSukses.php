@@ -3,6 +3,7 @@
 namespace App\Livewire\Front;
 
 use App\Models\Order;
+use App\Models\Setting;
 use App\Support\Pengaturan;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -23,7 +24,10 @@ class PesananSukses extends Component
         return view('livewire.front.pesanan-sukses', [
             'rekening' => $toko->teks('payment_mode') === 'paypal'
                 ? []
-                : (\App\Models\Setting::query()->where('key', 'manual_bank_accounts')->first()?->larik() ?? []),
-        ])->title(__('site.order.success_title').' · '.$toko->teks('site_name'));
+                : (Setting::query()->where('key', 'manual_bank_accounts')->first()?->larik() ?? []),
+        ])->title(__('site.order.success_title').' · '.$toko->teks('site_name'))
+            // Halaman ini memuat nomor pesanan dan data pembeli. Tidak boleh
+            // masuk indeks mesin pencari.
+            ->layoutData(['tanpaIndeks' => true]);
     }
 }

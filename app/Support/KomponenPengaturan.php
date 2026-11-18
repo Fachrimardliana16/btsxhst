@@ -59,7 +59,7 @@ class KomponenPengaturan
                 continue;
             }
 
-            $setting = new Setting();
+            $setting = new Setting;
             $setting->fill([
                 'key' => $key,
                 'group_name' => $grup,
@@ -164,12 +164,22 @@ class KomponenPengaturan
     {
         $hasil = [];
 
+        // Semua kolom terenkripsi, bukan hanya yang tercantum di
+        // KUNCI_RAHASIA. Daftar manual mudah tertinggal saat pengaturan baru
+        // ditambahkan — dan yang tertinggal akan terhapus saat formulirnya
+        // disimpan dengan kolom rahasia dibiarkan kosong.
+        $terenkripsi = Setting::query()
+            ->where('is_encrypted', true)
+            ->pluck('key')
+            ->all();
+
         foreach ($nilai as $kunci => $isi) {
             if (str_starts_with($kunci, '__')) {
                 continue;
             }
 
-            if (in_array($kunci, self::KUNCI_RAHASIA, true) && blank($isi)) {
+            if (blank($isi)
+                && (in_array($kunci, self::KUNCI_RAHASIA, true) || in_array($kunci, $terenkripsi, true))) {
                 // Dibiarkan kosong berarti "jangan ubah", bukan "kosongkan".
                 // Mengosongkan kredensial dilakukan lewat tombol hapus khusus.
                 continue;

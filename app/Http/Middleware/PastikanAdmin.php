@@ -2,8 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\PeranPengguna;
+use App\Enums\TipeKejadianKeamanan;
 use App\Support\Keamanan;
+use App\Support\SesiAdmin;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,9 +31,9 @@ class PastikanAdmin
         // luar panel: perintah `php artisan iksan:buka-blokir`, yang hanya
         // dapat dijalankan oleh orang yang memang punya akses ke server.
         if (Keamanan::ipDiblokir($request)) {
-            Keamanan::catat(\App\Enums\TipeKejadianKeamanan::IpDiblokir, $request, $request->user()?->email, $request->user()?->id, 'Alamat diblokir mencoba membuka panel');
+            Keamanan::catat(TipeKejadianKeamanan::IpDiblokir, $request, $request->user()?->email, $request->user()?->id, 'Alamat diblokir mencoba membuka panel');
 
-            abort(403, 'Akses dari jaringan ini diblokir sementara.');
+            abort(403, 'Access from this network is temporarily blocked.');
         }
 
         $user = $request->user();
@@ -41,37 +42,33 @@ class PastikanAdmin
             return redirect()->guest(route('admin.login'));
         }
 
-        $peran = $user->role instanceof PeranPengguna
-            ? $user->role
-            : PeranPengguna::tryFrom((string) $user->role);
+        $peran = $user->role;
 
-        if ($peran === null || ! $peran->bisaMasukPanel()) {
-            Keamanan::catat(\App\Enums\TipeKejadianKeamanan::AksesTidakSah, $request, $user->email, $user->id, 'Pelanggan mencoba membuka '.$request->path());
+        if (! $peran->bisaMasukPanel()) {
+            Keamanan::catat(TipeKejadianKeamanan::AksesTidakSah, $request, $user->email, $user->id, 'Pelanggan mencoba membuka '.$request->path());
 
             // Ditandai supaya middleware CatatKeamanan tidak mencatat
             // kejadian yang sama untuk kedua kalinya.
             return CatatKeamanan::tandaiSudahDicatat(
-                response('Akun ini tidak memiliki akses ke panel admin.', 403)
+                response('This account has no access to the admin panel.', 403)
             );
         }
 
         if ($user->is_blocked) {
-            abort(403, 'Akun ini diblokir.');
+            abort(403, 'This account is blocked.');
         }
 
         // Sesi admin berumur pendek. Sesi yang terlalu lama dibiarkan terbuka
         // adalah risiko terbesar pada panel yang hanya dipakai di satu meja.
-        $terakhir = $request->session()->get('admin.terakhir_aktif');
-
-        if ($terakhir !== null && now()->timestamp - (int) $terakhir > config('session.lifetime') * 60) {
+        if (SesiAdmin::kedaluwarsa($request->session())) {
             auth()->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->guest(route('admin.login'))->with('galat', 'Sesi berakhir. Silakan masuk lagi.');
+            return redirect()->guest(route('admin.login'))->with('galat', 'Your session has ended. Please sign in again.');
         }
 
-        $request->session()->put('admin.terakhir_aktif', now()->timestamp);
+        SesiAdmin::sentuh($request->session());
 
         return $next($request);
     }

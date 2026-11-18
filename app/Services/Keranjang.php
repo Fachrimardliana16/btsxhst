@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\StatusPesanan;
 use App\Enums\TipeKupon;
 use App\Models\Cart;
 use App\Models\CartItem;
@@ -10,6 +9,8 @@ use App\Models\Coupon;
 use App\Models\ProductVariant;
 use App\Models\User;
 use App\Support\HargaDolar;
+use App\Support\Pengaturan;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -72,7 +73,7 @@ class Keranjang
     /** @return Collection<int, CartItem> */
     public function items(): Collection
     {
-        return $this->ambil()?->items ?? collect();
+        return $this->ambil()->items ?? collect();
     }
 
     public function subtotal(): float
@@ -116,7 +117,7 @@ class Keranjang
 
         $tersedia = $variant->stokTersedia();
         $diminta = max(1, $jumlah);
-        $akhir = min($tersedia, ($baris?->quantity ?? 0) + $diminta);
+        $akhir = min($tersedia, ($baris->quantity ?? 0) + $diminta);
 
         if ($akhir <= 0) {
             return 0;
@@ -187,7 +188,7 @@ class Keranjang
 
     public function catatan(): string
     {
-        return (string) ($this->ambil()?->note ?? '');
+        return (string) ($this->ambil()->note ?? '');
     }
 
     /**
@@ -301,6 +302,12 @@ class Keranjang
             $ada = $akun->items()->where('product_variant_id', $item->product_variant_id)->first();
             $tersedia = $item->variant?->stokTersedia() ?? 0;
 
+            if ($tersedia <= 0) {
+                // Varian sudah habis: jangan membuat baris berjumlah nol yang
+                // nantinya ditolak saat checkout.
+                continue;
+            }
+
             if ($ada) {
                 $ada->update(['quantity' => min($tersedia, $ada->quantity + $item->quantity)]);
             } else {
@@ -316,6 +323,12 @@ class Keranjang
             $akun->update(['coupon_id' => $tamu->coupon_id]);
         }
 
+        // Catatan pembeli ikut pindah. Tanpa ini, catatan yang sudah ditulis
+        // di keranjang tamu hilang begitu ia masuk ke akunnya.
+        if (blank($akun->note) && filled($tamu->note)) {
+            $akun->update(['note' => $tamu->note]);
+        }
+
         $tamu->items()->delete();
         $tamu->delete();
 
@@ -324,7 +337,7 @@ class Keranjang
 
     // ── Internal ────────────────────────────────────────────────────
 
-    /** @return \Illuminate\Database\Eloquent\Builder<Cart> */
+    /** @return Builder<Cart> */
     private function query()
     {
         $userId = auth()->id();
@@ -379,9 +392,9 @@ class Keranjang
 
         $kupon = $this->kupon();
         $ongkir = HargaDolar::dariRupiah(
-            \App\Support\Pengaturan::instance()->angka('shipping_flat_rate', 0),
+            Pengaturan::instance()->angka('shipping_flat_rate', 0),
         ) ?? 0.0;
-        $persenPajak = (float) \App\Support\Pengaturan::instance()->angka('tax_percent', 0);
+        $persenPajak = (float) Pengaturan::instance()->angka('tax_percent', 0);
 
         // Kupon diterjemahkan ke dolar lebih dulu (lihat catatan di
         // HargaDolar): ambang minimal, nilai nominal, dan batas potongannya
@@ -389,9 +402,12 @@ class Keranjang
         $potonganBelanja = $kupon === null ? 0.0 : HargaDolar::kuponPotongan($kupon, $subtotal, $ongkir);
         $potonganOngkir = $kupon?->potonganOngkir($subtotal, $ongkir) ?? 0.0;
 
-        // Gratis ongkir dihitung dari skala dolar yang sama.
+        // Gratis ongkir dihitung dari skala dolar yang sama, tetapi tetap
+        // tunduk pada batas `max_discount` milik kupon. Tanpa batas itu,
+        // kupon "gratis ongkir maksimal $10" menggratiskan ongkir berapa pun.
         if ($kupon !== null && $kupon->type === TipeKupon::GratisOngkir) {
-            $potonganOngkir = $ongkir;
+            $maks = HargaDolar::kuponMaks($kupon);
+            $potonganOngkir = $maks === null ? $ongkir : min($ongkir, $maks);
         }
 
         $dasarPajak = max(0.0, $subtotal - $potonganBelanja);

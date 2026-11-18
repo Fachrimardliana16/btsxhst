@@ -169,10 +169,14 @@
 
 
     {{-- Drawer menu: tablet dan mobile --}}
-    <div x-show="menu" x-cloak class="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+    <div id="drawer-menu" x-show="menu" x-cloak class="fixed inset-0 z-50 lg:hidden"
+         role="dialog" aria-modal="true" aria-labelledby="drawer-menu-judul"
+         @keydown.escape.window="menu = false"
+         x-init="$watch('menu', function (buka) { if (buka) { $nextTick(function () { $refs.drawerTutup.focus(); }); } })">
         <div class="absolute inset-0 bg-black/50" @click="menu = false" x-transition.opacity></div>
 
-        <div class="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-surface"
+        <div x-ref="drawerPanel" class="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-surface"
+             @keydown.tab="jebakFokus($event, $refs.drawerPanel)"
              x-transition:enter="transition-transform duration-200"
              x-transition:enter-start="-translate-x-full"
              x-transition:leave="transition-transform duration-150"
@@ -182,8 +186,8 @@
                 {{-- Tanpa nomor: drawer adalah panel navigasi, bukan bagian isi
                              halaman. Nomor "01" di sini bertabrakan dengan
                              nomor section beranda (01 / Katalog). --}}
-                <span class="part-no">{{ __('site.nav.menu') }}</span>
-                <button type="button" class="btn-icon" @click="menu = false">
+                <span id="drawer-menu-judul" class="part-no">{{ __('site.nav.menu') }}</span>
+                <button type="button" class="btn-icon" x-ref="drawerTutup" @click="menu = false">
                     <x-ikon name="close" />
                     <span class="visually-hidden">{{ __('site.nav.close') }}</span>
                 </button>
@@ -224,8 +228,9 @@
 
     {{-- Overlay pencarian --}}
     <div x-show="cari" x-cloak class="fixed inset-0 z-50 bg-bg" role="dialog" aria-modal="true"
-         @keydown.escape.window="cari = false">
-        <div class="container-page py-4">
+         @keydown.escape.window="cari = false"
+         @keydown.tab="jebakFokus($event, $refs.panelCari)">
+        <div x-ref="panelCari" class="container-page py-4">
             <div class="flex items-center gap-2">
                 <span class="part-no">{{ __('site.nav.search') }}</span>
                 <button type="button" class="btn-icon ml-auto" @click="cari = false">

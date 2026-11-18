@@ -115,7 +115,9 @@
     /* #111827 di atas #FFFFFF = 17.7:1; di atas #F7F8FA = 16.9:1. */
     --c-text: #111827;
     --c-text-muted: #55606f;
-    --c-text-dim: #6b7280;
+    /* #6b7280 hanya 4.27:1 di atas --c-surface-sunken (#eef1f5), di bawah AA.
+       #5f6875 = 4.98:1 di sana, 5.31:1 di --c-bg, 5.64:1 di putih. */
+    --c-text-dim: #5f6875;
 
     /* Satu aksen untuk teks di atas LATAR GELAP (#08121b, footer + pita gelap).
        #0062ad hanya 3.01:1 di sana: warna aksen normal dirancang untuk latar
@@ -1574,6 +1576,13 @@ html:not(.js) [data-reveal] {
     /* Kolom footer tidak boleh tertutup di desktop. */
     .footer-akordeon > summary {
         pointer-events: none;
+    }
+
+    /* `open` dilepas dari markup supaya di ponsel kolomnya tertutup sejak
+       awal. Di desktop isinya dipaksa tampil — peramban menyembunyikan anak
+       <details> yang tertutup, dan aturan ini mengalahkannya. */
+    .footer-akordeon:not([open]) > :not(summary) {
+        display: block;
     }
 }
 

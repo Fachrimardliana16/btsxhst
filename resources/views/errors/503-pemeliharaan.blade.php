@@ -12,7 +12,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
-    <title>Sedang pemeliharaan · {{ \App\Support\Pengaturan::instance()->teks('site_name', 'Bites Exhaust') }}</title>
+    <title>{{ __('site.errors.503_title') }} · {{ \App\Support\Pengaturan::instance()->teks('site_name', 'Bites Exhaust') }}</title>
     @if (is_file(public_path('build/manifest.json')) || is_file(public_path('hot')))
         @vite(['resources/css/app.css'])
     @endif
@@ -23,7 +23,7 @@
             <span class="part-no">503</span>
 
             <h1 class="mt-3 font-display font-semibold leading-tight" style="font-size: var(--t-h3)">
-                Sedang pemeliharaan
+                {{ __('site.errors.503_title') }}
             </h1>
 
             <p class="mt-3 text-sm leading-relaxed text-muted">{{ $pesan }}</p>

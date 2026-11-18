@@ -97,6 +97,10 @@ return [
         'layanan_3_isi' => 'Send your bike model and year, we reply with a fitting recommendation.',
         'hero_all_products' => 'All products',
         'hero_consult' => 'Consult',
+        'hero_prev' => 'Previous slide',
+        'hero_next' => 'Next slide',
+        'hero_pick' => 'Go to slide :n',
+        'hero_toggle' => 'Pause or play automatic slides',
     ],
 
     'product' => [
@@ -126,6 +130,7 @@ return [
         'empty_hint' => 'Loosen the filter or clear the keyword.',
         'weight' => 'Weight',
         'variant_col' => 'Variant',
+        'image_of' => 'Image :n of :total',
         'spec_hint' => 'These rows appear as a specification table on the product page. Empty rows are not shown.',
         'spec_label' => 'Specification name',
         'spec_value' => 'Value',
@@ -143,6 +148,8 @@ return [
         'sort_price_asc' => 'Lowest price',
         'sort_price_desc' => 'Highest price',
         'sort_name' => 'Name A-Z',
+        'sort_popular' => 'Most popular',
+        'view_all' => 'View all products',
         'price_range' => 'Price range',
         'min' => 'Minimum',
         'max' => 'Maximum',
@@ -212,6 +219,60 @@ return [
         'pindah_keranjang' => 'Your cart changed. Please review it before placing the order.',
         'place_order' => 'Place Order',
         'summary' => 'Order Summary',
+        'currency_hint' => 'US Dollar. Prices and charges are in dollars.',
+        'intl_title' => 'Shipping to :negara',
+        'intl_address' => 'Write the address in Latin characters. Street name and number are enough — do not mix in the local script.',
+        'intl_shipping' => 'International shipping is quoted manually by our team after the order arrives. We will contact you by email or WhatsApp before shipping.',
+        'intl_duty' => 'Import duties and taxes in the destination country are the buyer\'s responsibility.',
+        'intl_currency' => 'All prices and charges are in US dollars. :kode is only the suggested dialling code.',
+    ],
+
+    'paypal' => [
+        'pending_eyebrow' => 'WAITING FOR PAYPAL',
+        'pending_title' => 'Checking payment…',
+        'pending_body' => 'Do not close this page. It only takes a few seconds.',
+        'paid_badge' => 'Paid',
+        'paid_title' => 'Payment successful',
+        'failed_title' => 'Payment not completed',
+        'order_number' => 'Order number',
+        'total_paid' => 'Total paid',
+        'view_order' => 'View order',
+        'keep_shopping' => 'Continue shopping',
+        'retry' => 'Try payment again',
+        'contact' => 'Contact us',
+    ],
+
+    'proof' => [
+        'eyebrow' => 'Payment · manual transfer',
+        'title' => 'Transfer receipt',
+        'paid' => 'Payment received',
+        'paid_body' => 'This order is paid and being processed. You do not need to upload anything else.',
+        'track' => 'Track order',
+        'received' => 'We have received your receipt',
+        'received_body' => 'Your transfer receipt is being reviewed. We will let you know by email or WhatsApp once the payment is verified, usually within one business day.',
+        'uploaded' => 'Uploaded receipts',
+        'status_verified' => 'verified',
+        'status_pending' => 'pending',
+        'reupload_hint' => 'Upload again only if we ask for a correction. The limit is three times per hour per order.',
+        'transfer_to' => 'Transfer to',
+        'account_name' => 'a.n. :nama',
+        'amount' => 'Amount',
+        'amount_hint' => 'Transfer exactly the amount above so the payment can be matched easily. Include the order number in the transfer note if possible.',
+        'no_account' => 'No bank account configured',
+        'no_account_body' => 'The store has not set up a destination account. Contact us via the contact page to complete payment for this order.',
+        'contact' => 'Contact us',
+        'upload_title' => 'Upload transfer receipt',
+        'upload_hint' => 'A screenshot or photo of the transfer receipt. JPG, PNG, WebP, or PDF, maximum 5 MB.',
+        'file_label' => 'Receipt file',
+        'pick_file' => 'Choose a receipt file or drop it here',
+        'file_hint' => 'JPG, PNG, WebP, or PDF · maximum 5 MB',
+        'uploading' => 'Uploading file…',
+        'note_label' => 'Note (optional)',
+        'note_placeholder' => 'For example: transferred from an account under a different name',
+        'submit' => 'Send receipt',
+        'submitting' => 'Sending…',
+        'help' => 'Need help?',
+        'help_track' => 'Track your order',
     ],
 
     'order' => [
@@ -240,6 +301,8 @@ return [
         'message' => 'Message',
         'send' => 'Send Message',
         'sent' => 'Message sent. We will reply to your email.',
+        'send_another' => 'Send another message',
+        'open_maps' => 'Open in Maps',
         'hours' => 'Business hours',
         'address' => 'Address',
         'call' => 'Reach us',
@@ -260,8 +323,9 @@ return [
 
     'cookie' => [
         'title' => 'Cookies',
-        'body' => 'We use a cookie to remember the shipping zone you pick, so the country field does not need to be filled in again on every visit. Personal data stays encrypted and is never shared.',
-        'accept' => 'Accept',
+        'body' => 'Essential cookies keep the site working: your session, the shipping zone you pick, and your language. Analytics cookies (Google Analytics and Meta Pixel) are set only if you accept them. Personal data stays encrypted and is never sold.',
+        'accept' => 'Accept analytics',
+        'decline' => 'Essential only',
         'learn_more' => 'Learn more',
         'learn_more_privacy' => 'Read the privacy policy',
     ],
@@ -276,6 +340,7 @@ return [
         'yes' => 'Yes',
         'no' => 'No',
         'search' => 'Search',
+        'skip_to_content' => 'Skip to content',
         'all' => 'All',
         'optional' => 'optional',
         'required' => 'required',
@@ -288,6 +353,12 @@ return [
         '403_title' => 'Access denied',
         '419_title' => 'Session expired',
         '500_title' => 'Something broke on our side',
+        '503_title' => 'Down for maintenance',
+        '403_body' => 'Your account does not have access to this page.',
+        '404_body' => 'The address you opened does not exist or has been moved.',
+        '419_body' => 'The page was left open too long. Reload it and try again.',
+        '500_body' => 'We have logged this incident. Try reloading in a moment.',
+        '503_body' => 'The site is temporarily unavailable. We will be back shortly.',
         'back_home' => 'Back to home',
     ],
 
@@ -365,7 +436,6 @@ return [
             'terjual' => 'sold',
         ],
 
-
         // ── lonceng-pesan.blade.php ──────────────────────────────────────
         'lonceng_pesan' => [
             'judul' => 'Messages',
@@ -406,19 +476,18 @@ return [
             'verify' => 'Verify',
             'tunggu_detik' => 'Wait :detik seconds.',
 
-        'galat' => [
-            'jaringan_diblokir' => 'This network is temporarily blocked after too many sign-in attempts.',
-            'jaringan_diblokir_singkat' => 'This network is temporarily blocked.',
-            'jaringan_diblokir_gagal' => 'This network is blocked after too many failed attempts.',
-            'terlalu_banyak' => 'Too many sign-in attempts. Try again after the waiting period.',
-            'akun_dibatasi' => 'Too many attempts for this account. Try again after the waiting period.',
-            'kredensial_salah' => 'Email or password does not match.',
-            'akun_diblokir' => 'This account is blocked. Contact the store owner.',
-            'sesi_berakhir' => 'The verification session expired. Please sign in again.',
-            'kode_salah' => 'Verification code does not match.',
+            'galat' => [
+                'jaringan_diblokir' => 'This network is temporarily blocked after too many sign-in attempts.',
+                'jaringan_diblokir_singkat' => 'This network is temporarily blocked.',
+                'jaringan_diblokir_gagal' => 'This network is blocked after too many failed attempts.',
+                'terlalu_banyak' => 'Too many sign-in attempts. Try again after the waiting period.',
+                'akun_dibatasi' => 'Too many attempts for this account. Try again after the waiting period.',
+                'kredensial_salah' => 'Email or password does not match.',
+                'akun_diblokir' => 'This account is blocked. Contact the store owner.',
+                'sesi_berakhir' => 'The verification session expired. Please sign in again.',
+                'kode_salah' => 'Verification code does not match.',
+            ],
         ],
-        ],
-
 
         /* [[AUTO:pengaturan]] */
         'pengaturan' => [
@@ -567,7 +636,6 @@ return [
         ],
         /* [[/AUTO:keranjang_terbuka]] */
 
-
         /* [[AUTO:cadangan]] */
         'cadangan' => [
             'judul' => 'Database Backup',
@@ -689,7 +757,6 @@ return [
         ],
         /* [[/AUTO:pengguna_peran]] */
 
-
         /* [[AUTO:hero_sunting]] */
         'hero_sunting' => [
             'kembali' => 'Back to slide list',
@@ -756,6 +823,8 @@ return [
             'kosong_minimum' => 'Leave blank if there is no minimum.',
             'kuota' => 'Usage limit',
             'kosong_tanpa_batas' => 'Leave blank for unlimited.',
+            'batas_per_pelanggan' => 'Limit per customer',
+            'kosong_tanpa_batas_pelanggan' => 'Leave blank if one customer may use it repeatedly.',
             'masa_berlaku' => 'Validity',
             'mulai' => 'Start',
             'berakhir' => 'End',
@@ -785,7 +854,6 @@ return [
             'opsional' => '(optional)',
         ],
         /* [[/AUTO:kupon]] */
-
 
         /* [[AUTO:pesanan_daftar]] */
         'pesanan_daftar' => [
@@ -849,6 +917,7 @@ return [
             'pembayaran_diterima' => 'Payment received',
             'belum_ada_catatan_bayar' => 'No payment records yet.',
             'metode' => 'Method:',
+            'belum_dipilih' => 'Not selected',
             'jenis_notifikasi' => 'Notification type',
             'kirim_ulang' => 'Resend',
             'pesanan_dikirim' => 'Order shipped',
@@ -917,7 +986,6 @@ return [
             'pilih_pesan' => 'Pick a message to read it.',
         ],
         /* [[/AUTO:pesan_kontak]] */
-
 
         /* [[AUTO:produk_form]] */
         'produk_form' => [
@@ -1042,17 +1110,17 @@ return [
         /* [[/AUTO:produk_daftar]] */
 
         /* Pesan galat proses masuk (dipakai Masuk.php). */
-        "galat" => [
-    "jaringan_diblokir" => "This network is temporarily blocked after too many sign-in attempts.",
-    "jaringan_diblokir_singkat" => "This network is temporarily blocked.",
-    "jaringan_diblokir_gagal" => "This network is blocked after too many failed attempts.",
-    "terlalu_banyak" => "Too many sign-in attempts. Try again after the waiting period.",
-    "akun_dibatasi" => "Too many attempts for this account. Try again after the waiting period.",
-    "kredensial_salah" => "Email or password does not match.",
-    "akun_diblokir" => "This account is blocked. Contact the store owner.",
-    "sesi_berakhir" => "The verification session expired. Please sign in again.",
-    "kode_salah" => "Verification code does not match.",
-],
+        'galat' => [
+            'jaringan_diblokir' => 'This network is temporarily blocked after too many sign-in attempts.',
+            'jaringan_diblokir_singkat' => 'This network is temporarily blocked.',
+            'jaringan_diblokir_gagal' => 'This network is blocked after too many failed attempts.',
+            'terlalu_banyak' => 'Too many sign-in attempts. Try again after the waiting period.',
+            'akun_dibatasi' => 'Too many attempts for this account. Try again after the waiting period.',
+            'kredensial_salah' => 'Email or password does not match.',
+            'akun_diblokir' => 'This account is blocked. Contact the store owner.',
+            'sesi_berakhir' => 'The verification session expired. Please sign in again.',
+            'kode_salah' => 'Verification code does not match.',
+        ],
 
         /* [[AUTO:nav]] */
         'nav' => [
@@ -1108,247 +1176,225 @@ return [
                 .'Racing-series products are for track use only.',
         ],
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     ],
     /* Pesan validasi & notifikasi panel (dipakai dari kelas Livewire). */
     'msg' => [
-        "akses" => [
-            "harus_masuk" => "Sign in as a panel user to do this.",
-            "bukan_admin" => "This account does not have access to the admin panel.",
-            "akun_diblokir" => "This account is blocked.",
+        'akses' => [
+            'harus_masuk' => 'Sign in as a panel user to do this.',
+            'bukan_admin' => 'This account does not have access to the admin panel.',
+            'akun_diblokir' => 'This account is blocked.',
         ],
-        "dashboard" => [
-            "wa_belum" => "WhatsApp number is not set. The WhatsApp button will not appear on the site.",
-            "site_name_belum" => "Store name is empty. The site title, invoices, and emails will use the fallback name.",
-            "contact_email_belum" => "Public contact email is not set. Customers have no email address to reach.",
-            "mail_belum" => "SMTP is selected but the host is empty. Order and notification emails will not be sent.",
-            "paypal_kredensial_belum" => "PayPal is enabled but the Client ID or Secret is missing (or still a placeholder). PayPal checkout will fail.",
-            "paypal_webhook_belum" => "PayPal webhook ID is not set. Automatic payment confirmation from PayPal will be rejected.",
-            "pesanan_hari_ini" => "Orders today",
-            "stok_menipis" => "Low stock",
-            "pesanan_belum_bayar" => ":jumlah orders unpaid for more than 24 hours.",
-            "pesan_belum_dibaca" => ":jumlah contact messages unread.",
-            "produk_tanpa_gambar" => ":jumlah products have no image.",
+        'dashboard' => [
+            'wa_belum' => 'WhatsApp number is not set. The WhatsApp button will not appear on the site.',
+            'site_name_belum' => 'Store name is empty. The site title, invoices, and emails will use the fallback name.',
+            'contact_email_belum' => 'Public contact email is not set. Customers have no email address to reach.',
+            'mail_belum' => 'SMTP is selected but the host is empty. Order and notification emails will not be sent.',
+            'paypal_kredensial_belum' => 'PayPal is enabled but the Client ID or Secret is missing (or still a placeholder). PayPal checkout will fail.',
+            'paypal_webhook_belum' => 'PayPal webhook ID is not set. Automatic payment confirmation from PayPal will be rejected.',
+            'pesanan_hari_ini' => 'Orders today',
+            'stok_menipis' => 'Low stock',
+            'pesanan_belum_bayar' => ':jumlah orders unpaid for more than 24 hours.',
+            'pesan_belum_dibaca' => ':jumlah contact messages unread.',
+            'produk_tanpa_gambar' => ':jumlah products have no image.',
         ],
-        "cadangan" => [
-            "gagal" => "Backup failed: :pesan",
-            "berhasil" => "Backup created: :berkas",
-            "tidak_ada" => "Backup file not found.",
-            "dihapus" => "Backup deleted.",
+        'cadangan' => [
+            'gagal' => 'Backup failed: :pesan',
+            'berhasil' => 'Backup created: :berkas',
+            'tidak_ada' => 'Backup file not found.',
+            'dihapus' => 'Backup deleted.',
         ],
-        "faq" => [
-            "pertanyaan_id_wajib" => "The question is required.",
-            "jawaban_id_wajib" => "The answer is required.",
-            "jawaban_terlalu_pendek" => "The answer must be at least ten characters — a one-word answer helps no one.",
-            "kelompok_tidak_dikenal" => "Unknown group.",
-            "disimpan_baru" => "New FAQ saved.",
-            "disimpan" => "Changes saved.",
-            "dinonaktifkan" => "FAQ deactivated — no longer shown on the site.",
-            "dihapus" => "FAQ deleted.",
-            "urutan_disimpan" => "FAQ order saved.",
+        'faq' => [
+            'pertanyaan_id_wajib' => 'The question is required.',
+            'jawaban_id_wajib' => 'The answer is required.',
+            'jawaban_terlalu_pendek' => 'The answer must be at least ten characters — a one-word answer helps no one.',
+            'kelompok_tidak_dikenal' => 'Unknown group.',
+            'disimpan_baru' => 'New FAQ saved.',
+            'disimpan' => 'Changes saved.',
+            'dinonaktifkan' => 'FAQ deactivated — no longer shown on the site.',
+            'dihapus' => 'FAQ deleted.',
+            'urutan_disimpan' => 'FAQ order saved.',
         ],
-        "hero" => [
-            "batas_slide" => "The slide limit has been reached. Delete one before adding another.",
-            "urutan_disimpan" => "Slide order saved.",
-            "minimal_satu_aktif" => "At least one slide must stay active. Activate another slide before deactivating this one.",
-            "belum_punya_berkas" => "This slide has no file yet. Upload an image or video before activating it.",
-            "satu_satunya_aktif" => "This is the only active slide. Activate another slide before deleting it.",
-            "dihapus" => "Slide deleted.",
-            "tersimpan" => "Slide saved.",
-            "judul_id_wajib" => "The slide title is required.",
-            "judul_en_wajib" => "The English title is required.",
-            "tanggal_terbalik" => "The end date cannot come before the start date.",
-            "ada_isian_salah" => "Some fields need fixing.",
-            "video_tanpa_berkas" => "A video slide must have a video file.",
-            "gagal_simpan" => "The hero slide could not be saved.",
+        'hero' => [
+            'batas_slide' => 'The slide limit has been reached. Delete one before adding another.',
+            'urutan_disimpan' => 'Slide order saved.',
+            'minimal_satu_aktif' => 'At least one slide must stay active. Activate another slide before deactivating this one.',
+            'belum_punya_berkas' => 'This slide has no file yet. Upload an image or video before activating it.',
+            'satu_satunya_aktif' => 'This is the only active slide. Activate another slide before deleting it.',
+            'dihapus' => 'Slide deleted.',
+            'tersimpan' => 'Slide saved.',
+            'judul_id_wajib' => 'The slide title is required.',
+            'judul_en_wajib' => 'The English title is required.',
+            'tanggal_terbalik' => 'The end date cannot come before the start date.',
+            'ada_isian_salah' => 'Some fields need fixing.',
+            'video_tanpa_berkas' => 'A video slide must have a video file.',
+            'gagal_simpan' => 'The hero slide could not be saved.',
         ],
-        "kategori" => [
-            "nama_id_wajib" => "The category name is required.",
-            "slug_format" => "The slug may only contain lowercase letters, numbers, and hyphens.",
-            "slug_dipakai" => "This slug is already used by another category.",
-            "dihapus" => "Category deleted.",
-            "tersimpan" => "Category saved.",
-            "urutan_disimpan" => "Category order saved.",
-            "berhasil_dihapus" => ":nama deleted.",
+        'kategori' => [
+            'nama_id_wajib' => 'The category name is required.',
+            'slug_format' => 'The slug may only contain lowercase letters, numbers, and hyphens.',
+            'slug_dipakai' => 'This slug is already used by another category.',
+            'dihapus' => 'Category deleted.',
+            'tersimpan' => 'Category saved.',
+            'urutan_disimpan' => 'Category order saved.',
+            'berhasil_dihapus' => ':nama deleted.',
         ],
-        "keamanan" => [
-            "sidik_salah" => "Invalid address fingerprint.",
-            "blokir_tidak_ada" => "The block for this address no longer exists.",
-            "diblokir_manual" => "Blocked manually by :oleh",
-            "diblokir_selama" => "Address blocked for :lama",
-            "dibuka" => "Block removed.",
-            "percobaan_dibersihkan" => "Finished attempts cleared.",
+        'keamanan' => [
+            'sidik_salah' => 'Invalid address fingerprint.',
+            'blokir_tidak_ada' => 'The block for this address no longer exists.',
+            'diblokir_manual' => 'Blocked manually by :oleh',
+            'diblokir_selama' => 'Address blocked for :lama',
+            'dibuka' => 'Block removed.',
+            'percobaan_dibersihkan' => 'Finished attempts cleared.',
         ],
-        "keranjang" => [
-            "dibuang" => ":jumlah old carts discarded.",
-            "tidak_ada" => "No abandoned carts.",
+        'keranjang' => [
+            'dibuang' => ':jumlah old carts discarded.',
+            'tidak_ada' => 'No abandoned carts.',
         ],
-        "kupon" => [
-            "kode_wajib" => "The coupon code is required.",
-            "kode_format" => "The code may only contain letters, numbers, hyphens, and underscores.",
-            "kode_dipakai" => "This code is already used by another coupon.",
-            "nilai_wajib" => "The discount value is required.",
-            "nilai_angka" => "The discount value must be a number.",
-            "tanggal_terbalik" => "The end date must come after the start date.",
-            "slug_kol_format" => "The KOL slug may only contain lowercase letters, numbers, and hyphens.",
-            "slug_kol_dipakai" => "This slug is already used by another KOL.",
-            "tersimpan" => "Coupon saved.",
-            "dihapus" => "Coupon deleted.",
-            "dinonaktifkan" => "Coupon deactivated.",
+        'kupon' => [
+            'kode_wajib' => 'The coupon code is required.',
+            'kode_format' => 'The code may only contain letters, numbers, hyphens, and underscores.',
+            'kode_dipakai' => 'This code is already used by another coupon.',
+            'nilai_wajib' => 'The discount value is required.',
+            'nilai_angka' => 'The discount value must be a number.',
+            'tanggal_terbalik' => 'The end date must come after the start date.',
+            'slug_kol_format' => 'The KOL slug may only contain lowercase letters, numbers, and hyphens.',
+            'slug_kol_dipakai' => 'This slug is already used by another KOL.',
+            'tersimpan' => 'Coupon saved.',
+            'dihapus' => 'Coupon deleted.',
+            'dinonaktifkan' => 'Coupon deactivated.',
         ],
-        "notifikasi" => [
-            "sudah_terdaftar" => "This push address is already registered to another account.",
-            "dimatikan" => "Notifications turned off for your device.",
-            "uji_terkirim" => "Test notification sent.",
-            "belum_terkirim" => "Not sent yet.",
-            "uji_isi" => "This is a test notification from the :toko panel.",
+        'notifikasi' => [
+            'sudah_terdaftar' => 'This push address is already registered to another account.',
+            'endpoint_tidak_sah' => 'This push address is not from a recognised notification service.',
+            'dimatikan' => 'Notifications turned off for your device.',
+            'uji_terkirim' => 'Test notification sent.',
+            'belum_terkirim' => 'Not sent yet.',
+            'uji_isi' => 'This is a test notification from the :toko panel.',
         ],
-        "pelanggan" => [
-            "tidak_dapat_diblokir" => "The account in use cannot be blocked.",
-            "super_blokir_super" => "Only a super admin can block another super admin.",
-            "super_terakhir_blokir" => "This is the last super admin. Blocking it would leave the panel unmanageable.",
-            "diblokir" => "Account blocked.",
-            "dibuka_blokir" => "Account unblocked.",
-            "peran_tidak_dikenal" => "Unknown role.",
-            "peran_sendiri" => "You cannot change your own account role.",
-            "hanya_super_ubah" => "Only a super admin can change roles.",
-            "dihapus" => "Account deleted.",
-            "punya_pesanan" => "This account has orders and cannot be deleted.",
+        'pelanggan' => [
+            'tidak_dapat_diblokir' => 'The account in use cannot be blocked.',
+            'super_blokir_super' => 'Only a super admin can block another super admin.',
+            'super_terakhir_blokir' => 'This is the last super admin. Blocking it would leave the panel unmanageable.',
+            'diblokir' => 'Account blocked.',
+            'dibuka_blokir' => 'Account unblocked.',
+            'peran_tidak_dikenal' => 'Unknown role.',
+            'peran_sendiri' => 'You cannot change your own account role.',
+            'hanya_super_ubah' => 'Only a super admin can change roles.',
+            'dihapus' => 'Account deleted.',
+            'punya_pesanan' => 'This account has orders and cannot be deleted.',
         ],
-        "pengaturan" => [
-            "tidak_ada_perubahan" => "There are no changes to save.",
-            "gagal_tab" => "Could not save settings tab :tab",
-            "gagal" => "Settings could not be saved",
-            "gagal_periksa" => "Settings could not be saved. Check the fields on this tab.",
-            "tersimpan" => "Settings saved.",
-            "uji_gagal_jalan" => "The test could not run: :pesan",
-            "cek_log" => "check the logs for details",
-            "isi_email_dulu" => "Fill in \"Admin email\" with a valid address first — the test email is sent there.",
-            "email_uji_terkirim" => "Test email sent to :email.",
-            "email_uji_gagal" => "The test email failed to send.",
-            "paypal_ok" => "PayPal connection succeeded.",
-            "paypal_gagal" => "PayPal connection failed: :pesan",
-            "kredensial_dihapus" => "Stored credentials deleted.",
+        'pengaturan' => [
+            'tidak_ada_perubahan' => 'There are no changes to save.',
+            'gagal_tab' => 'Could not save settings tab :tab',
+            'gagal' => 'Settings could not be saved',
+            'gagal_periksa' => 'Settings could not be saved. Check the fields on this tab.',
+            'tersimpan' => 'Settings saved.',
+            'uji_gagal_jalan' => 'The test could not run: :pesan',
+            'cek_log' => 'check the logs for details',
+            'isi_email_dulu' => 'Fill in "Admin email" with a valid address first — the test email is sent there.',
+            'email_uji_terkirim' => 'Test email sent to :email.',
+            'email_uji_gagal' => 'The test email failed to send.',
+            'paypal_ok' => 'PayPal connection succeeded.',
+            'paypal_gagal' => 'PayPal connection failed: :pesan',
+            'kredensial_dihapus' => 'Stored credentials deleted.',
         ],
-        "pengguna" => [
-            "proses_pesanan" => "Process orders, print tracking slips",
-            "turunkan_lewat_pelanggan" => "To demote to Customer, use the Customers page.",
-            "peran_sendiri" => "You cannot change your own account role.",
-            "naikkan_lewat_pelanggan" => "Customer accounts are promoted from the Customers page.",
-            "hanya_super_ubah" => "Only a super admin can change roles.",
-            "super_terakhir_turun" => "This is the last super admin. Its role cannot be lowered.",
-            "tidak_dapat_diblokir" => "The account in use cannot be blocked.",
-            "super_blokir_super" => "Only a super admin can block another super admin.",
-            "peran_diubah" => "Role changed.",
-            "diblokir" => "Account blocked.",
-            "dibuka_blokir" => "Account unblocked.",
+        'pengguna' => [
+            'proses_pesanan' => 'Process orders, print tracking slips',
+            'turunkan_lewat_pelanggan' => 'To demote to Customer, use the Customers page.',
+            'peran_sendiri' => 'You cannot change your own account role.',
+            'naikkan_lewat_pelanggan' => 'Customer accounts are promoted from the Customers page.',
+            'hanya_super_ubah' => 'Only a super admin can change roles.',
+            'super_terakhir_turun' => 'This is the last super admin. Its role cannot be lowered.',
+            'tidak_dapat_diblokir' => 'The account in use cannot be blocked.',
+            'super_blokir_super' => 'Only a super admin can block another super admin.',
+            'peran_diubah' => 'Role changed.',
+            'diblokir' => 'Account blocked.',
+            'dibuka_blokir' => 'Account unblocked.',
         ],
-        "pesan" => [
-            "ditandai_dibaca" => "Marked as read.",
-            "ditandai_belum_dibaca" => "Marked as unread.",
-            "tanda_balas_dilepas" => "Replied mark removed.",
-            "ditandai_dibalas" => "Marked as replied.",
-            "dihapus" => "Message deleted.",
-            "massal_dibaca" => ":jumlah messages marked as read.",
+        'pesan' => [
+            'ditandai_dibaca' => 'Marked as read.',
+            'ditandai_belum_dibaca' => 'Marked as unread.',
+            'tanda_balas_dilepas' => 'Replied mark removed.',
+            'ditandai_dibalas' => 'Marked as replied.',
+            'dihapus' => 'Message deleted.',
+            'massal_dibaca' => ':jumlah messages marked as read.',
         ],
-        "pesanan" => [
-            "lunas_dari_daftar" => "Marked as paid from the order list",
-            "gagal_pindah" => "The order status could not be changed.",
-            "pengiriman_disimpan" => "Shipping details saved.",
-            "pembayaran_diverifikasi" => "Payment verified. The order is marked as paid.",
-            "gagal_verifikasi" => "Verification failed: :pesan",
-            "alasan_wajib" => "A rejection reason is required so the buyer knows what to fix.",
-            "gagal_tolak" => "Rejection failed: :pesan",
-            "notif_tidak_dikenal" => "Unknown notification type.",
-            "tanpa_kontak" => "This order has neither an email nor a phone number for the buyer.",
-            "notif_terkirim" => "Notification sent.",
-            "tidak_ada_ubah" => "No changes to apply.",
+        'pesanan' => [
+            'lunas_dari_daftar' => 'Marked as paid from the order list',
+            'gagal_pindah' => 'The order status could not be changed.',
+            'pengiriman_disimpan' => 'Shipping details saved.',
+            'pembayaran_diverifikasi' => 'Payment verified. The order is marked as paid.',
+            'gagal_verifikasi' => 'Verification failed: :pesan',
+            'alasan_wajib' => 'A rejection reason is required so the buyer knows what to fix.',
+            'gagal_tolak' => 'Rejection failed: :pesan',
+            'notif_tidak_dikenal' => 'Unknown notification type.',
+            'tanpa_kontak' => 'This order has neither an email nor a phone number for the buyer.',
+            'notif_terkirim' => 'Notification sent.',
+            'tidak_ada_ubah' => 'No changes to apply.',
         ],
-        "produk" => [
-            "dilewati_tanpa_varian" => "skipped: no variants yet.",
-            "ditarik" => "product removed from the catalog.",
-            "tidak_unggulan" => "product is no longer featured.",
-            "kategori_tidak_ada" => "Destination category not found.",
-            "dilewati_sudah_dipesan" => "skipped: already ordered. Just unpublish it from the catalog.",
-            "dihapus" => "product deleted.",
-            "massal_dihapus" => "products deleted",
-            "kategori_tidak_ditemukan" => "The selected category does not exist.",
-            "sku_wajib" => "SKU is required.",
-            "sku_format" => "The SKU may only contain letters, numbers, hyphens, and underscores.",
-            "sku_dipakai" => "This SKU is already used by another product.",
-            "nama_id_wajib" => "The product name is required.",
-            "slug_format" => "The slug may only contain lowercase letters, numbers, and hyphens.",
-            "slug_dipakai" => "This slug is already used by another product.",
-            "harga_wajib" => "The base price is required.",
-            "harga_angka" => "The base price must be a number.",
-            "berat_angka" => "Weight must be a number.",
-            "tersimpan" => "Product saved.",
-            "varian_tersimpan" => "Variant saved.",
-            "varian_dihapus" => "Variant deleted.",
-            "gambar_diunggah" => "Image uploaded.",
-            "gambar_dihapus" => "Image deleted.",
-            "gambar_utama" => "Main image set.",
-            "urutan_gambar" => "Image order saved.",
-            "stok_negatif" => "Stock cannot be negative.",
+        'produk' => [
+            'dilewati_tanpa_varian' => 'skipped: no variants yet.',
+            'ditarik' => 'product removed from the catalog.',
+            'tidak_unggulan' => 'product is no longer featured.',
+            'kategori_tidak_ada' => 'Destination category not found.',
+            'dilewati_sudah_dipesan' => 'skipped: already ordered. Just unpublish it from the catalog.',
+            'dihapus' => 'product deleted.',
+            'massal_dihapus' => 'products deleted',
+            'kategori_tidak_ditemukan' => 'The selected category does not exist.',
+            'sku_wajib' => 'SKU is required.',
+            'sku_format' => 'The SKU may only contain letters, numbers, hyphens, and underscores.',
+            'sku_dipakai' => 'This SKU is already used by another product.',
+            'nama_id_wajib' => 'The product name is required.',
+            'slug_format' => 'The slug may only contain lowercase letters, numbers, and hyphens.',
+            'slug_dipakai' => 'This slug is already used by another product.',
+            'harga_wajib' => 'The base price is required.',
+            'harga_angka' => 'The base price must be a number.',
+            'berat_angka' => 'Weight must be a number.',
+            'tersimpan' => 'Product saved.',
+            'varian_tersimpan' => 'Variant saved.',
+            'varian_dihapus' => 'Variant deleted.',
+            'gambar_diunggah' => 'Image uploaded.',
+            'gambar_dihapus' => 'Image deleted.',
+            'gambar_utama' => 'Main image set.',
+            'urutan_gambar' => 'Image order saved.',
+            'stok_negatif' => 'Stock cannot be negative.',
         ],
     ],
 
     /* Pesan tahap-2: kalimat bervariabel. */
     'msg2' => [
-        "hero" => [
-            "gagal_simpan_periksa" => "The hero slide could not be saved. Check the fields and the image file again.",
+        'hero' => [
+            'gagal_simpan_periksa' => 'The hero slide could not be saved. Check the fields and the image file again.',
         ],
-        "kupon" => [
-            "persen_maks" => "The percentage discount cannot exceed 100%.",
-            "nominal_nol" => "The fixed discount must be greater than zero.",
-            "sudah_dipakai" => "This coupon has been used for :jumlah orders. Deactivate it instead of deleting it.",
+        'kupon' => [
+            'persen_maks' => 'The percentage discount cannot exceed 100%.',
+            'nominal_nol' => 'The fixed discount must be greater than zero.',
+            'sudah_dipakai' => 'This coupon has been used for :jumlah orders. Deactivate it instead of deleting it.',
         ],
-        "masuk" => [
-            "login_diblokir" => "Admin sign-in blocked for :detik seconds",
-            "akun_diblokir" => "Blocked account attempted to sign in",
+        'masuk' => [
+            'login_diblokir' => 'Admin sign-in blocked for :detik seconds',
+            'akun_diblokir' => 'Blocked account attempted to sign in',
         ],
-        "pelanggan" => [
-            "tidak_dapat_dihapus" => "The account in use cannot be deleted.",
-            "super_terakhir_hapus" => "This is the last super admin and cannot be deleted.",
+        'pelanggan' => [
+            'tidak_dapat_dihapus' => 'The account in use cannot be deleted.',
+            'super_terakhir_hapus' => 'This is the last super admin and cannot be deleted.',
         ],
-        "pengaturan" => [
-            "email_uji_isi" => "This is a test email from the :toko panel. Check your inbox (and spam folder) within a few minutes.",
-            "maps_hint" => "Paste the embed code from Google Maps, or fill in the coordinates below.",
-            "nilai_tersembunyi" => "Stored values can no longer be displayed. Retype only if you want to replace them.",
-            "bantuan_stok_habis" => "Variants that truly cannot be ordered again. Most urgent.",
-            "bantuan_stok_menipis" => "Variants whose remaining stock is below the low-stock threshold.",
-            "bantuan_perlu_dikirim" => "Paid orders that have not shipped yet.",
-            "bantuan_hampir_batal" => "Orders awaiting payment that are close to the 24-hour limit.",
-            "bantuan_keranjang" => "Carts still active in the last 24 hours.",
-            "bantuan_push" => "Panel notifications appear in the browser even when the panel is closed. Requires browser permission, once per device.",
+        'pengaturan' => [
+            'email_uji_isi' => 'This is a test email from the :toko panel. Check your inbox (and spam folder) within a few minutes.',
+            'maps_hint' => 'Paste the embed code from Google Maps, or fill in the coordinates below.',
+            'nilai_tersembunyi' => 'Stored values can no longer be displayed. Retype only if you want to replace them.',
+            'bantuan_stok_habis' => 'Variants that truly cannot be ordered again. Most urgent.',
+            'bantuan_stok_menipis' => 'Variants whose remaining stock is below the low-stock threshold.',
+            'bantuan_perlu_dikirim' => 'Paid orders that have not shipped yet.',
+            'bantuan_hampir_batal' => 'Orders awaiting payment that are close to the 24-hour limit.',
+            'bantuan_keranjang' => 'Carts still active in the last 24 hours.',
+            'bantuan_push' => 'Panel notifications appear in the browser even when the panel is closed. Requires browser permission, once per device.',
         ],
-        "produk" => [
-            "sudah_dipesan" => "This product has already been ordered, so it is not deleted. Just unpublish it from the catalog.",
-            "ditarik_singkat" => "Product removed from the catalog.",
-            "tanpa_varian_terbit" => "The product has no variants yet, so it cannot be published.",
-            "berat_wajib" => "Weight is required because it is used to calculate shipping.",
+        'produk' => [
+            'sudah_dipesan' => 'This product has already been ordered, so it is not deleted. Just unpublish it from the catalog.',
+            'ditarik_singkat' => 'Product removed from the catalog.',
+            'tanpa_varian_terbit' => 'The product has no variants yet, so it cannot be published.',
+            'berat_wajib' => 'Weight is required because it is used to calculate shipping.',
         ],
     ],
 

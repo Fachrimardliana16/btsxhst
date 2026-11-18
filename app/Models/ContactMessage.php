@@ -4,10 +4,13 @@ namespace App\Models;
 
 use App\Models\Concerns\PunyaIndeksButa;
 use App\Models\Concerns\PunyaUlid;
+use App\Support\BlindIndex;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Crypt;
 
 class ContactMessage extends Model
 {
@@ -26,10 +29,13 @@ class ContactMessage extends Model
         'replied_by',
     ];
 
-    /** @var array<string, string> */
-    protected array $indeksButa = [
-        'email' => 'email_bidx',
-    ];
+    /** @return array<string, string> */
+    protected function petaIndeksButa(): array
+    {
+        return [
+            'email' => 'email_bidx',
+        ];
+    }
 
     protected function casts(): array
     {
@@ -92,7 +98,7 @@ class ContactMessage extends Model
         // Sidik jari email dicari PERSIS, bukan dengan LIKE: LIKE pada HMAC
         // tidak pernah cocok karena satu karakter berbeda menghasilkan hash
         // yang sama sekali tak berkaitan.
-        return $query->where('email_bidx', \App\Support\BlindIndex::buat($kata, 'email_bidx'));
+        return $query->where('email_bidx', BlindIndex::buat($kata, 'email_bidx'));
     }
 
     /**
@@ -157,10 +163,8 @@ class ContactMessage extends Model
         }
 
         try {
-            $hasil = \Illuminate\Support\Facades\Crypt::decryptString((string) $value);
-
-            return is_string($hasil) ? $hasil : (string) $value;
-        } catch (\Illuminate\Contracts\Encryption\DecryptException) {
+            return Crypt::decryptString((string) $value);
+        } catch (DecryptException) {
             return (string) $value;
         }
     }

@@ -90,7 +90,7 @@
         <button type="button"
                 @click="sebelumnya()"
                 class="group absolute left-3 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition-all duration-200 hover:scale-110 hover:border-promo hover:bg-black/60 hover:text-promo md:left-6 md:h-14 md:w-14"
-                aria-label="Slide sebelumnya">
+                aria-label="{{ __('site.home.hero_prev') }}">
             <x-ikon name="chevron-left" :size="24" class="transition-transform group-hover:-translate-x-0.5" />
         </button>
 
@@ -98,7 +98,7 @@
         <button type="button"
                 @click="berikutnya()"
                 class="group absolute right-3 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition-all duration-200 hover:scale-110 hover:border-promo hover:bg-black/60 hover:text-promo md:right-6 md:h-14 md:w-14"
-                aria-label="Slide berikutnya">
+                aria-label="{{ __('site.home.hero_next') }}">
             <x-ikon name="chevron-right" :size="24" class="transition-transform group-hover:translate-x-0.5" />
         </button>
     @endif
@@ -188,7 +188,7 @@
                         <button type="button"
                                 @click="i = {{ $idx }}; berhenti()"
                                 class="flex h-6 w-6 items-center justify-center rounded-full"
-                                aria-label="Pilih slide {{ $idx + 1 }}">
+                                aria-label="{{ __('site.home.hero_pick', ['n' => $idx + 1]) }}">
                             <span class="block h-2 rounded-full transition-all duration-300"
                                   :class="i === {{ $idx }} ? 'w-6 bg-promo' : 'w-2 bg-white/40 group-hover:bg-white/70'"></span>
                         </button>
@@ -198,7 +198,7 @@
                 <button type="button"
                         @click="jeda = !jeda; jeda ? berhenti() : mulai()"
                         class="ml-1 flex h-6 w-6 items-center justify-center text-white/60 hover:text-white"
-                        aria-label="Jeda atau putar slide otomatis"
+                        aria-label="{{ __('site.home.hero_toggle') }}"
                         :title="jeda ? 'Putar slide' : 'Jeda slide'">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                         <g x-show="!jeda"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></g>

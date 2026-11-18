@@ -46,7 +46,7 @@ class PenulisPengaturan
 
         $perubahan = [];
 
-        DB::transaction(function () use ($baris, $nilai, $lama, $userId, &$perubahan): void {
+        DB::transaction(function () use ($baris, $nilai, $userId, &$perubahan): void {
             foreach ($baris as $setting) {
                 $nilaiBaru = $this->normalisasi($setting->type, $nilai[$setting->key]);
 
@@ -238,7 +238,7 @@ class PenulisPengaturan
         };
     }
 
-    private function normalisasi(string $type, mixed $nilai): ?string
+    private function normalisasi(string $type, mixed $nilai): string
     {
         if ($nilai === null || $nilai === '') {
             return $type === 'boolean' ? '0' : '';

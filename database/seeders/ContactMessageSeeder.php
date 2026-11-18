@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\ContactMessage;
+use App\Support\BlindIndex;
 use Illuminate\Database\Seeder;
 
 class ContactMessageSeeder extends Seeder
@@ -27,7 +28,7 @@ class ContactMessageSeeder extends Seeder
             // di setiap seeding. Email punya indeks buta (email_bidx) yang
             // stabil — sama untuk nilai yang sama.
             ContactMessage::query()->updateOrCreate(
-                ['email_bidx' => \App\Support\BlindIndex::buat($email, 'email_bidx')],
+                ['email_bidx' => BlindIndex::buat($email, 'email_bidx')],
                 [
                     'name' => $nama,
                     'email' => $email,

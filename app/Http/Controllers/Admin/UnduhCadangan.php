@@ -40,22 +40,22 @@ class UnduhCadangan
         $nama = basename($berkas);
 
         if ($nama !== $berkas || ! preg_match('/^iksan-[\w.-]+\.sqlite$/', $nama)) {
-            abort(404, 'Nama cadangan tidak sah.');
+            abort(404, 'Invalid backup file name.');
         }
 
         $folder = realpath(storage_path('app/backup'));
 
         if ($folder === false) {
-            abort(404, 'Folder cadangan belum ada.');
+            abort(404, 'The backup folder does not exist.');
         }
 
         $jalur = realpath($folder.DIRECTORY_SEPARATOR.$nama);
 
         // realpath mengikuti symlink dan menormalkan "..", jadi berkas di luar
         // folder cadangan tidak akan lolos walau namanya lolos pola di atas.
-        abort_if($jalur === false || ! str_starts_with($jalur, $folder.DIRECTORY_SEPARATOR), 404, 'Cadangan tidak ditemukan.');
+        abort_if($jalur === false || ! str_starts_with($jalur, $folder.DIRECTORY_SEPARATOR), 404, 'Backup file not found.');
 
-        abort_unless(is_file($jalur), 404, 'Cadangan tidak ditemukan.');
+        abort_unless(is_file($jalur), 404, 'Backup file not found.');
 
         $mime = @mime_content_type($jalur) ?: 'application/octet-stream';
 

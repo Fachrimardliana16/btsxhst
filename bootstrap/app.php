@@ -3,8 +3,8 @@
 use App\Http\Middleware\BatasiLaju;
 use App\Http\Middleware\BlokirIp;
 use App\Http\Middleware\CacheAset;
-use App\Http\Middleware\CacheHalaman;
 use App\Http\Middleware\CatatKeamanan;
+use App\Http\Middleware\ModePemeliharaan;
 use App\Http\Middleware\PastikanAdmin;
 use App\Http\Middleware\PercayaiProxy;
 use App\Http\Middleware\SecurityHeaders;
@@ -94,19 +94,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // melewati grup web, dan di sanalah sebagian besar bita berada.
         $middleware->append(CacheAset::class);
 
-        // Cache halaman publik. Ditaruh SESUDAH grup web (jadi sesi sudah
-        // dimulai dan $request->user() dapat dibaca), tetapi sebelum
-        // pengendali berjalan. Rute yang tidak boleh disimpan ditolak di
-        // dalam middlewarenya sendiri.
-        $middleware->web(append: [CacheHalaman::class]);
-
-        /* Mode pemeliharaan dari panel.
-         *
-         * Dipasang SETELAH cache halaman: halaman yang tersimpan di cache
-         * tidak boleh disajikan ketika toko sedang ditutup. Middleware ini
-         * berjalan lebih dulu pada permintaan (urutan append), lalu memutus
-         * rantai sebelum cache sempat menyajikan apa pun. */
-        $middleware->web(append: [\App\Http\Middleware\ModePemeliharaan::class]);
+        // Mode pemeliharaan dari panel.
+        $middleware->web(append: [ModePemeliharaan::class]);
 
         $middleware->web(append: [
             SecurityHeaders::class,

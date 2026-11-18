@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\PunyaUlid;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
@@ -181,9 +182,9 @@ class ProductLike extends Model
      * Dipakai sebagai parameter iklan: produk yang dibutuhkan pembeli, bukan
      * produk yang menurut toko bagus.
      *
-     * @return Collection<int, object>
+     * @return EloquentCollection<int, static>
      */
-    public static function terpopuler(int $batas = 10)
+    public static function terpopuler(int $batas = 10): EloquentCollection
     {
         return static::query()
             ->join('products', 'products.id', '=', 'product_likes.product_id')

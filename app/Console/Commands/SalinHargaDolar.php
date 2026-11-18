@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\Product;
-use App\Models\ProductVariant;
 use App\Support\HargaDolar;
 use Illuminate\Console\Command;
 
@@ -43,7 +42,10 @@ class SalinHargaDolar extends Command
         $produk = 0;
         $varian = 0;
 
-        foreach (Product::query()->cursor() as $p) {
+        // Varian dimuat bersama produknya. Tanpa eager load, satu kueri
+        // tambahan dijalankan untuk setiap produk — pada katalog besar itu
+        // ribuan kueri untuk data yang bisa diambil seratus per potongan.
+        foreach (Product::query()->with('variants')->lazyById(100) as $p) {
             $sudahAda = (float) ($p->base_price_usd ?? 0) > 0;
 
             if (! $sudahAda || $paksa) {

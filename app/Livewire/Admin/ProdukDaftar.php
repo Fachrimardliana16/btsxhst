@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\WithPagination;
-use Throwable;
 
 /**
  * Daftar produk (checklist F3-02).

@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property array<int, string>|null $two_factor_recovery_codes Daftar kode pemulihan, terenkripsi utuh di basis data.
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -34,10 +37,13 @@ class User extends Authenticatable
         'two_factor_recovery_codes',
     ];
 
-    /** @var array<string, string> */
-    protected array $indeksButa = [
-        'email' => 'email_bidx',
-    ];
+    /** @return array<string, string> */
+    protected function petaIndeksButa(): array
+    {
+        return [
+            'email' => 'email_bidx',
+        ];
+    }
 
     protected function casts(): array
     {
@@ -82,9 +88,7 @@ class User extends Authenticatable
 
     public function admin(): bool
     {
-        return $this->role instanceof PeranPengguna
-            ? $this->role->bisaMasukPanel()
-            : false;
+        return $this->role->bisaMasukPanel();
     }
 
     public function superAdmin(): bool

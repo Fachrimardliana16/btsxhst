@@ -49,12 +49,21 @@ class Faq extends Model
 
     // ULID dan nama rute publik disediakan trait PunyaUlid; tidak diulang di sini.
 
-    /** Hanya yang aktif, urut sesuai pengaturan admin. */
+    /**
+     * Hanya yang aktif, urut sesuai pengaturan admin.
+     *
+     * @param  Builder<Faq>  $q
+     * @return Builder<Faq>
+     */
     public function scopeAktif(Builder $q): Builder
     {
         return $q->where('is_active', true)->orderBy('display_order')->orderBy('id');
     }
 
+    /**
+     * @param  Builder<Faq>  $q
+     * @return Builder<Faq>
+     */
     public function scopeBeranda(Builder $q): Builder
     {
         return $q->aktif()->where('tampil_di_beranda', true);

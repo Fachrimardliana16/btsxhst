@@ -1,5 +1,5 @@
 @include('errors.layout', [
     'kode' => 503,
-    'headline' => 'Sedang pemeliharaan',
-    'pesan' => 'Situs sementara tidak dapat diakses. Kami segera kembali.',
+    'headline' => __('site.errors.503_title'),
+    'pesan' => __('site.errors.503_body'),
 ])

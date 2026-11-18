@@ -4,10 +4,15 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Policies\KebijakanPanel;
+use App\Services\Keranjang;
+use App\Support\KonfigurasiMail;
 use Illuminate\Database\Events\ConnectionEstablished;
+use Illuminate\Foundation\Events\DiagnosingHealth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
         // permintaan. Kueri itu sama persis, jadi mengulanginya hanya membakar
         // koneksi basis data. Pada muat pertama (keranjang belum ada) efeknya
         // paling terasa: tiap panggilan mengulang pencarian "belum ada".
-        $this->app->singleton(\App\Services\Keranjang::class);
+        $this->app->singleton(Keranjang::class);
     }
 
     public function boot(): void
@@ -43,7 +48,36 @@ class AppServiceProvider extends ServiceProvider
          * Harus dijalankan di sini — SEBELUM mailer dibuat — karena Laravel
          * menyimpan MailManager di container saat pertama dipakai. Mengubah
          * config('mail.*') setelah mailer jadi tidak berpengaruh. */
-        \App\Support\KonfigurasiMail::terapkan();
+        KonfigurasiMail::terapkan();
+
+        $this->periksaKesehatan();
+    }
+
+    /**
+     * `/up` bawaan hanya membuktikan PHP dapat boot. Mesin yang basis datanya
+     * terkunci, cache-nya tidak dapat ditulis, atau disknya penuh tetap
+     * menjawab 200 — dan pemantau tidak pernah tahu toko sedang tidak bisa
+     * melayani pesanan.
+     */
+    private function periksaKesehatan(): void
+    {
+        Event::listen(DiagnosingHealth::class, function (): void {
+            DB::connection()->select('select 1');
+
+            $kunci = 'kesehatan:'.bin2hex(random_bytes(4));
+
+            Cache::put($kunci, 'ok', 10);
+
+            if (Cache::get($kunci) !== 'ok') {
+                throw new \RuntimeException('Cache cannot be written.');
+            }
+
+            Cache::forget($kunci);
+
+            if (! is_writable(storage_path())) {
+                throw new \RuntimeException('Storage directory is not writable.');
+            }
+        });
     }
 
     /**

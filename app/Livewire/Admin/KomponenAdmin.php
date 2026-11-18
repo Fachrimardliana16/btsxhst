@@ -2,7 +2,11 @@
 
 namespace App\Livewire\Admin;
 
+use App\Enums\TipeKejadianKeamanan;
 use App\Models\User;
+use App\Support\Keamanan;
+use App\Support\SesiAdmin;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Livewire\Component;
 
 /**
@@ -33,6 +37,40 @@ abstract class KomponenAdmin extends Component
     public function boot(): void
     {
         $this->pastikanPenggunaPanel();
+        $this->pastikanSesiBelumKedaluwarsa();
+    }
+
+    /**
+     * Umur sesi juga berlaku untuk aksi Livewire.
+     *
+     * Middleware PastikanAdmin tidak berjalan pada /livewire/update, jadi
+     * tanpa pemeriksaan ini panel yang dibiarkan terbuka dapat terus dipakai
+     * setelah waktu tunggunya habis.
+     */
+    protected function pastikanSesiBelumKedaluwarsa(): void
+    {
+        // Permintaan /livewire/update selalu lewat grup `web` dan punya sesi.
+        // Pemeriksaan ini dilewati hanya pada pemanggilan tanpa HTTP — misalnya
+        // Livewire::test() yang tidak memasang session store.
+        if (! request()->hasSession()) {
+            return;
+        }
+
+        $sesi = request()->session();
+
+        if (! SesiAdmin::kedaluwarsa($sesi)) {
+            SesiAdmin::sentuh($sesi);
+
+            return;
+        }
+
+        auth()->logout();
+        $sesi->invalidate();
+        $sesi->regenerateToken();
+
+        throw new HttpResponseException(
+            redirect()->guest(route('admin.login'))->with('galat', 'Your session has ended. Please sign in again.')
+        );
     }
 
     /**
@@ -51,9 +89,9 @@ abstract class KomponenAdmin extends Component
 
         $peran = $pengguna->role;
 
-        if ($peran === null || ! $peran->bisaMasukPanel()) {
-            \App\Support\Keamanan::catat(
-                \App\Enums\TipeKejadianKeamanan::AksesTidakSah,
+        if (! $peran->bisaMasukPanel()) {
+            Keamanan::catat(
+                TipeKejadianKeamanan::AksesTidakSah,
                 request(),
                 $pengguna->email,
                 $pengguna->id,

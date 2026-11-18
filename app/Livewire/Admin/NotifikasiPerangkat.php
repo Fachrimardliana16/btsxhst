@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\PushSubscription;
+use App\Support\NotifikasiPush;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 
@@ -35,6 +36,14 @@ class NotifikasiPerangkat extends KomponenAdmin
         $pengguna = auth()->user();
 
         if ($pengguna === null) {
+            return;
+        }
+
+        // Endpoint akan dipanggil dari server, jadi hanya layanan push yang
+        // dikenal yang boleh disimpan.
+        if (! NotifikasiPush::endpointAman($endpoint)) {
+            $this->pesan = __('site.msg.notifikasi.endpoint_tidak_sah');
+
             return;
         }
 
@@ -97,7 +106,7 @@ class NotifikasiPerangkat extends KomponenAdmin
             return;
         }
 
-        $hasil = \App\Support\NotifikasiPush::ke(
+        $hasil = NotifikasiPush::ke(
             $pengguna,
             'Test notification',
             __('site.msg.notifikasi.uji_isi'),
@@ -139,7 +148,7 @@ class NotifikasiPerangkat extends KomponenAdmin
                 ->where('user_id', auth()->id())
                 ->count(),
             'kunciPublik' => config('services.vapid.public_key'),
-            'siap' => \App\Support\NotifikasiPush::siap(),
+            'siap' => NotifikasiPush::siap(),
         ])->title('Devices · Panel');
     }
 }

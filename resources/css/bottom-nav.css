@@ -113,7 +113,7 @@ html[data-typing] .nav-bawah {
     /* --r-sedang (12px) berbeda dari tombol (.btn = 10px). Slot ini adalah
        TOMBOL, jadi bentuknya mengikuti kelas tombol, bukan kelas panel. */
     border-radius: var(--r-btn);
-    color: #6b7280;
+    color: var(--c-text-dim);
     text-decoration: none;
     background: transparent;
     border: 0;

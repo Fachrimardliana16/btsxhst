@@ -4,8 +4,8 @@ namespace App\Support;
 
 use App\Models\Coupon;
 use App\Models\Order;
-use App\Support\Pengaturan;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * Kupon bertingkat dan program loyalitas (Fase 2: P2-06).
@@ -101,9 +101,9 @@ class KuponLanjutan
      */
     public static function beriKuponLoyalitas(int $userId): ?Coupon
     {
-        $ambang = (int) Pengaturan::instance()?->angka('loyalty_order_threshold', 3) ?: 3;
-        $persen = (float) Pengaturan::instance()?->angka('loyalty_discount_percent', 10) ?: 10.0;
-        $masaHari = (int) Pengaturan::instance()?->angka('loyalty_valid_days', 30) ?: 30;
+        $ambang = (int) Pengaturan::instance()->angka('loyalty_order_threshold', 3) ?: 3;
+        $persen = (float) Pengaturan::instance()->angka('loyalty_discount_percent', 10) ?: 10.0;
+        $masaHari = (int) Pengaturan::instance()->angka('loyalty_valid_days', 30) ?: 30;
 
         $selesai = Order::query()
             ->where('user_id', $userId)
@@ -129,7 +129,7 @@ class KuponLanjutan
             return null;
         }
 
-        $kode = 'LOYAL-'.$userId.'-'.strtoupper(\Illuminate\Support\Str::random(6));
+        $kode = 'LOYAL-'.$userId.'-'.strtoupper(Str::random(6));
 
         return Coupon::query()->create([
             'code' => $kode,

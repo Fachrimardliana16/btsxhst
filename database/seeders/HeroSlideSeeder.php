@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\HeroSlide;
 use App\Support\GambarContoh;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 class HeroSlideSeeder extends Seeder
 {
@@ -55,7 +56,7 @@ class HeroSlideSeeder extends Seeder
         foreach ($slides as $i => $slide) {
             $berkas = 'hero/slide-'.($i + 1).'.webp';
 
-            if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($berkas)) {
+            if (! Storage::disk('public')->exists($berkas)) {
                 $hasil = GambarContoh::buat(
                     folder: 'hero',
                     namaBerkas: 'slide-'.($i + 1).'.webp',

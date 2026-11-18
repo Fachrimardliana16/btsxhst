@@ -34,23 +34,37 @@ class PercayaiProxy
     {
         $proxies = config('iksan.trusted_proxies');
 
-        // Lingkungan lokal: cloudflared berjalan di mesin yang sama, jadi hanya
-        // 127.0.0.1 yang perlu dipercaya. BUKAN '*': itu membuat Laravel
-        // mempercayai X-Forwarded-For dari siapa pun, dan pemanggil dapat
-        // memalsukan alamat IP untuk melewati pembatas laju.
+        // Proxy berjalan di mesin yang sama (cloudflared → nginx → php-cgi),
+        // jadi loopback adalah satu-satunya alamat yang perlu dipercaya.
+        // BUKAN '*': itu membuat Laravel mempercayai X-Forwarded-For dari
+        // siapa pun, dan pemanggil dapat memalsukan alamat IP untuk melewati
+        // pembatas laju.
         if ($proxies === null || $proxies === '') {
-            $proxies = config('app.env') === 'local' ? '127.0.0.1' : null;
+            $proxies = '127.0.0.1,::1';
         }
 
-        if (is_string($proxies) && $proxies !== '') {
+        if (is_string($proxies)) {
             $daftar = $proxies === '*' ? ['*'] : array_map('trim', explode(',', $proxies));
 
-            // Hanya PROTO yang dibutuhkan di sini: skema HTTPS dari
-            // X-Forwarded-Proto. Alamat IP asli TIDAK dipercaya dari header,
-            // supaya pembatas laju tidak dapat dipalsukan.
-            // Hanya PROTO yang dipercaya. Setiap permintaan baru membawa set
-            // kosong, jadi diulang di sini — bukan sekali saat boot.
-            $request->setTrustedProxies($daftar, Request::HEADER_X_FORWARDED_PROTO);
+            // Alamat klien ikut dipercaya HANYA dari proxy di daftar ini.
+            // Tanpa X-Forwarded-For, semua pengunjung tampak sebagai
+            // 127.0.0.1: pembatas laju berbagi satu kuota untuk seluruh toko,
+            // dan satu blokir brute-force menutup situs bagi semua tamu.
+            $request->setTrustedProxies(
+                $daftar,
+                Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO,
+            );
+
+            // Cloudflare Tunnel kadang hanya mengirim CF-Connecting-IP.
+            // Dipakai sebagai cadangan, dan hanya bila permintaan memang
+            // datang dari proxy yang dipercaya.
+            $remote = (string) $request->server->get('REMOTE_ADDR', '');
+
+            if (! $request->headers->has('X-Forwarded-For')
+                && in_array($remote, $daftar, true)
+                && filter_var((string) $request->headers->get('CF-Connecting-IP'), FILTER_VALIDATE_IP) !== false) {
+                $request->headers->set('X-Forwarded-For', (string) $request->headers->get('CF-Connecting-IP'));
+            }
         }
 
         // ── SKEMA DIKUNCI SETELAH PROXY DIPERCAYA ──────────────────────────

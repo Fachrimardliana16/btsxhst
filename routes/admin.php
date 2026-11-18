@@ -1,27 +1,35 @@
 <?php
 
+use App\Enums\TipeKejadianKeamanan;
+use App\Http\Controllers\Admin\BuktiPembayaran;
 use App\Http\Controllers\Admin\DokumenPesanan;
 use App\Http\Controllers\Admin\LaporanPenjualan;
+use App\Http\Controllers\Admin\ResiBanyak;
+use App\Http\Controllers\Admin\UnduhCadangan;
 use App\Http\Middleware\PastikanAdmin;
-use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\CadanganPanel;
+use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\FaqPanel;
 use App\Livewire\Admin\HeroBuilder;
 use App\Livewire\Admin\HeroSunting;
 use App\Livewire\Admin\Kategori;
 use App\Livewire\Admin\KeamananPanel;
+use App\Livewire\Admin\KeranjangTerbuka;
 use App\Livewire\Admin\KolPerforma;
 use App\Livewire\Admin\Kupon;
-use App\Livewire\Admin\KeranjangTerbuka;
+use App\Livewire\Admin\Kurir;
 use App\Livewire\Admin\Masuk;
+use App\Livewire\Admin\NotifikasiPerangkat;
 use App\Livewire\Admin\Pelanggan;
+use App\Livewire\Admin\PengaturanSitus;
 use App\Livewire\Admin\PenggunaPeran;
 use App\Livewire\Admin\PesananDaftar;
 use App\Livewire\Admin\PesananDetail;
-use App\Livewire\Admin\PengaturanSitus;
 use App\Livewire\Admin\PesanKontak;
 use App\Livewire\Admin\ProdukDaftar;
 use App\Livewire\Admin\ProdukForm;
 use App\Models\User;
+use App\Support\Keamanan;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -51,7 +59,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         request()->session()->regenerateToken();
 
         if ($email !== null) {
-            App\Support\Keamanan::catat(App\Enums\TipeKejadianKeamanan::LoginBerhasil, request(), $email, ringkasan: 'Keluar panel');
+            Keamanan::catat(TipeKejadianKeamanan::LoginBerhasil, request(), $email, ringkasan: 'Keluar panel');
         }
 
         return redirect()->route('admin.login');
@@ -63,7 +71,6 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         // ── Penjualan ────────────────────────────────────────────────
         Route::get('keranjang-terbuka', KeranjangTerbuka::class)->name('carts.index');
 
-
         Route::get('pesanan', PesananDaftar::class)->name('orders.index');
 
         // Cetak resi BANYAK sekaligus: satu berkas PDF berisi beberapa label
@@ -73,7 +80,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         // cocok lebih dulu dan akan menelan kata "cetak-resi" sebagai ULID,
         // sehingga PesananDetail mencari pesanan bernama "cetak-resi" lalu
         // menghasilkan 404 yang membingungkan.
-        Route::get('pesanan/cetak-resi', \App\Http\Controllers\Admin\ResiBanyak::class)
+        Route::get('pesanan/cetak-resi', ResiBanyak::class)
             ->name('orders.receipt.bulk');
         Route::get('pesanan/{ulid}', PesananDetail::class)->name('orders.show');
 
@@ -90,13 +97,18 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
 
         // Report penjualan: rentang tanggal di query string, jadi tautannya
         // dapat disalin dan dibuka ulang — laporan akhir bulan yang sama setiap
-        // bulan. Ekspor lama (eksporCsv) dipertahankan: dipakai tautan lama
-        // yang mungkin sudah tersimpan di penanda buku admin.
-        Route::get('laporan/penjualan/csv', [LaporanPenjualan::class, 'csv'])->name('reports.sales.csv');
-        Route::get('laporan/penjualan/pdf', [LaporanPenjualan::class, 'pdf'])->name('reports.sales.pdf');
-
-        Route::get('ekspor/pesanan', [DokumenPesanan::class, 'eksporCsv'])->name('exports.orders');
-
+        // bulan.
+        //
+        // Keduanya memuat ribuan pesanan sekaligus (maks. 5000 baris), jadi
+        // diberi batas laju yang sama seperti unduhan lain. Tanpa itu, sesi
+        // admin yang sah — atau skrip yang memegang sesi itu — dapat memanggil
+        // pembuatan PDF berulang tanpa jeda dan menghabiskan CPU server.
+        Route::get('laporan/penjualan/csv', [LaporanPenjualan::class, 'csv'])
+            ->middleware('throttle:6,1')
+            ->name('reports.sales.csv');
+        Route::get('laporan/penjualan/pdf', [LaporanPenjualan::class, 'pdf'])
+            ->middleware('throttle:6,1')
+            ->name('reports.sales.pdf');
 
         // ── Katalog ──────────────────────────────────────────────────
         // Pesan kontak, pelanggan, dan kupon melengkapi pekerjaan penjualan:
@@ -121,7 +133,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         // Master ekspedisi. Dulu daftar kurir hanya nilai JSON di halaman
         // Pengaturan; tautan pelacakan per kurir, urutan, dan status aktif
         // tidak punya tempat di sana.
-        Route::get('kurir', \App\Livewire\Admin\Kurir::class)->name('couriers.index');
+        Route::get('kurir', Kurir::class)->name('couriers.index');
 
         // Performa KOL. Terpisah dari halaman Kupon karena pertanyaannya
         // berbeda: halaman Kupon mengelola aturan diskon, halaman ini menjawab
@@ -163,12 +175,12 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         // tertukar, dan memakai ulid — bukan id — sama seperti slide di sisi
         // depan, sehingga alamat yang tersalin tidak dapat ditebak berurutan.
         Route::get('hero/{ulid}/sunting', HeroSunting::class)->name('hero.edit');
-        Route::get('faq', \App\Livewire\Admin\FaqPanel::class)->name('faq.index');
+        Route::get('faq', FaqPanel::class)->name('faq.index');
 
         // Halaman pendaftaran notifikasi perangkat. Tidak di bawah /pengaturan:
         // izin notifikasi diminta sekali per perangkat, dan mencarinya di dalam
         // halaman pengaturan yang panjang membuat orang tidak menemukannya.
-        Route::get('notifikasi', \App\Livewire\Admin\NotifikasiPerangkat::class)->name('notifications.index');
+        Route::get('notifikasi', NotifikasiPerangkat::class)->name('notifications.index');
     });
 });
 
@@ -181,7 +193,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
 | (checklist F10-09) dan pemeriksaan sesi admin di dalam controller. Berkasnya
 | berada di disk privat karena memuat nama pengirim dan nomor rekening.
 */
-Route::get('bukti-bayar/{payment:ulid}', \App\Http\Controllers\Admin\BuktiPembayaran::class)
+Route::get('bukti-bayar/{payment:ulid}', BuktiPembayaran::class)
     ->middleware(['signed', 'throttle:30,1'])
     ->name('admin.payments.proof');
 
@@ -194,7 +206,7 @@ Route::get('bukti-bayar/{payment:ulid}', \App\Http\Controllers\Admin\BuktiPembay
 | berumur 15 menit. Controller juga memeriksa perannya sendiri — tanda tangan
 | yang sah tidak cukup tanpa sesi Super Admin.
 */
-Route::get('cadangan/unduh/{berkas}', \App\Http\Controllers\Admin\UnduhCadangan::class)
+Route::get('cadangan/unduh/{berkas}', UnduhCadangan::class)
     ->middleware(['auth', 'signed', 'throttle:10,1'])
     ->can('aturSitus', User::class)
     ->name('admin.backup.download');

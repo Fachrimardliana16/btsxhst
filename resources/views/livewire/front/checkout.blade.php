@@ -38,21 +38,24 @@
                     <div class="mt-4 grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="label" for="nama">{{ __('site.checkout.name') }}</label>
-                            <input id="nama" type="text" class="field" wire:model="nama" autocomplete="name">
-                            @error('nama') <p class="field-error">{{ $message }}</p> @enderror
+                            <input id="nama" type="text" class="field" wire:model="nama" autocomplete="name"
+                                   @error('nama') aria-invalid="true" aria-describedby="galat-nama" @enderror>
+                            @error('nama') <p id="galat-nama" class="field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
                             <label class="label" for="email">{{ __('site.checkout.email') }}</label>
-                            <input id="email" type="email" class="field" wire:model="email" autocomplete="email">
-                            @error('email') <p class="field-error">{{ $message }}</p> @enderror
+                            <input id="email" type="email" class="field" wire:model="email" autocomplete="email"
+                                   @error('email') aria-invalid="true" aria-describedby="galat-email" @enderror>
+                            @error('email') <p id="galat-email" class="field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="sm:col-span-2">
                             <label class="label" for="telepon">{{ __('site.checkout.phone') }}</label>
                             <input id="telepon" type="tel" inputmode="tel" class="field" wire:model="telepon"
-                                   autocomplete="tel" placeholder="62812xxxxxxx">
-                            @error('telepon') <p class="field-error">{{ $message }}</p> @enderror
+                                   autocomplete="tel" placeholder="62812xxxxxxx"
+                                   @error('telepon') aria-invalid="true" aria-describedby="galat-telepon" @enderror>
+                            @error('telepon') <p id="galat-telepon" class="field-error">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </section>
@@ -63,8 +66,9 @@
                     <div class="mt-4 grid gap-4 sm:grid-cols-2">
                         <div class="sm:col-span-2">
                             <label class="label" for="alamat1">{{ __('site.checkout.address_1') }}</label>
-                            <textarea id="alamat1" class="field" wire:model="alamat1" rows="2"></textarea>
-                            @error('alamat1') <p class="field-error">{{ $message }}</p> @enderror
+                            <textarea id="alamat1" class="field" wire:model="alamat1" rows="2"
+                                      @error('alamat1') aria-invalid="true" aria-describedby="galat-alamat1" @enderror></textarea>
+                            @error('alamat1') <p id="galat-alamat1" class="field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="sm:col-span-2">
@@ -74,20 +78,23 @@
 
                         <div>
                             <label class="label" for="kota">{{ __('site.checkout.city') }}</label>
-                            <input id="kota" type="text" class="field" wire:model="kota">
-                            @error('kota') <p class="field-error">{{ $message }}</p> @enderror
+                            <input id="kota" type="text" class="field" wire:model="kota"
+                                   @error('kota') aria-invalid="true" aria-describedby="galat-kota" @enderror>
+                            @error('kota') <p id="galat-kota" class="field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
                             <label class="label" for="provinsi">{{ __('site.checkout.province') }}</label>
-                            <input id="provinsi" type="text" class="field" wire:model="provinsi">
-                            @error('provinsi') <p class="field-error">{{ $message }}</p> @enderror
+                            <input id="provinsi" type="text" class="field" wire:model="provinsi"
+                                   @error('provinsi') aria-invalid="true" aria-describedby="galat-provinsi" @enderror>
+                            @error('provinsi') <p id="galat-provinsi" class="field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
                             <label class="label" for="kodePos">{{ __('site.checkout.postal') }}</label>
-                            <input id="kodePos" type="text" inputmode="numeric" class="field" wire:model="kodePos">
-                            @error('kodePos') <p class="field-error">{{ $message }}</p> @enderror
+                            <input id="kodePos" type="text" inputmode="numeric" class="field" wire:model="kodePos"
+                                   @error('kodePos') aria-invalid="true" aria-describedby="galat-kodePos" @enderror>
+                            @error('kodePos') <p id="galat-kodePos" class="field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
@@ -118,19 +125,19 @@
                             <p class="label">{{ __('site.checkout.currency') }}</p>
                             <p class="text-sm">
                                 <span class="tech font-medium">USD</span>
-                                <span class="text-muted">— US Dollar. Tagihan dan pembayaran dalam dolar.</span>
+                                <span class="text-muted">— {{ __('site.checkout.currency_hint') }}</span>
                             </p>
                         </div>
 
                         @unless ($danNegeri)
                             <div class="sm:col-span-2">
                                 <div class="plate border-l-2 border-l-warn p-3 text-sm">
-                                    <p class="font-semibold">Kirim ke {{ $namaNegara }}</p>
+                                    <p class="font-semibold">{{ __('site.checkout.intl_title', ['negara' => $namaNegara]) }}</p>
                                     <ul class="mt-2 space-y-1 text-muted">
-                                        <li>Tulis alamat dalam huruf Latin. Nama jalan dan nomor saja sudah cukup — jangan campur bahasa setempat.</li>
-                                        <li>Ongkir internasional dihitung manual oleh admin setelah pesanan masuk. Anda akan dihubungi lewat surel atau WhatsApp sebelum pesanan dikirim.</li>
-                                        <li>Bea masuk dan pajak impor di negara tujuan menjadi tanggungan pembeli.</li>
-                                        <li>Semua harga dan tagihan dalam dolar AS. {{ $kodeTelepon }} saja hanyalah kode telepon yang disarankan.</li>
+                                        <li>{{ __('site.checkout.intl_address') }}</li>
+                                        <li>{{ __('site.checkout.intl_shipping') }}</li>
+                                        <li>{{ __('site.checkout.intl_duty') }}</li>
+                                        <li>{{ __('site.checkout.intl_currency', ['kode' => $kodeTelepon]) }}</li>
                                     </ul>
                                 </div>
                             </div>
@@ -139,8 +146,9 @@
                         <div class="sm:col-span-2">
                             <label class="label" for="catatan">{{ __('site.checkout.note') }}</label>
                             <textarea id="catatan" class="field" wire:model="catatan" rows="2"
-                                      maxlength="500" placeholder="{{ __('site.cart.note_hint') }}"></textarea>
-                            @error('catatan') <p class="field-error">{{ $message }}</p> @enderror
+                                      maxlength="500" placeholder="{{ __('site.cart.note_hint') }}"
+                                      @error('catatan') aria-invalid="true" aria-describedby="galat-catatan" @enderror></textarea>
+                            @error('catatan') <p id="galat-catatan" class="field-error">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </section>

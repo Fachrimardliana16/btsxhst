@@ -192,7 +192,18 @@ Dibuat oleh `UserSeeder` saat basis data produksi di-seed:
 | `staff@bitesexhaust.test` | Admin |
 
 Kata sandi awal sama untuk keduanya (lihat `database/seeders/UserSeeder.php`).
-**Ganti sebelum toko dibuka.** Kedua akun punya 2FA aktif sejak awal.
+**Ganti sebelum toko dibuka.**
+
+Dua faktor **belum aktif**. Seeder tidak lagi mengisi `two_factor_confirmed_at`
+tanpa secret — dulu panel melaporkan 2FA aktif padahal login hanya memakai
+kata sandi. Aktifkan per akun dari server:
+
+```powershell
+& "$env:LOCALAPPDATA\php85\php.exe" artisan iksan:dua-faktor admin@bitesexhaust.com --env=production
+```
+
+Simpan kode pemulihan yang dicetak perintah itu. Untuk mencopot 2FA dari akun
+yang perangkatnya hilang, tambahkan `--nonaktif`.
 
 Untuk menambah admin baru atau mengganti kata sandi, gunakan panel
 `/admin/pengguna`.

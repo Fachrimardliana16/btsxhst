@@ -83,7 +83,7 @@
                                 <button type="button"
                                         @click="geserKe({{ $i }})"
                                         :aria-current="aktif === {{ $i }} ? 'true' : 'false'"
-                                        aria-label="Gambar {{ $i + 1 }} dari {{ $daftarMedia->count() }}"
+                                        aria-label="{{ __('site.product.image_of', ['n' => $i + 1, 'total' => $daftarMedia->count()]) }}"
                                         class="aspect-[4/3] overflow-hidden border transition-colors"
                                         :class="aktif === {{ $i }} ? 'border-accent' : 'border-line-soft'">
                                     <img src="{{ $m->url('thumb') }}" width="320" height="240"

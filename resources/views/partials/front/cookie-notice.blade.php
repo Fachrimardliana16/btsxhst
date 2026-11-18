@@ -27,6 +27,10 @@
                 {{ __('site.cookie.accept') }}
             </button>
 
+            <button type="button" class="btn btn-ghost btn-sm" data-aksi="cookie-tolak">
+                {{ __('site.cookie.decline') }}
+            </button>
+
             {{-- Teks tombol utuh: "Learn more" sendirian tidak menjelaskan apa
                  pun kalau dibaca lewat daftar tautan pembaca layar (audit SEO
                  link-text). Nama tujuannya ikut ditulis, dan tautannya menyebut

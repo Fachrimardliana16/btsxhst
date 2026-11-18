@@ -4,10 +4,10 @@ namespace App\Livewire\Front;
 
 use App\Models\Category;
 use App\Models\Product;
-use App\Support\CacheKatalog;
+use App\Models\ProductLike;
+use App\Models\ProductMedia;
 use App\Support\HargaDolar;
 use App\Support\Pengaturan;
-use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -95,7 +95,7 @@ class Kategori extends Component
             'deskripsi' => $deskripsi,
             // Data suka untuk seluruh kartu, satu kueri — bukan satu kueri per
             // kartu. Lihat ProductLike::propsUntuk().
-            'suka' => \App\Models\ProductLike::propsUntuk(
+            'suka' => ProductLike::propsUntuk(
                 $produk->getCollection(),
                 auth()->user(),
                 session()->getId(),
@@ -121,7 +121,7 @@ class Kategori extends Component
                     'judul' => $namaKategori,
                     'deskripsi' => $deskripsi,
                     'gambar' => $kategori->image_path
-                        ? url(\App\Models\ProductMedia::urlMedia($kategori->image_path))
+                        ? url(ProductMedia::urlMedia($kategori->image_path))
                         : null,
                     'alt' => $namaKategori,
                 ],

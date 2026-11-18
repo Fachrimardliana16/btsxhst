@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Enums\PeranPengguna;
 use App\Models\User;
 use App\Support\CatatanAktivitas;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
@@ -33,7 +34,7 @@ class PenggunaPeran extends KomponenAdmin
     public ?string $pesan = null;
 
     /** Akun panel: peran selain Pelanggan. */
-    public function akunPanel(): \Illuminate\Contracts\Pagination\Paginator
+    public function akunPanel(): Paginator
     {
         return User::query()
             ->whereIn('role', [

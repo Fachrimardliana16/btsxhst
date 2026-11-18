@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\User;
 use App\Support\CatatanAktivitas;
+use App\Support\Galat;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\URL;
@@ -40,7 +42,7 @@ class CadanganPanel extends KomponenAdmin
         // Membuat cadangan menyentuh basis data seluruhnya dan menyalin
         // beberapa megabita. Hanya Super Admin, sebatas aturSitus: tindakan
         // ini mengubah berkas di server, bukan sekadar data di basis data.
-        $this->authorize('aturSitus', \App\Models\User::class);
+        $this->authorize('aturSitus', User::class);
 
         $this->galat = null;
         $this->pesan = null;
@@ -51,26 +53,23 @@ class CadanganPanel extends KomponenAdmin
             // perintah itu sudah memeriksa ruang disk, menolak berkas rusak,
             // membersihkan salinan lama, dan mencatat kegagalan. Menulis ulang
             // logika itu di komponen berarti dua salinan yang bisa berbeda.
-            Artisan::call('iksan:backup', ['--simpan' => $this->simpan]);
-
+            $kode = Artisan::call('iksan:backup', ['--simpan' => $this->simpan]);
             $keluaran = trim(Artisan::output());
 
             // Perintah mengembalikan FAILURE tanpa melempar exception: disk
-            // penuh, berkas rusak, folder tak bisa dibuat. Tanpa memeriksa
-            // kode keluaran, kegagalan tampak sebagai pesan sukses kosong.
-            if (Artisan::hasOption('iksan:backup', 'simpan')) {
-                // Keluaran dicetak ke buffer apa adanya; yang dicari penanda
-                // keberhasilan yang bisa dipercaya.
+            // penuh, berkas rusak, folder tak bisa dibuat. Kode keluaran adalah
+            // satu-satunya penanda yang dapat dipercaya — jangan menebak dari
+            // potongan teks keluarannya.
+            if ($kode !== 0) {
+                $this->galat = $keluaran !== '' ? $keluaran : 'Backup failed.';
+                $this->pesan = null;
+
+                return;
             }
 
             $this->pesan = $keluaran !== '' ? $keluaran : 'Backup created.';
-
-            if (str_contains($keluaran, 'gagal') || str_contains($keluaran, 'dibatalkan')) {
-                $this->galat = $keluaran;
-                $this->pesan = null;
-            }
         } catch (Throwable $e) {
-            $this->galat = __('site.msg.cadangan.gagal', ['pesan' => $e->getMessage()]);
+            $this->galat = __('site.msg.cadangan.gagal', ['pesan' => Galat::denganKode($e)]);
 
             CatatanAktivitas::catat('backup.gagal', [
                 'sebab' => $e->getMessage(),

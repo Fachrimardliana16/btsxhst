@@ -46,10 +46,10 @@ class PesananPembeli extends Mailable
         $nama = (string) $toko->teks('site_name', 'Bites Exhaust');
 
         $judul = match ($this->kejadian) {
-            self::DIBAYAR => 'Pembayaran diterima',
-            self::DIKIRIM => 'Pesanan dikirim',
-            self::SELESAI => 'Pesanan selesai',
-            default => 'Pesanan diterima',
+            self::DIBAYAR => 'Payment received',
+            self::DIKIRIM => 'Order shipped',
+            self::SELESAI => 'Order completed',
+            default => 'Order received',
         };
 
         return new Envelope(
@@ -67,7 +67,7 @@ class PesananPembeli extends Mailable
             with: [
                 'kejadian' => $this->kejadian,
                 'pesanan' => $this->pesanan,
-                'nama' => (string) ($snapshot['recipient_name'] ?? 'Pelanggan'),
+                'nama' => (string) ($snapshot['recipient_name'] ?? 'Customer'),
                 'toko' => $toko,
                 'urlLacak' => route('front.order.track', ['kode' => $this->pesanan->order_number]),
                 'urlPesanan' => route('front.order.success', $this->pesanan),

@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Support\HargaDolar;
 use App\Support\Pengaturan;
 use App\Support\Ukuran;
 use Carbon\CarbonImmutable;
@@ -65,23 +68,23 @@ if (! function_exists('dolar')) {
      */
     function dolar(float|int|string|null $amount): string
     {
-        return \App\Support\HargaDolar::format($amount);
+        return HargaDolar::format($amount);
     }
 }
 
 if (! function_exists('harga_produk')) {
     /** Harga produk dalam dolar, dengan awalan "mulai" bila variannya banyak. */
-    function harga_produk(\App\Models\Product $produk, bool $denganAwalan = true): string
+    function harga_produk(Product $produk, bool $denganAwalan = true): string
     {
-        return \App\Support\HargaDolar::teksProduk($produk, $denganAwalan);
+        return HargaDolar::teksProduk($produk, $denganAwalan);
     }
 }
 
 if (! function_exists('harga_varian')) {
     /** Harga varian dalam dolar. */
-    function harga_varian(\App\Models\ProductVariant $varian): string
+    function harga_varian(ProductVariant $varian): string
     {
-        return \App\Support\HargaDolar::format(\App\Support\HargaDolar::dariVarian($varian));
+        return HargaDolar::format(HargaDolar::dariVarian($varian));
     }
 }
 
@@ -94,7 +97,7 @@ if (! function_exists('harga_nilai')) {
      */
     function harga_nilai(float|int|string|null $rupiah): string
     {
-        return \App\Support\HargaDolar::format(\App\Support\HargaDolar::dariRupiah($rupiah));
+        return HargaDolar::format(HargaDolar::dariRupiah($rupiah));
     }
 }
 

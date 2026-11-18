@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Setting;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -63,9 +64,18 @@ class Pengaturan
                     ->pluck('value', 'key')
                     ->all();
             });
-        } catch (Throwable) {
+        } catch (Throwable $e) {
             // Saat migrasi belum berjalan, tabel belum ada. Halaman tidak boleh
             // gagal total hanya karena pengaturan belum tersedia.
+            //
+            // Tetap dicatat: tabel yang rusak atau cache yang tidak dapat
+            // ditulis membuat seluruh nilai jatuh ke bawaan — ongkir nol,
+            // pajak nol — dan tanpa catatan itu gejalanya hanya terlihat
+            // sebagai angka yang aneh di halaman.
+            Log::warning('Pengaturan tidak dapat dimuat; memakai nilai bawaan.', [
+                'sebab' => $e->getMessage(),
+            ]);
+
             self::$memori = [];
         }
 
@@ -159,7 +169,7 @@ class Pengaturan
     /**
      * Daftar media sosial yang aktif.
      *
-     * @return Collection<int, array{platform: string, url: string}>
+     * @return Collection<int, array{platform: string, url: string, tampil: true}>
      */
     public function mediaSosial(): Collection
     {

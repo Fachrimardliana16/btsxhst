@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Models\HeroSlide;
+use App\Models\ProductMedia;
 use App\Services\Hero\PenyimpanHero;
 use App\Support\CacheKatalog;
 use App\Support\CatatanAktivitas;
@@ -235,11 +236,6 @@ class HeroBuilder extends KomponenAdmin
 
     // ── Penyuntingan ─────────────────────────────────────────────────
 
-
-
-
-
-
     // ── Pembantu ─────────────────────────────────────────────────────
 
     /**
@@ -256,7 +252,6 @@ class HeroBuilder extends KomponenAdmin
             }
         });
     }
-
 
     private function bersihkanPesan(): void
     {
@@ -278,6 +273,6 @@ class HeroBuilder extends KomponenAdmin
     /** URL gambar untuk pratinjau. Jalur kosong berarti belum ada berkas. */
     public function urlMedia(?string $jalur): ?string
     {
-        return filled($jalur) ? \App\Models\ProductMedia::urlMedia($jalur) : null;
+        return filled($jalur) ? ProductMedia::urlMedia($jalur) : null;
     }
 }

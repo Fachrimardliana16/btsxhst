@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 /**
  * 24 produk realistis. Tidak ada angka karangan: seluruh harga, stok, dan
@@ -83,7 +84,7 @@ class ProductSeeder extends Seeder
             $nomorPerKategori[$namaKategori] = ($nomorPerKategori[$namaKategori] ?? 1000) + 1;
             $sku = 'IK-'.(self::PREFIKS[$namaKategori] ?? 'XX').'-'.$nomorPerKategori[$namaKategori];
 
-            $slug = \Illuminate\Support\Str::slug($nama);
+            $slug = Str::slug($nama);
 
             $produk = Product::query()->updateOrCreate(
                 ['slug' => $slug],

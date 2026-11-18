@@ -43,7 +43,7 @@ class CartItem extends Model
 
     public function hargaSatuan(): float
     {
-        return $this->variant?->hargaAkhir() ?? (float) $this->product?->base_price ?? 0.0;
+        return $this->variant?->hargaAkhir() ?? (float) ($this->product->base_price ?? 0.0);
     }
 
     public function subtotal(): float

@@ -5,20 +5,22 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\StatusPembayaran;
 use App\Enums\StatusPesanan;
 use App\Models\Order;
+use App\Support\Csv;
 use App\Support\DokumenPdf;
 use App\Support\Pengaturan;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Report penjualan dengan filter waktu, keluar sebagai CSV atau PDF.
  *
- * Ekspor lama (DokumenPesanan::eksporCsv) tidak punya batas waktu sama
- * sekali: membukanya selalu mengirim seluruh riwayat pesanan. Untuk toko
- * dengan dua ribu pesanan, berkas itu berisi satu setengah tahun data
- * sementara yang dibutuhkan cuma bulan ini.
+ * Inilah satu-satunya jalur ekspor pesanan. Versi lama
+ * (DokumenPesanan::eksporCsv) tidak punya batas waktu sama sekali —
+ * membukanya selalu mengirim seluruh riwayat pesanan — dan sudah dihapus
+ * setelah dipastikan tidak ada tautan yang menuju ke sana.
  *
  * Rentangnya diterima sebagai tanggal awal dan akhir, bukan "7 hari
  * terakhir" sebagai pilihan tetap — admin yang menutup laporan akhir bulan
@@ -81,7 +83,7 @@ class LaporanPenjualan
      * tidak membuat halaman laporan mati, apalagi membuat admin menyangka
      * datanya hilang.
      *
-     * @return array{0: \Illuminate\Support\Carbon, 1: \Illuminate\Support\Carbon}
+     * @return array{0: Carbon, 1: Carbon}
      */
     private function rentang(Request $request): array
     {
@@ -101,20 +103,20 @@ class LaporanPenjualan
         return [$mulai->startOfDay(), $sampai->endOfDay()];
     }
 
-    private function tanggal(mixed $nilai): ?\Illuminate\Support\Carbon
+    private function tanggal(mixed $nilai): ?Carbon
     {
         if (! is_string($nilai) || trim($nilai) === '') {
             return null;
         }
 
         try {
-            return \Illuminate\Support\Carbon::parse($nilai);
+            return Carbon::parse($nilai);
         } catch (\Throwable) {
             return null;
         }
     }
 
-    private function labelRentang(\Illuminate\Support\Carbon $mulai, \Illuminate\Support\Carbon $sampai): string
+    private function labelRentang(Carbon $mulai, Carbon $sampai): string
     {
         return $mulai->format('Ymd').'-'.$sampai->format('Ymd');
     }
@@ -126,7 +128,7 @@ class LaporanPenjualan
      * baik diminta per periode daripada membuat proses ekspor menahan memori
      * sampai batas PHP.
      */
-    private function pesanan(\Illuminate\Support\Carbon $mulai, \Illuminate\Support\Carbon $sampai, Request $request)
+    private function pesanan(Carbon $mulai, Carbon $sampai, Request $request)
     {
         $status = (string) $request->query('status', 'semua');
         $bayar = (string) $request->query('bayar', 'semua');
@@ -146,7 +148,7 @@ class LaporanPenjualan
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, Order>  $pesanan
+     * @param  Collection<int, Order>  $pesanan
      * @return array<string, mixed>
      */
     private function ringkasan($pesanan): array
@@ -158,7 +160,7 @@ class LaporanPenjualan
             'selesai' => $selesai,
             'batal' => $pesanan->where('status', StatusPesanan::Cancelled)->count(),
             'pendapatan' => (float) $pesanan
-                ->whereIn('status', [StatusPesanan::Paid, StatusPesanan::Processing, StatusPesanan::Shipped, StatusPesanan::Completed])
+                ->whereIn('status', StatusPesanan::pendapatan())
                 ->sum('grand_total'),
             'nilaiBelumMasuk' => (float) $pesanan
                 ->where('payment_status', '!=', StatusPembayaran::Paid->value)
@@ -171,7 +173,7 @@ class LaporanPenjualan
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, Order>  $pesanan
+     * @param  Collection<int, Order>  $pesanan
      */
     private function unduhCsv($pesanan, string $labelRentang): StreamedResponse
     {
@@ -192,14 +194,14 @@ class LaporanPenjualan
             foreach ($pesanan as $o) {
                 $alamat = $o->alamat();
 
-                fputcsv($keluaran, [
+                fputcsv($keluaran, Csv::baris([
                     $o->order_number,
                     $o->created_at->format('Y-m-d H:i'),
                     $o->status->label(),
                     $o->payment_status->label(),
                     $o->payment_method?->label() ?? '',
                     $o->namaPenerima(),
-                    $o->emailPenerima() ?? $o->user?->email ?? '',
+                    $o->emailPenerima() ?? $o->user->email ?? '',
                     $alamat['city'] ?? '',
                     $o->jumlahItem(),
                     number_format((float) $o->subtotal, 2, '.', ''),
@@ -208,7 +210,7 @@ class LaporanPenjualan
                     number_format((float) $o->tax_amount, 2, '.', ''),
                     number_format((float) $o->grand_total, 2, '.', ''),
                     $o->tracking_number ?? '',
-                ]);
+                ]));
             }
 
             fclose($keluaran);

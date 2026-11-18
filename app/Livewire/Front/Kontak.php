@@ -48,7 +48,7 @@ class Kontak extends Component
         $this->galat = null;
 
         if ($this->perusahaan !== '' || now()->timestamp - $this->dimulaiPada < config('iksan.brute_force.min_form_seconds')) {
-            $this->galat = 'Formulir dikirim terlalu cepat. Coba lagi.';
+            $this->galat = 'The form was submitted too quickly. Please try again.';
 
             return;
         }
@@ -56,7 +56,7 @@ class Kontak extends Component
         $kunci = 'kontak:'.request()->ip();
 
         if (RateLimiter::tooManyAttempts($kunci, config('iksan.rate_limits.contact')[0])) {
-            $this->galat = 'Terlalu banyak pesan dari jaringan ini. Coba lagi nanti.';
+            $this->galat = 'Too many messages from this network. Please try again later.';
 
             return;
         }

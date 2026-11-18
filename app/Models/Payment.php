@@ -49,6 +49,8 @@ class Payment extends Model
 
     public function terverifikasi(): bool
     {
-        return $this->verified_at !== null;
+        // `verified_at` saja tidak cukup: baris yang ditolak pernah diisi
+        // kolom itu, sehingga bukti yang gagal tampak seperti bukti sah.
+        return $this->provider_status === 'terverifikasi' && $this->verified_at !== null;
     }
 }

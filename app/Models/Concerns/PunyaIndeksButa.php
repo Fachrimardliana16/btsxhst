@@ -3,7 +3,6 @@
 namespace App\Models\Concerns;
 
 use App\Support\BlindIndex;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 
 /**
  * Sinkronisasi otomatis antara kolom ber-cast "encrypted" dan kolom indeks
@@ -22,6 +21,20 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
  */
 trait PunyaIndeksButa
 {
+    /**
+     * Kolom sumber → kolom indeks pasangannya.
+     *
+     * Ditulis sebagai method, bukan properti: properti trait tidak boleh
+     * diberi nilai awal berbeda oleh kelas pemakainya, dan nilai awalnya
+     * memang berbeda per model.
+     *
+     * @return array<string, string>
+     */
+    protected function petaIndeksButa(): array
+    {
+        return [];
+    }
+
     public static function bootPunyaIndeksButa(): void
     {
         static::saving(function ($model): void {
@@ -39,7 +52,7 @@ trait PunyaIndeksButa
     /** @return array<string, string> */
     public function indeksButa(): array
     {
-        return property_exists($this, 'indeksButa') ? $this->indeksButa : [];
+        return $this->petaIndeksButa();
     }
 
     /**

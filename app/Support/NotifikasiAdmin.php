@@ -3,12 +3,11 @@
 namespace App\Support;
 
 use App\Enums\StatusPesanan;
-use App\Models\User;
 use App\Models\Cart;
 use App\Models\NotificationRead;
 use App\Models\Order;
 use App\Models\ProductVariant;
-use App\Support\SakelarNotifikasi;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -55,8 +54,7 @@ class NotifikasiAdmin
      */
     public static function semua(?User $pengguna = null): Collection
     {
-        $butir = collect()
-            ->merge(self::stokHabis())
+        $butir = collect(self::stokHabis())
             ->merge(self::stokMenipis())
             ->merge(self::hampirBatal())
             ->merge(self::pesananBaru())
@@ -73,11 +71,7 @@ class NotifikasiAdmin
         if ($pengguna === null) {
             // Tanpa pengguna tidak ada tanda baca yang bisa dipercaya; anggap
             // semuanya belum dilihat, jangan menebak.
-            return $butir->map(fn (array $b): array => $b + [
-                'sidik' => self::sidik($b),
-                'dilihat' => false,
-                'dilihat_pada' => null,
-            ]);
+            return $butir->map(fn (array $b): array => self::lengkapi($b, false, null));
         }
 
         $tersimpan = NotificationRead::query()
@@ -93,12 +87,28 @@ class NotifikasiAdmin
             // Tanda baca hanya sah bila keadaannya tidak berubah sejak dilihat.
             $dilihat = $catatan !== null && hash_equals((string) $catatan->fingerprint, $sidik);
 
-            return $b + [
-                'sidik' => $sidik,
-                'dilihat' => $dilihat,
-                'dilihat_pada' => $dilihat ? $catatan->read_at : null,
-            ];
+            return self::lengkapi($b, $dilihat, $dilihat ? $catatan->read_at : null);
         });
+    }
+
+    /**
+     * Tambahkan status "sudah dilihat" ke satu butir.
+     *
+     * Dipisah supaya tipe kembaliannya satu: `array<string, mixed>`. Menulis
+     * penambahannya langsung di dalam map membuat tipe hasilnya berupa
+     * irisan dengan nilai literal, yang tidak lagi cocok dengan tipe
+     * kembalian `semua()`.
+     *
+     * @param  array<string, mixed>  $butir
+     * @return array<string, mixed>
+     */
+    private static function lengkapi(array $butir, bool $dilihat, ?string $dilihatPada): array
+    {
+        return [
+            'sidik' => self::sidik($butir),
+            'dilihat' => $dilihat,
+            'dilihat_pada' => $dilihatPada,
+        ] + $butir;
     }
 
     /** Butir yang BELUM dilihat pada keadaan sekarang. */
@@ -192,6 +202,7 @@ class NotifikasiAdmin
     // ── Butir notifikasi ─────────────────────────────────────────────
 
     /** @return array<int, array<string, mixed>> */
+    /** @return array<int, array<string, mixed>> */
     private static function stokHabis(): array
     {
         $kueri = ProductVariant::query()
@@ -220,9 +231,9 @@ class NotifikasiAdmin
             'nada' => 'danger',
             'ikon' => 'alert',
             'jumlah' => $jumlah,
-            'teks' => $jumlah.' varian kehabisan stok',
+            'teks' => $jumlah.' variants out of stock',
             'rinci' => self::contohNama($daftar),
-            'rute' => \Illuminate\Support\Facades\Route::has('admin.products.index')
+            'rute' => Route::has('admin.products.index')
                 ? route('admin.products.index', ['stok' => 'habis'])
                 : route('admin.dashboard'),
         ]];
@@ -255,9 +266,9 @@ class NotifikasiAdmin
             'nada' => 'warn',
             'ikon' => 'box',
             'jumlah' => $jumlah,
-            'teks' => $jumlah.' varian hampir habis (≤'.$ambang.' tersisa)',
+            'teks' => $jumlah.' variants running low (≤'.$ambang.' left)',
             'rinci' => self::contohNama($daftar),
-            'rute' => \Illuminate\Support\Facades\Route::has('admin.products.index')
+            'rute' => Route::has('admin.products.index')
                 ? route('admin.products.index', ['stok' => 'menipis'])
                 : route('admin.dashboard'),
         ]];
@@ -266,30 +277,33 @@ class NotifikasiAdmin
     /** @return array<int, array<string, mixed>> */
     private static function hampirBatal(): array
     {
-        $daftar = Order::query()
+        // Hanya angka yang dibutuhkan. Sebelumnya seluruh baris dimuat untuk
+        // dihitung di PHP; pada toko yang ramai itu berarti ratusan model
+        // terdekripsi hanya untuk satu butir notifikasi.
+        $dasar = Order::query()
             ->where('status', StatusPesanan::Pending->value)
             ->whereNotNull('expires_at')
-            ->where('expires_at', '<=', now()->addHours(6))
-            ->orderBy('expires_at')
-            ->get();
+            ->where('expires_at', '<=', now()->addHours(6));
 
-        if ($daftar->isEmpty()) {
+        $jumlah = (clone $dasar)->count();
+
+        if ($jumlah === 0) {
             return [];
         }
 
-        $lewat = $daftar->where('expires_at', '<=', now())->count();
-        $menuju = $daftar->count() - $lewat;
+        $lewat = (clone $dasar)->where('expires_at', '<=', now())->count();
+        $menuju = $jumlah - $lewat;
 
         return [[
             'kunci' => 'hampir-batal',
             'jenis' => 'pesanan',
             'nada' => 'danger',
             'ikon' => 'clock',
-            'jumlah' => $daftar->count(),
-            'teks' => $daftar->count().' pesanan hampir batal otomatis',
+            'jumlah' => $jumlah,
+            'teks' => $jumlah.' orders about to auto-cancel',
             'rinci' => $lewat > 0
-                ? $lewat.' sudah lewat batas, '.$menuju.' kurang dari 6 jam lagi'
-                : $menuju.' tersisa kurang dari 6 jam',
+                ? $lewat.' already overdue, '.$menuju.' with under 6 hours left'
+                : $menuju.' with under 6 hours left',
             'rute' => route('admin.orders.index', ['bayar' => 'unpaid']),
         ]];
     }
@@ -318,7 +332,7 @@ class NotifikasiAdmin
             'nada' => 'steel',
             'ikon' => 'box',
             'jumlah' => $jumlah,
-            'teks' => $jumlah.' pesanan siap dikirim',
+            'teks' => $jumlah.' orders ready to ship',
             'rinci' => $terbaru
                 ? 'Last: '.$terbaru->order_number.' · '.dolar($terbaru->grand_total)
                 : '',
@@ -331,13 +345,13 @@ class NotifikasiAdmin
     {
         $sehari = now()->subDay();
 
-        $jumlah = \App\Models\Cart::query()->where('updated_at', '>=', $sehari)->count();
+        $jumlah = Cart::query()->where('updated_at', '>=', $sehari)->count();
 
         if ($jumlah === 0) {
             return [];
         }
 
-        $barang = \Illuminate\Support\Facades\DB::table('cart_items')
+        $barang = DB::table('cart_items')
             ->join('carts', 'carts.id', '=', 'cart_items.cart_id')
             ->where('carts.updated_at', '>=', $sehari)
             ->sum('cart_items.quantity');
@@ -348,8 +362,8 @@ class NotifikasiAdmin
             'nada' => 'accent',
             'ikon' => 'cart',
             'jumlah' => $jumlah,
-            'teks' => $jumlah.' keranjang aktif dalam 24 jam',
-            'rinci' => (int) $barang.' barang tertahan di keranjang, belum dibayar',
+            'teks' => $jumlah.' active carts in the last 24h',
+            'rinci' => (int) $barang.' items held in carts, unpaid',
             'rute' => route('admin.carts.index', ['umur' => 'harian']),
         ]];
     }
@@ -360,9 +374,9 @@ class NotifikasiAdmin
         return $varian
             ->take(3)
             ->map(function (ProductVariant $v): string {
-                $judul = $v->product?->judul() ?? '(produk terhapus)';
+                $judul = $v->product?->judul() ?? '(product deleted)';
 
-                return mb_strimwidth($judul, 0, 28, '…').' — '.$v->stokTersedia().' tersisa';
+                return mb_strimwidth($judul, 0, 28, '…').' — '.$v->stokTersedia().' left';
             })
             ->implode(' · ');
     }

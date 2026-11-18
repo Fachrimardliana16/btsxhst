@@ -35,7 +35,9 @@
              header, jadi panel absolute akan diposisikan relatif tombol dan
              meluber ke kiri tepi layar pada ponsel. Lihat catatan panjang di
              lonceng-notifikasi.blade.php. --}}
-        <div class="fixed inset-x-0 top-full z-50 mx-auto mt-2 w-[min(92vw,22rem)] px-4 sm:px-0"
+        <div x-ref="panelPesan"
+             @keydown.tab="jebakFokus($event, $refs.panelPesan)"
+             class="fixed inset-x-0 top-full z-50 mx-auto mt-2 w-[min(92vw,22rem)] px-4 sm:px-0"
              role="dialog" aria-label="{{ __('site.admin.lonceng_pesan.daftar') }}">
             <div class="plate-up">
 

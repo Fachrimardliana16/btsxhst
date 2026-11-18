@@ -99,7 +99,7 @@ class ProdukDaftar extends Component
     {
         $toko = Pengaturan::instance();
 
-        $kategori = $toko && $this->kategoriSlug !== ''
+        $kategori = $this->kategoriSlug !== ''
             ? Category::query()->where('slug', $this->kategoriSlug)->first()
             : null;
 

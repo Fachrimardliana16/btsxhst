@@ -9,6 +9,7 @@ use App\Support\CacheKatalog;
 use App\Support\HargaDolar;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
  * Tab 2 — varian produk (checklist F3-04). Seluruh varian disimpan dalam
@@ -166,7 +167,12 @@ trait MengelolaVarian
                 continue;
             }
 
-            $ditahan = (int) ($baris['ditahan'] ?? 0);
+            // Dibaca dari basis data, bukan dari `ditahan` kiriman form.
+            // Nilai form adalah salinan saat halaman dimuat; pesanan yang
+            // masuk setelahnya tidak terlihat di sana.
+            $ditahan = (int) DB::table('product_variants')
+                ->where('id', (int) $baris['id'])
+                ->value('reserved_quantity');
 
             if ((int) $baris['stok'] < $ditahan) {
                 $this->addError(
@@ -182,51 +188,75 @@ trait MengelolaVarian
             }
         }
 
-        DB::transaction(function (): void {
-            $produk = Product::query()->findOrFail($this->produkId);
-            $idDipakai = [];
+        try {
+            DB::transaction(function (): void {
+                $produk = Product::query()->findOrFail($this->produkId);
+                $idDipakai = [];
 
-            foreach ($this->varian as $urutan => $baris) {
-                $selisihRupiah = $this->selisihRupiah($baris);
-                $selisihUsd = filled($baris['selisih_usd'] ?? null)
-                    ? (float) $baris['selisih_usd']
-                    : (HargaDolar::dariRupiah($selisihRupiah) ?? 0.0);
+                foreach ($this->varian as $urutan => $baris) {
+                    $selisihRupiah = $this->selisihRupiah($baris);
+                    $selisihUsd = filled($baris['selisih_usd'] ?? null)
+                        ? (float) $baris['selisih_usd']
+                        : (HargaDolar::dariRupiah($selisihRupiah) ?? 0.0);
 
-                $data = [
-                    'variant_name_id' => $baris['nama_id'],
-                    'variant_name_en' => $baris['nama_id'],
-                    'price_adjustment' => $selisihRupiah,
-                    'price_adjustment_usd' => $selisihUsd,
-                    'stock_quantity' => (int) $baris['stok'],
-                    'weight_gram' => $baris['berat'] === '' ? null : (int) $baris['berat'],
-                    'display_order' => $urutan + 1,
-                    'is_active' => $baris['aktif'],
-                ];
+                    $data = [
+                        'variant_name_id' => $baris['nama_id'],
+                        'variant_name_en' => $baris['nama_id'],
+                        'price_adjustment' => $selisihRupiah,
+                        'price_adjustment_usd' => $selisihUsd,
+                        'stock_quantity' => (int) $baris['stok'],
+                        'weight_gram' => $baris['berat'] === '' ? null : (int) $baris['berat'],
+                        'display_order' => $urutan + 1,
+                        'is_active' => $baris['aktif'],
+                    ];
 
-                if ($baris['id'] === null) {
-                    $data['sku_variant'] = $produk->sku.'-V'.($urutan + 1);
-                    $varian = $produk->variants()->create($data);
-                    $idDipakai[] = $varian->id;
-                } else {
-                    $varian = ProductVariant::query()->findOrFail($baris['id']);
-                    $varian->update($data);
-                    $idDipakai[] = $varian->id;
-                }
-            }
+                    if ($baris['id'] === null) {
+                        $data['sku_variant'] = $produk->sku.'-V'.($urutan + 1);
+                        $varian = $produk->variants()->create($data);
+                        $idDipakai[] = $varian->id;
+                    } else {
+                        // UPDATE bersyarat: pemeriksaan di atas memakai angka yang
+                        // dibaca beberapa saat sebelumnya. Pesanan yang masuk di
+                        // antaranya bisa menaikkan reserved_quantity, dan stok yang
+                        // lebih kecil dari tahanan membuat stok tersedia negatif.
+                        // Basis data yang memutuskan, bukan kode PHP.
+                        $terkena = DB::table('product_variants')
+                            ->where('id', (int) $baris['id'])
+                            ->whereRaw('reserved_quantity <= ?', [(int) $baris['stok']])
+                            ->update($data);
 
-            // Varian yang hilang dari daftar dihapus, kecuali yang pernah
-            // dipesan — penghapusan itu sudah dicegah di hapusVarian, tetapi
-            // pemeriksaan diulang di sini karena keadaan bisa berubah antara
-            // penghapusan di antarmuka dan penyimpanan.
-            $produk->variants()
-                ->whereNotIn('id', $idDipakai)
-                ->get()
-                ->each(function (ProductVariant $v): void {
-                    if (! OrderItem::query()->where('product_variant_id', $v->id)->exists()) {
-                        $v->delete();
+                        if ($terkena !== 1) {
+                            throw new RuntimeException(sprintf(
+                                'Stock for variant row %d cannot be below the quantity already reserved by open orders.',
+                                $urutan + 1,
+                            ));
+                        }
+
+                        $idDipakai[] = (int) $baris['id'];
                     }
-                });
-        });
+                }
+
+                // Varian yang hilang dari daftar dihapus, kecuali yang pernah
+                // dipesan — penghapusan itu sudah dicegah di hapusVarian, tetapi
+                // pemeriksaan diulang di sini karena keadaan bisa berubah antara
+                // penghapusan di antarmuka dan penyimpanan.
+                $produk->variants()
+                    ->whereNotIn('id', $idDipakai)
+                    ->get()
+                    ->each(function (ProductVariant $v): void {
+                        if (! OrderItem::query()->where('product_variant_id', $v->id)->exists()) {
+                            $v->delete();
+                        }
+                    });
+            });
+        } catch (RuntimeException $e) {
+            // Kegagalan stok adalah pesan bisnis yang ditulis di atas; sisa
+            // RuntimeException lain (mis. model hilang) juga aman ditampilkan
+            // di panel ini daripada menjadi layar galat.
+            $this->addError('varian', $e->getMessage());
+
+            return;
+        }
 
         // Muat ulang supaya kolom "ditahan" dan id varian baru segar.
         $this->muatUlangVarian();

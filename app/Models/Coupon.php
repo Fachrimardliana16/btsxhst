@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Casts\BatasAtauTangga;
 use App\Enums\TipeKupon;
 use App\Models\Concerns\PunyaUlid;
+use App\Support\HargaDolar;
+use App\Support\KuponLanjutan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Coupon extends Model
 {
@@ -20,6 +24,7 @@ class Coupon extends Model
         'min_spend',
         'max_discount',
         'quota',
+        'limit_per_customer',
         'used_count',
         'starts_at',
         'ends_at',
@@ -35,8 +40,9 @@ class Coupon extends Model
             'type' => TipeKupon::class,
             'value' => 'decimal:2',
             'min_spend' => 'decimal:2',
-            'max_discount' => \App\Casts\BatasAtauTangga::class,
+            'max_discount' => BatasAtauTangga::class,
             'quota' => 'integer',
+            'limit_per_customer' => 'integer',
             'used_count' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
@@ -71,7 +77,7 @@ class Coupon extends Model
         $slug = $value !== null ? trim($value) : '';
 
         if ($slug === '' && $this->kol_nama !== null) {
-            $slug = \Illuminate\Support\Str::slug($this->kol_nama);
+            $slug = Str::slug($this->kol_nama);
         }
 
         $this->attributes['kol_slug'] = $slug === '' ? null : $slug;
@@ -95,7 +101,7 @@ class Coupon extends Model
         if ($this->attributes['kol_nama'] === null || $this->attributes['kol_nama'] === '') {
             $this->attributes['kol_slug'] = null;
         } elseif (blank($this->attributes['kol_slug'] ?? null)) {
-            $this->attributes['kol_slug'] = \Illuminate\Support\Str::slug($this->attributes['kol_nama']);
+            $this->attributes['kol_slug'] = Str::slug($this->attributes['kol_nama']);
         }
     }
 
@@ -156,7 +162,7 @@ class Coupon extends Model
         // Membandingkannya langsung membuat kupon dengan minimal Rp 500.000
         // selalu ditolak, dan pesannya menulis "Minimal belanja Rp 500.000"
         // untuk pembeli yang melihat dolar di seluruh halaman lain.
-        $minimal = \App\Support\HargaDolar::dariRupiah($this->min_spend) ?? 0.0;
+        $minimal = HargaDolar::dariRupiah($this->min_spend) ?? 0.0;
 
         if ($minimal > 0 && $subtotal < $minimal) {
             return 'Minimal belanja '.dolar($minimal).' untuk memakai kupon ini.';
@@ -170,7 +176,7 @@ class Coupon extends Model
         // Kupon bertingkat (Fase 2: P2-06) memakai tangga sendiri: potongan
         // mengikuti besar belanja, bukan satu nilai tetap. Diperiksa lebih
         // dulu supaya nilai di kolom `value` tidak ikut dipakai.
-        $bertingkat = \App\Support\KuponLanjutan::potonganBertingkat($this, $subtotal);
+        $bertingkat = KuponLanjutan::potonganBertingkat($this, $subtotal);
 
         if ($bertingkat !== null) {
             return $bertingkat;

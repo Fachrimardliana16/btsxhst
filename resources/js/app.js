@@ -116,6 +116,12 @@ document.addEventListener('click', (event) => {
     if (aksi === 'cookie-setuju') {
         window.iksanCookie.setuju();
     }
+
+    // Menolak analitik tetap diperlakukan sebagai pilihan: banner tidak
+    // muncul lagi, dan skrip analitik tidak pernah dicetak oleh server.
+    if (aksi === 'cookie-tolak') {
+        window.iksanCookie.tolak();
+    }
 });
 
 /**
@@ -131,23 +137,47 @@ window.iksanCookie = {
         return 'iksan_izin';
     },
 
+    /**
+     * Pilihan analitik. Keberadaan cookie ini berarti pembeli sudah memilih —
+     * `1` menerima, `0` menolak. Nilainya dibaca server saat merender skrip
+     * Google Analytics dan Meta Pixel.
+     */
+    get keyAnalitik() {
+        return 'iksan_analitik';
+    },
+
     get disetujui() {
         try {
             return document.cookie
                 .split('; ')
-                .some((baris) => baris.startsWith(this.key + '='));
+                .some((baris) => baris.startsWith(this.keyAnalitik + '='));
         } catch (e) {
             return false;
         }
     },
 
-    setuju() {
+    tulis(nama, nilai) {
         // Satu tahun, sama dengan cookie zona. Hati-hati: tanpa SameSite,
         // cookie ini ikut terkirim pada permintaan lintas situs.
         document.cookie =
-            this.key +
-            '=1; path=/; max-age=31536000; SameSite=Lax' +
+            nama +
+            '=' +
+            nilai +
+            '; path=/; max-age=31536000; SameSite=Lax' +
             (window.location.protocol === 'https:' ? '; Secure' : '');
+    },
+
+    setuju() {
+        this.tulis(this.keyAnalitik, '1');
+        this.tulis(this.key, '1');
+
+        // Muat ulang: skrip analitik hanya dirender server bila cookie izin
+        // sudah ada, jadi halaman yang sedang tampil belum memuatnya.
+        window.location.reload();
+    },
+
+    tolak() {
+        this.tulis(this.keyAnalitik, '0');
 
         const notice = document.getElementById('cookie-notice');
         if (notice) {
@@ -155,7 +185,7 @@ window.iksanCookie = {
         }
     },
 
-    /** Tampilkan pemberitahuan hanya bila belum ada persetujuan. */
+    /** Tampilkan pemberitahuan hanya bila belum ada pilihan. */
     perbarui() {
         if (this.disetujui) {
             return;
@@ -1063,3 +1093,114 @@ document.addEventListener('change', function (e) {
         nama.hidden = true;
     }
 });
+
+/* ═══ Bidang formulir dan pesan galatnya ═══════════════════════════════════
+
+   Setiap @error() merender <p class="field-error">, tetapi bidangnya tidak
+   pernah ditandai aria-invalid atau dihubungkan ke pesan itu. Pembaca layar
+   karena itu tidak tahu bidang mana yang salah: pesannya dibacakan di luar
+   konteks, dan fokus tetap berpindah ke bidang berikutnya tanpa peringatan.
+
+   Ditangani sekali di sini, bukan di setiap template: jumlah formulirnya
+   puluhan, dan menambal satu per satu berarti setiap formulir baru harus
+   ingat melakukannya sendiri.
+
+   Pengamat DOM diperlukan karena Livewire mengganti isi formulir setelah
+   validasi — saat halaman dimuat pesan galatnya belum ada. */
+(function () {
+    var nomor = 0;
+
+    function tandai(akar) {
+        if (!akar || !akar.querySelectorAll) return;
+
+        akar.querySelectorAll('.field-error').forEach(function (pesan) {
+            var bidang = pesan.parentElement
+                && pesan.parentElement.querySelector('input, select, textarea');
+
+            if (!bidang) return;
+
+            if (!pesan.id) pesan.id = 'galat-bidang-' + (++nomor);
+            if (!bidang.id) bidang.id = 'bidang-' + (++nomor);
+
+            // Diucapkan saat muncul; tanpa ini pengguna pembaca layar baru
+            // tahu ada galat setelah menjelajah ke pesannya.
+            pesan.setAttribute('role', 'alert');
+            bidang.setAttribute('aria-invalid', 'true');
+
+            var dijelaskan = (bidang.getAttribute('aria-describedby') || '')
+                .split(/\s+/)
+                .filter(Boolean);
+
+            if (dijelaskan.indexOf(pesan.id) === -1) {
+                dijelaskan.push(pesan.id);
+                bidang.setAttribute('aria-describedby', dijelaskan.join(' '));
+            }
+        });
+
+        // Bidang yang galatnya sudah hilang harus dilepas penandanya, kalau
+        // tidak ia terus diumumkan sebagai tidak sah.
+        akar.querySelectorAll('[aria-invalid="true"]').forEach(function (bidang) {
+            var wadah = bidang.parentElement;
+
+            if (!wadah || !wadah.querySelector('.field-error')) {
+                bidang.removeAttribute('aria-invalid');
+            }
+        });
+    }
+
+    var tertunda = false;
+
+    function jadwalkan() {
+        if (tertunda) return;
+
+        tertunda = true;
+        requestAnimationFrame(function () {
+            tertunda = false;
+            tandai(document);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', jadwalkan);
+    document.addEventListener('livewire:navigated', jadwalkan);
+
+    if (window.MutationObserver) {
+        new MutationObserver(jadwalkan).observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+        });
+    }
+})();
+
+/* Jebakan fokus untuk panel dialog.
+ *
+ * Drawer menu memakai role="dialog" dan aria-modal="true", tetapi tanpa
+ * jebakan fokus Tab tetap berjalan ke tautan di belakang lapisan gelap —
+ * pengguna papan tik bisa "keluar" dari dialog yang katanya modal. Escape
+ * dan fokus awal sudah ditangani Alpine di navbar; berkas ini hanya menjaga
+ * ujung-ujung daftar fokus. */
+window.jebakFokus = function (peristiwa, panel) {
+    if (!panel || peristiwa.key !== 'Tab') return;
+
+    var semua = panel.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), ' +
+        'select:not([disabled]), textarea:not([disabled]), ' +
+        '[tabindex]:not([tabindex="-1"])'
+    );
+
+    var bisaFokus = Array.prototype.filter.call(semua, function (el) {
+        return el.offsetParent !== null;
+    });
+
+    if (bisaFokus.length === 0) return;
+
+    var pertama = bisaFokus[0];
+    var terakhir = bisaFokus[bisaFokus.length - 1];
+
+    if (peristiwa.shiftKey && document.activeElement === pertama) {
+        peristiwa.preventDefault();
+        terakhir.focus();
+    } else if (!peristiwa.shiftKey && document.activeElement === terakhir) {
+        peristiwa.preventDefault();
+        pertama.focus();
+    }
+};

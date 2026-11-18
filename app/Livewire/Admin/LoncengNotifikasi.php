@@ -4,7 +4,9 @@ namespace App\Livewire\Admin;
 
 use App\Events\NotifikasiPanelMuncul;
 use App\Support\NotifikasiAdmin;
+use App\Support\SakelarNotifikasi;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
 
 /**
@@ -63,12 +65,15 @@ class LoncengNotifikasi extends KomponenAdmin
     /**
      * Jumlah notifikasi belum dilihat pada render SEBELUMNYA.
      *
-     * Push hanya dikirim ketika angkanya NAIK. Tanpa penanda ini, setiap
-     * penyegaran halaman akan mengirim "anda punya notifikasi" — termasuk pada
-     * halaman yang tidak berubah sama sekali, dan admin akan mematikan izin
-     * notifikasi dalam satu hari.
+     * Push hanya dikirim ketika angkanya NAIK. Penanda ini disimpan di sesi,
+     * bukan di properti publik komponen: properti Livewire kembali ke nilai
+     * awalnya pada setiap muat halaman, sehingga notifikasi yang sama dikirim
+     * ulang di setiap navigasi admin.
      */
-    public int $diberitahukan = 0;
+    private function jumlahSebelumnya(): int
+    {
+        return (int) session('admin.lonceng.diberitahukan', 0);
+    }
 
     /**
      * Kirim push hanya bila jumlah notifikasi yang belum dilihat BERTAMBAH.
@@ -77,17 +82,17 @@ class LoncengNotifikasi extends KomponenAdmin
      * yang dirender ulang oleh Livewire — atau admin yang membuka panel di
      * tab lain — tidak memicunya berulang kali untuk angka yang sama.
      */
-    private function beriTahu(\Illuminate\Support\Collection $belum): void
+    private function beriTahu(Collection $belum): void
     {
         $jumlah = $belum->count();
 
-        if ($jumlah <= $this->diberitahukan) {
+        if ($jumlah <= $this->jumlahSebelumnya()) {
             return;
         }
 
         $pengguna = auth()->user();
 
-        if ($pengguna === null || ! \App\Support\SakelarNotifikasi::kirimAktif('push_perangkat')) {
+        if ($pengguna === null || ! SakelarNotifikasi::kirimAktif('push_perangkat')) {
             return;
         }
 
@@ -100,7 +105,7 @@ class LoncengNotifikasi extends KomponenAdmin
             route('admin.dashboard'),
         );
 
-        $this->diberitahukan = $jumlah;
+        session(['admin.lonceng.diberitahukan' => $jumlah]);
     }
 
     public function render(): View

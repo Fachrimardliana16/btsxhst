@@ -7,7 +7,6 @@ use App\Models\Order;
 use App\Support\DokumenPdf;
 use App\Support\Pengaturan;
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
@@ -85,68 +84,6 @@ class DokumenPesanan
         abort_unless(in_array($jenis, ['resi', 'invoice', 'surat-jalan'], true), 404);
 
         return view('cetak.'.$jenis, $this->data($order, denganAlamat: true));
-    }
-
-    /**
-     * Ekspor CSV daftar pesanan mengikuti saringan yang sedang aktif.
-     *
-     * Dipakai untuk rekap penjualan di luar aplikasi. Kutipan ganda pada nilai
-     * digandakan supaya pemisah kolom tidak rusak saat nama produk memuat
-     * karakter itu.
-     */
-    public function eksporCsv(Request $request)
-    {
-        $status = $request->query('status', 'semua');
-        $bayar = $request->query('bayar', 'semua');
-        $cari = trim((string) $request->query('cari', ''));
-
-        $pesanan = Order::query()
-            ->with(['items', 'user'])
-            ->when($status !== 'semua' && $status !== '', fn ($q) => $q->where('status', $status))
-            ->when($bayar !== 'semua' && $bayar !== '', fn ($q) => $q->where('payment_status', $bayar))
-            ->when($cari !== '', fn ($q) => $q->where('order_number', 'like', '%'.$cari.'%'))
-            ->orderByDesc('created_at')
-            ->limit(5000)
-            ->get();
-
-        $namaBerkas = 'pesanan-'.now()->format('Ymd-His').'.csv';
-
-        return response()->streamDownload(function () use ($pesanan): void {
-            $keluaran = fopen('php://output', 'w');
-
-            // BOM UTF-8 supaya Excel di Windows membaca aksen dengan benar.
-            fwrite($keluaran, "\xEF\xBB\xBF");
-
-            fputcsv($keluaran, [
-                'Number', 'Date', 'Status', 'Payment', 'Method',
-                'Buyer', 'Contact', 'City', 'Item count', 'Subtotal',
-                'Discount', 'Shipping', 'Tax', 'Total', 'Tracking',
-            ]);
-
-            foreach ($pesanan as $o) {
-                $alamat = $o->alamat();
-
-                fputcsv($keluaran, [
-                    $o->order_number,
-                    $o->created_at->format('Y-m-d H:i'),
-                    $o->status->label(),
-                    $o->payment_status->label(),
-                    $o->payment_method?->label() ?? '',
-                    $o->namaPenerima(),
-                    $o->emailPenerima() ?? $o->user?->email ?? '',
-                    $alamat['city'] ?? '',
-                    $o->jumlahItem(),
-                    number_format((float) $o->subtotal, 2, '.', ''),
-                    number_format((float) $o->discount_amount, 2, '.', ''),
-                    number_format((float) $o->shipping_cost, 2, '.', ''),
-                    number_format((float) $o->tax_amount, 2, '.', ''),
-                    number_format((float) $o->grand_total, 2, '.', ''),
-                    $o->tracking_number ?? '',
-                ]);
-            }
-
-            fclose($keluaran);
-        }, $namaBerkas, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     /**

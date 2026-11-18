@@ -3,11 +3,13 @@
 namespace App\Livewire\Front;
 
 use App\Models\Product;
+use App\Models\ProductLike;
 use App\Models\ProductVariant;
 use App\Services\Keranjang;
 use App\Support\HargaDolar;
 use App\Support\Pengaturan;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -45,7 +47,7 @@ class DetailProduk extends Component
             ->where('is_active', true)
             ->sortBy('display_order')
             ->firstWhere(fn (ProductVariant $v) => $v->stokTersedia() > 0)
-            ?->id
+            ->id
             ?? $this->product->variants->where('is_active', true)->first()?->id;
 
         // Dihitung sekali per tampilan, bukan per render. Penulisan per render
@@ -142,7 +144,7 @@ class DetailProduk extends Component
      */
     public function tautanWhatsApp(): ?string
     {
-        $nomor = preg_replace('/\D/', '', (string) Pengaturan::instance()?->teks('whatsapp_number'));
+        $nomor = preg_replace('/\D/', '', Pengaturan::instance()->teks('whatsapp_number'));
 
         if ($nomor === '') {
             return null;
@@ -151,11 +153,11 @@ class DetailProduk extends Component
         $varian = $this->varian();
 
         $pesan = sprintf(
-            'Halo %s, saya mau tanya %s (%s)%s. Stoknya masih ada?',
+            'Hello %s, I would like to ask about %s (%s)%s. Is it still in stock?',
             Pengaturan::instance()->teks('site_name'),
             $this->product->judul(),
             $this->product->sku,
-            $varian === null ? '' : ' varian '.$varian->nama(),
+            $varian === null ? '' : ' variant '.$varian->nama(),
         );
 
         return 'https://wa.me/'.$nomor.'?text='.rawurlencode($pesan);
@@ -224,7 +226,7 @@ class DetailProduk extends Component
             'audio' => $audio,
             // Status suka produk ini. Satu kueri hitung + satu kueri status,
             // keduanya indeks — halaman detail memang memuat satu produk.
-            'suka' => \App\Models\ProductLike::propsUntuk(
+            'suka' => ProductLike::propsUntuk(
                 collect([$this->product]),
                 auth()->user(),
                 session()->getId(),
@@ -284,30 +286,29 @@ class DetailProduk extends Component
      * mengutip kalimat, bukan tabel: ringkasan yang disusun sendiri oleh mereka
      * dari menu navigasi sering salah menyebut harga atau ketersediaan.
      */
-    private function ringkasanAi(string $harga, int $tersedia): string
+    private function ringkasanAi(float $harga, int $tersedia): string
     {
         $nama = $this->product->judul();
         $kategori = $this->product->category?->nama();
-        $toko = app(\App\Support\Pengaturan::class)->teks('site_name', 'Bites Exhaust');
+        $toko = app(Pengaturan::class)->teks('site_name', 'Bites Exhaust');
 
-        $bagian = ["{$nama}".($kategori ? " adalah produk {$kategori}" : '')." dari {$toko}."];
+        $bagian = ["{$nama}".($kategori ? " is a {$kategori} product" : '')." from {$toko}."];
 
-        if ($harga !== '') {
-            // $harga sudah berupa nominal dolar ("235.21"), bukan angka
-            // rupiah. Menyisipkannya apa adanya menghasilkan "Harganya
-            // 235.21" — tanpa simbol, dan mesin jawaban mengutipnya sebagai
-            // nomor versi.
-            $bagian[] = 'Harganya mulai '.dolar((float) $harga).'.';
+        if ($harga > 0) {
+            // $harga sudah berupa nominal dolar, bukan angka rupiah.
+            // Menyisipkannya tanpa simbol membuat mesin jawaban mengutipnya
+            // sebagai nomor versi, bukan harga.
+            $bagian[] = 'Prices start at '.dolar($harga).'.';
         }
 
         $bagian[] = $tersedia > 0
-            ? "Tersedia {$tersedia} varian yang dapat dibeli, dikirim ke seluruh Indonesia."
-            : 'Saat ini sedang tidak tersedia.';
+            ? "{$tersedia} variants are available to order."
+            : 'It is currently out of stock.';
 
         $deskripsi = trim(strip_tags($this->product->deskripsi()));
 
         if ($deskripsi !== '') {
-            $bagian[] = \Illuminate\Support\Str::limit($deskripsi, 220);
+            $bagian[] = Str::limit($deskripsi, 220);
         }
 
         return implode(' ', $bagian);

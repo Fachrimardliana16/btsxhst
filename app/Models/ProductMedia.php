@@ -102,7 +102,7 @@ class ProductMedia extends Model
         // type di-cast ke enum TipeMedia, bukan string: membandingkannya
         // langsung dengan 'model_3d' selalu false, dan pemutarnya tidak pernah
         // dirender tanpa satu pun galat.
-        $nilai = $this->type instanceof \App\Enums\TipeMedia ? $this->type->value : (string) $this->type;
+        $nilai = $this->type->value;
 
         return in_array($nilai, ['model_3d', 'audio', 'video'], true)
             && filled($this->path_media);

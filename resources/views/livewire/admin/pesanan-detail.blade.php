@@ -139,6 +139,28 @@
                         <dd class="tech font-semibold">{{ dolar($order->grand_total) }}</dd>
                     </div>
                 </dl>
+
+                @if ($order->shipping_is_intl)
+                    <div class="border-t border-line-soft p-4">
+                        <p class="part-no">International shipping quote</p>
+                        <p class="mt-1 text-xs text-muted">
+                            Checkout uses the domestic flat rate. Enter the courier's quoted cost before processing.
+                            @if ($order->shipping_quoted_at)
+                                Quoted {{ $order->shipping_quoted_at->format('Y-m-d H:i') }}.
+                            @endif
+                        </p>
+                        <div class="mt-3 flex flex-wrap items-end gap-2">
+                            <label class="block">
+                                <span class="part-no">Shipping cost (USD)</span>
+                                <input type="text" inputmode="decimal" wire:model="ongkir" class="field mt-1.5 w-40" />
+                            </label>
+                            <button type="button" wire:click="simpanOngkir" class="btn btn-outline">
+                                Save quote
+                            </button>
+                        </div>
+                        @error('ongkir') <p class="field-error mt-2">{{ $message }}</p> @enderror
+                    </div>
+                @endif
             </div>
 
             {{-- Perpindahan status --}}
@@ -293,13 +315,17 @@
                     <p class="mt-2 text-sm text-muted">{{ __('site.admin.pesanan_detail.alamat_tidak_ada') }}</p>
                 @else
                     <address class="mt-2 text-sm not-italic leading-relaxed text-muted">
-                        {{ $alamat['recipient_name'] }}<br>
+                        {{ $order->namaPenerima() }}<br>
                         {{ $alamat['address_line_1'] }}<br>
                         @if (filled($alamat['address_line_2'] ?? null))
                             {{ $alamat['address_line_2'] }}<br>
                         @endif
-                        {{ $alamat['city'] }}, {{ $alamat['state_province'] }} {{ $alamat['postal_code'] }}<br>
-                        {{ $alamat['phone_number'] }}
+                        @if (filled($order->barisKota()))
+                            {{ $order->barisKota() }}<br>
+                        @endif
+                        @if (filled($order->teleponPenerima()))
+                            {{ $order->teleponPenerima() }}
+                        @endif
                     </address>
                 @endif
             </div>
@@ -310,7 +336,7 @@
 
                 <p class="mt-2 text-sm">
                     {{ __('site.admin.pesanan_detail.metode') }}
-                    <span class="font-medium">{{ $order->payment_method?->label() ?? 'belum dipilih' }}</span>
+                    <span class="font-medium">{{ $order->payment_method?->label() ?? __('site.admin.pesanan_detail.belum_dipilih') }}</span>
                 </p>
 
                 @forelse ($order->payments as $bayar)

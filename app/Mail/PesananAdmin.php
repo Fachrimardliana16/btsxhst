@@ -46,8 +46,8 @@ class PesananAdmin extends Mailable
         $nama = (string) $toko->teks('site_name', 'Bites Exhaust');
 
         $judul = $this->kejadian === self::SELESAI
-            ? 'Pesanan selesai'
-            : 'Pesanan baru';
+            ? 'Order completed'
+            : 'New order';
 
         // Nomor pesanan dan total ikut di judul: itulah yang dibaca admin di
         // daftar masuk tanpa membuka emailnya.

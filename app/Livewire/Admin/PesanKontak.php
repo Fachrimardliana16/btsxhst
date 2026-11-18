@@ -5,6 +5,8 @@ namespace App\Livewire\Admin;
 use App\Models\ContactMessage;
 use App\Support\CatatanAktivitas;
 use Illuminate\Contracts\View\View;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\WithPagination;
@@ -189,12 +191,12 @@ class PesanKontak extends KomponenAdmin
                 fn (ContactMessage $p): bool => $p->cocokPencarian($this->cari),
             )->values();
 
-            $daftar = new \Illuminate\Pagination\LengthAwarePaginator(
+            $daftar = new LengthAwarePaginator(
                 $semua->forPage($this->getPage(), 10),
                 $semua->count(),
                 10,
                 $this->getPage(),
-                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()],
+                ['path' => Paginator::resolveCurrentPath()],
             );
         } else {
             $daftar = $kueri->paginate(10);

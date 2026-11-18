@@ -20,12 +20,14 @@
 
 // dirname(__DIR__) = akar proyek (naik satu dari public/).
 $akarProyek = dirname(__DIR__);
-$berkasEnv  = $akarProyek.DIRECTORY_SEPARATOR.'.env.production';
+$berkasEnv = $akarProyek.DIRECTORY_SEPARATOR.'.env.production';
 
 if (! is_file($berkasEnv)) {
     http_response_code(500);
     header('Content-Type: text/plain; charset=utf-8');
-    exit(".env.production tidak ditemukan di: $berkasEnv\n");
+    // Jangan sebut jalur absolut: berkas ini dapat dijangkau publik, dan
+    // jalur server adalah peta bagi penyerang.
+    exit("Production environment file is missing.\n");
 }
 
 // Muat .env.production ke $_ENV/$_SERVER tanpa menimpa nilai yang sudah ada.

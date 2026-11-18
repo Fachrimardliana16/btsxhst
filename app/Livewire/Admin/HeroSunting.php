@@ -3,11 +3,13 @@
 namespace App\Livewire\Admin;
 
 use App\Models\HeroSlide;
+use App\Models\ProductMedia;
 use App\Services\Hero\PenyimpanHero;
 use App\Support\CacheKatalog;
 use App\Support\CatatanAktivitas;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\WithFileUploads;
 use Throwable;
@@ -90,7 +92,7 @@ class HeroSunting extends KomponenAdmin
                 'form.ends_at.after_or_equal' => __('site.msg.hero.tanggal_terbalik'),
                 'berkasVideo.max' => 'The video exceeds the :max KB limit.',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->galat = __('site.msg.hero.ada_isian_salah');
 
             throw $e;
@@ -111,7 +113,7 @@ class HeroSunting extends KomponenAdmin
                 continue;
             }
 
-            if (\App\Models\HeroSlide::urlTombolAman($nilai) === null) {
+            if (HeroSlide::urlTombolAman($nilai) === null) {
                 $this->addError(
                     'form.'.$kunci,
                     'Enter an https://… address or an in-site path such as /products.',
@@ -266,7 +268,7 @@ class HeroSunting extends KomponenAdmin
     /** URL gambar untuk pratinjau. Jalur kosong berarti belum ada berkas. */
     public function urlMedia(?string $jalur): ?string
     {
-        return filled($jalur) ? \App\Models\ProductMedia::urlMedia($jalur) : null;
+        return filled($jalur) ? ProductMedia::urlMedia($jalur) : null;
     }
 
     public function render(): View

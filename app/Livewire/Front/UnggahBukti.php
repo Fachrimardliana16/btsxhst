@@ -8,8 +8,11 @@ use App\Models\Payment;
 use App\Services\Pembayaran\PembayaranManual;
 use App\Support\Pengaturan;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use Throwable;
 
@@ -31,7 +34,7 @@ class UnggahBukti extends Component
 
     public string $pesananUlid = '';
 
-    /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null */
+    /** @var TemporaryUploadedFile|null */
     public $bukti = null;
 
     public string $catatan = '';
@@ -67,10 +70,10 @@ class UnggahBukti extends Component
             'bukti' => ['required', 'file', 'max:5120'],
             'catatan' => ['nullable', 'string', 'max:500'],
         ], [
-            'bukti.required' => 'Pilih berkas bukti transfer dulu.',
-            'bukti.max' => 'Ukuran berkas maksimum 5 MB.',
-            'bukti.file' => 'Berkas tidak dapat dibaca.',
-            'catatan.max' => 'Catatan maksimum 500 karakter.',
+            'bukti.required' => 'Select the transfer receipt file first.',
+            'bukti.max' => 'The file must be 5 MB or smaller.',
+            'bukti.file' => 'The file cannot be read.',
+            'catatan.max' => 'The note must be 500 characters or fewer.',
         ]);
 
         $pesanan = $this->pesanan();
@@ -86,7 +89,7 @@ class UnggahBukti extends Component
             $this->pesan = $hasil['pesan'];
             $this->bukti = null;
             $this->catatan = '';
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             // Pesan dari layanan lebih spesifik daripada validasi umum, jadi
             // diteruskan apa adanya ke kolomnya.
             foreach ($e->errors() as $kolom => $daftar) {
@@ -96,12 +99,12 @@ class UnggahBukti extends Component
             // Pesan pengecualian TIDAK diteruskan ke pembeli: isinya dapat memuat
             // jalur berkas server, nama tabel, atau kueri. Yang dicatat ke log,
             // yang ditampilkan hanya pesan umum.
-            \Illuminate\Support\Facades\Log::warning('Bukti bayar gagal diunggah', [
-                'pesanan' => $this->ulid,
+            Log::warning('Bukti bayar gagal diunggah', [
+                'pesanan' => $this->pesananUlid,
                 'sebab' => $e->getMessage(),
             ]);
 
-            $this->galat = 'Bukti gagal diunggah. Coba lagi, atau hubungi kami lewat WhatsApp.';
+            $this->galat = 'The receipt could not be uploaded. Try again, or reach us on WhatsApp.';
         }
     }
 
@@ -123,6 +126,9 @@ class UnggahBukti extends Component
             'rekeningLengkap' => $manual->rekeningLengkap(),
             'sudahLunas' => $pesanan->payment_status === StatusPembayaran::Paid,
             'menunggu' => $pesanan->payment_status === StatusPembayaran::Pending,
-        ])->title('Unggah bukti transfer · '.$toko->teks('site_name', 'Bites Exhaust'));
+        ])->title('Unggah bukti transfer · '.$toko->teks('site_name', 'Bites Exhaust'))
+            // Halaman ini dibuka lewat ULID pesanan; tautannya setara token
+            // akses pesanan dan tidak boleh masuk indeks.
+            ->layoutData(['tanpaIndeks' => true]);
     }
 }

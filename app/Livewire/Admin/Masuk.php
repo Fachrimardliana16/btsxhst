@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin;
 
-use App\Enums\PeranPengguna;
 use App\Enums\TipeKejadianKeamanan;
 use App\Models\User;
 use App\Support\BlindIndex;
@@ -130,9 +129,9 @@ class Masuk extends Component
             return;
         }
 
-        $peran = $user->role instanceof PeranPengguna ? $user->role : PeranPengguna::tryFrom((string) $user->role);
+        $peran = $user->role;
 
-        if ($peran === null || ! $peran->bisaMasukPanel()) {
+        if (! $peran->bisaMasukPanel()) {
             Keamanan::catat(TipeKejadianKeamanan::AksesTidakSah, request(), $this->email, $user->id, 'Bukan admin mencoba masuk panel');
             $this->galat = $pesanSeragam;
 
@@ -170,7 +169,7 @@ class Masuk extends Component
 
         if (RateLimiter::tooManyAttempts($kunci, config('iksan.rate_limits.admin_login')[0])) {
             Keamanan::catat(TipeKejadianKeamanan::BatasLaju, request(), null, $userId, 'Batas laju 2FA');
-            $this->galat = 'Terlalu banyak percobaan. Tunggu sebentar.';
+            $this->galat = __('site.admin.galat.terlalu_banyak');
 
             return;
         }
@@ -194,7 +193,6 @@ class Masuk extends Component
         if (! $sah) {
             // Kode cadangan: satu kali pakai, dihapus setelah dipakai.
             $cadangan = $user->two_factor_recovery_codes ?? [];
-            $cadangan = is_string($cadangan) ? (json_decode($cadangan, true) ?: []) : $cadangan;
             $indeks = array_search($kode, $cadangan, true);
 
             if ($kode !== '' && $indeks !== false) {
@@ -211,6 +209,10 @@ class Masuk extends Component
 
             return;
         }
+
+        // Pilihan "remember me" dibuat di langkah kata sandi; setelah 2FA,
+        // nilainya harus dibawa, kalau tidak centangnya hilang tanpa kabar.
+        $this->ingat = (bool) session()->get('admin.2fa.ingat', false);
 
         session()->forget(['admin.2fa.user', 'admin.2fa.ingat']);
 

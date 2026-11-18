@@ -118,7 +118,7 @@
                 <p class="isi-kolom">
                     {{ $alamat['address_line_1'] ?? '' }}
                     @if (filled($alamat['address_line_2'] ?? null))<br>{{ $alamat['address_line_2'] }}@endif
-                    @if (filled($alamat['city'] ?? null))<br>{{ $alamat['city'] }}, {{ $alamat['state_province'] }} {{ $alamat['postal_code'] }}@endif
+                    @if (filled($order->barisKota()))<br>{{ $order->barisKota() }}@endif
                 </p>
             </td>
 

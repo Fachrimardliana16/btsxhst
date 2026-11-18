@@ -73,23 +73,23 @@
                                 @endif
 
                                 <div class="mt-auto flex items-end justify-between gap-3 pt-3">
-                                    {{-- Tombol jumlah 40x40px. Sebelumnya 36x36
-                                         karena kelas !h-9 !w-9 menimpa ukuran
-                                         bawaan btn-icon. --}}
+                                    {{-- Tombol jumlah 44x44px. 40px masih di bawah
+                                         target sentuh minimum yang nyaman;
+                                         36px sebelumnya bahkan lebih kecil. --}}
                                     <div class="flex items-center">
-                                        <button type="button" class="btn-icon !h-10 !w-10 !border !border-line"
+                                        <button type="button" class="btn-icon !h-11 !w-11 !border !border-line"
                                                 wire:click="ubahJumlah({{ $item->id }}, {{ $item->quantity - 1 }})">
                                             <x-ikon name="minus" :size="15" />
-                                            <span class="visually-hidden">Kurangi</span>
+                                            <span class="visually-hidden">{{ __('site.product.decrease_qty') }}</span>
                                         </button>
 
                                         <span class="tech w-12 text-center">{{ $item->quantity }}</span>
 
-                                        <button type="button" class="btn-icon !h-10 !w-10 !border !border-line"
+                                        <button type="button" class="btn-icon !h-11 !w-11 !border !border-line"
                                                 wire:click="ubahJumlah({{ $item->id }}, {{ $item->quantity + 1 }})"
                                                 @disabled($item->quantity >= $maks)>
                                             <x-ikon name="plus" :size="15" />
-                                            <span class="visually-hidden">Tambah</span>
+                                            <span class="visually-hidden">{{ __('site.product.increase_qty') }}</span>
                                         </button>
                                     </div>
 
@@ -101,7 +101,7 @@
                                              dapat dibatalkan, jadi jaraknya
                                              dijauhkan dan ukurannya dibuat
                                              penuh, bukan 30x36. --}}
-                                        <button type="button" class="btn-icon !h-10 !w-10 text-danger"
+                                        <button type="button" class="btn-icon !h-11 !w-11 text-danger"
                                                 wire:click="hapusItem({{ $item->id }})"
                                                 wire:confirm="{{ __('site.cart.remove') }}?">
                                             <x-ikon name="trash" :size="17" />

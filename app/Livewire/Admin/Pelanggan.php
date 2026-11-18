@@ -7,7 +7,6 @@ use App\Models\Order;
 use App\Models\User;
 use App\Support\CatatanAktivitas;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\WithPagination;
@@ -83,6 +82,8 @@ class Pelanggan extends KomponenAdmin
      */
     public function ubahBlokir(int $id): void
     {
+        $this->authorize('kelolaAkun', User::class);
+
         $pengguna = User::query()->findOrFail($id);
         $saya = auth()->user();
 
@@ -130,7 +131,7 @@ class Pelanggan extends KomponenAdmin
     public function ubahPeran(int $id, string $peranBaru): void
     {
         // Mengubah peran berarti mengubah siapa yang boleh masuk panel.
-        $this->authorize('kelolaAkun', \App\Models\User::class);
+        $this->authorize('kelolaAkun', User::class);
 
         $saya = auth()->user();
 
@@ -186,7 +187,7 @@ class Pelanggan extends KomponenAdmin
 
     public function hapus(int $id): void
     {
-        $this->authorize('kelolaAkun', \App\Models\User::class);
+        $this->authorize('kelolaAkun', User::class);
 
         $saya = auth()->user();
         $pengguna = User::query()->withCount('orders')->findOrFail($id);

@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\ProductMedia;
 use App\Services\Produk\PengunggahMediaProduk;
 use App\Support\CacheKatalog;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Tab 3 — media produk: unggah, urutan, gambar utama, dan teks alt

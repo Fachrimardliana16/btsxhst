@@ -59,6 +59,16 @@ class PaypalGateway
      */
     public function buatPesanan(Order $pesanan): array
     {
+        // Hanya pesanan yang masih menunggu pembayaran yang boleh membuat
+        // pesanan PayPal baru. Pesanan batal sudah melepas stoknya; membiarkan
+        // pembeli membayarnya berarti uang masuk untuk barang yang tidak akan
+        // dikirim.
+        $pesanan->refresh();
+
+        if ($pesanan->status !== StatusPesanan::Pending) {
+            throw new RuntimeException('Pesanan ini tidak lagi menunggu pembayaran.');
+        }
+
         $token = $this->aksesToken();
 
         $muatan = [
@@ -121,6 +131,38 @@ class PaypalGateway
      */
     public function tangkap(Order $pesanan, string $paypalOrderId): Payment
     {
+        $pesanan->refresh();
+
+        if ($pesanan->status === StatusPesanan::Cancelled) {
+            throw new RuntimeException('Pesanan ini sudah dibatalkan dan tidak dapat dibayar.');
+        }
+
+        if ($pesanan->payment_status === StatusPembayaran::Paid) {
+            $ada = Payment::query()
+                ->where('order_id', $pesanan->id)
+                ->where('provider', 'paypal')
+                ->first();
+
+            if ($ada !== null) {
+                return $ada;
+            }
+        }
+
+        if ($pesanan->status !== StatusPesanan::Pending) {
+            throw new RuntimeException('Pesanan ini tidak lagi menunggu pembayaran.');
+        }
+
+        // Sebelum dana ditangkap, pastikan pesanan PayPal yang dibawa klien
+        // memang pesanan PayPal yang dibuat untuk pesanan toko ini. Tanpa
+        // pemeriksaan ini, id pesanan PayPal milik transaksi murah dapat
+        // dipasangkan ke pesanan toko yang mahal: yang ditangkap hanya nilainya
+        // yang kecil, tetapi yang ditandai lunas pesanan yang mahal.
+        $this->pastikanPesananPaypalCocok(
+            $pesanan,
+            $this->rincianPesananPaypal($paypalOrderId),
+            'pesanan PayPal',
+        );
+
         $token = $this->aksesToken();
 
         $respons = Http::withToken($token)
@@ -144,11 +186,19 @@ class PaypalGateway
             ?: $paypalOrderId
         );
 
+        // Nominal hasil penangkapan adalah yang benar-benar berpindah, jadi
+        // inilah yang dibandingkan — bukan nominal yang diminta saat pesanan
+        // PayPal dibuat.
+        $nilaiTangkap = $respons->json('purchase_units.0.payments.captures.0.amount.value');
+        $mataTangkap = $respons->json('purchase_units.0.payments.captures.0.amount.currency_code');
+
+        $this->pastikanNominal($pesanan, $nilaiTangkap, $mataTangkap, 'payPal capture');
+
         return $this->catatPembayaran(
             $pesanan,
             $transaksiId,
-            (float) $respons->json('purchase_units.0.payments.captures.0.amount.value', $pesanan->grand_total),
-            strtoupper((string) $respons->json('purchase_units.0.payments.captures.0.amount.currency_code', $pesanan->currency ?: HargaDolar::MATA)),
+            round((float) $nilaiTangkap, 2),
+            strtoupper((string) $mataTangkap),
             ['sumber' => 'capture', 'status_paypal' => $status],
         );
     }
@@ -191,7 +241,7 @@ class PaypalGateway
         $tandaTangan = (string) $request->header('PAYPAL-TRANSMISSION-SIG', '');
         $sertifikat = (string) $request->header('PAYPAL-CERT-URL', '');
         $algo = (string) $request->header('PAYPAL-AUTH-ALGO', 'SHA256withRSA');
-        $idWebhook = (string) (Pengaturan::instance()?->teks('paypal_webhook_id') ?? '');
+        $idWebhook = (string) Pengaturan::instance()->teks('paypal_webhook_id');
 
         // Tanpa id webhook, PayPal tidak dapat memastikan kiriman ini milik
         // toko ini. Menolak lebih baik daripada menerima tanpa dasar.
@@ -275,9 +325,32 @@ class PaypalGateway
                 return ['diabaikan' => true, 'alasan' => 'Pembayaran pesanan ini sudah tercatat.'];
             }
 
+            if ($pesanan->status !== StatusPesanan::Pending) {
+                CatatanAktivitas::catat('paypal.pesanan-tidak-menunggu-pembayaran', [
+                    'order_number' => $pesanan->order_number,
+                    'status' => $pesanan->status->value,
+                    'paypal_id' => $idPaypal,
+                ], null, $pesanan);
+
+                return ['diabaikan' => true, 'alasan' => 'Pesanan tidak lagi menunggu pembayaran.'];
+            }
+
             $this->tangkap($pesanan, $idPaypal);
 
             return ['diabaikan' => false, 'alasan' => 'Pembayaran ditangkap.'];
+        }
+
+        // Dana yang ditarik kembali atau ditolak. Sebelumnya peristiwa ini
+        // dijawab "tidak memengaruhi status pesanan", sehingga refund dan
+        // chargeback tidak meninggalkan jejak apa pun di basis data.
+        if (in_array($jenis, ['PAYMENT.CAPTURE.REFUNDED', 'PAYMENT.CAPTURE.REVERSED', 'PAYMENT.CAPTURE.DENIED'], true)) {
+            return $this->tanganiPembatalanDana($jenis, (array) ($peristiwa['resource'] ?? []));
+        }
+
+        // Sengketa dibuka pembeli. Statusnya dicatat supaya admin tahu ada
+        // uang yang sedang diperebutkan, bukan menemukannya di email PayPal.
+        if (str_starts_with($jenis, 'CUSTOMER.DISPUTE.')) {
+            return $this->tanganiSengketa($jenis, (array) ($peristiwa['resource'] ?? []));
         }
 
         if ($jenis !== 'PAYMENT.CAPTURE.COMPLETED') {
@@ -319,15 +392,283 @@ class PaypalGateway
             return ['diabaikan' => true, 'alasan' => 'Transaksi '.$transaksiId.' sudah tercatat.'];
         }
 
+        if ($pesanan->status !== StatusPesanan::Pending) {
+            CatatanAktivitas::catat('paypal.pesanan-tidak-menunggu-pembayaran', [
+                'order_number' => $pesanan->order_number,
+                'status' => $pesanan->status->value,
+                'transaksi' => $transaksiId,
+            ], null, $pesanan);
+
+            return ['diabaikan' => true, 'alasan' => 'Pesanan tidak lagi menunggu pembayaran.'];
+        }
+
+        try {
+            $this->pastikanNominal(
+                $pesanan,
+                $sumber['amount']['value'] ?? null,
+                $sumber['amount']['currency_code'] ?? null,
+                'PayPal webhook',
+            );
+        } catch (RuntimeException $e) {
+            // Uang sudah berpindah tetapi nominalnya tidak cocok dengan pesanan.
+            // Jangan tandai lunas; catat supaya admin meninjaunya.
+            CatatanAktivitas::catat('paypal.nominal-tidak-cocok', [
+                'order_number' => $pesanan->order_number,
+                'transaksi' => $transaksiId,
+                'nominal' => $sumber['amount']['value'] ?? null,
+                'mata_uang' => $sumber['amount']['currency_code'] ?? null,
+                'sebab' => $e->getMessage(),
+            ], null, $pesanan);
+
+            return ['diabaikan' => true, 'alasan' => 'Nominal pembayaran tidak cocok dengan pesanan.'];
+        }
+
         $this->catatPembayaran(
             $pesanan,
             $transaksiId,
-            (float) ($sumber['amount']['value'] ?? $pesanan->grand_total),
-            strtoupper((string) ($sumber['amount']['currency_code'] ?? ($pesanan->currency ?: HargaDolar::MATA))),
+            round((float) $sumber['amount']['value'], 2),
+            strtoupper((string) $sumber['amount']['currency_code']),
             ['sumber' => 'webhook', 'jenis' => $jenis],
         );
 
         return ['diabaikan' => false, 'alasan' => 'Pembayaran dicatat.'];
+    }
+
+    /**
+     * Mencari baris pembayaran yang dirujuk peristiwa PayPal.
+     *
+     * Objek refund dan dispute tidak selalu membawa id capture di tempat yang
+     * sama: kadang di `id`, kadang di `supplementary_data`, kadang hanya di
+     * tautan `up` menuju /captures/{id}. Semua kandidat dicoba, karena salah
+     * menebak satu bentuk berarti refund tidak pernah tercatat.
+     *
+     * @param  array<string, mixed>  $sumber
+     */
+    private function cariPembayaranPaypal(array $sumber): ?Payment
+    {
+        $kandidat = [
+            (string) ($sumber['id'] ?? ''),
+            (string) (data_get($sumber, 'supplementary_data.related_ids.capture_id') ?? ''),
+            (string) ($sumber['custom_id'] ?? ''),
+        ];
+
+        foreach ((array) ($sumber['links'] ?? []) as $tautan) {
+            $href = (string) ($tautan['href'] ?? '');
+
+            if (preg_match('#/captures/([^/?]+)#', $href, $cocok) === 1) {
+                $kandidat[] = $cocok[1];
+            }
+        }
+
+        foreach ((array) ($sumber['disputed_transactions'] ?? []) as $transaksi) {
+            $kandidat[] = (string) ($transaksi['seller_transaction_id'] ?? '');
+        }
+
+        $kandidat = array_values(array_unique(array_filter($kandidat, fn ($v) => $v !== '')));
+
+        if ($kandidat === []) {
+            return null;
+        }
+
+        return Payment::query()
+            ->where('provider', 'paypal')
+            ->whereIn('provider_transaction_id', $kandidat)
+            ->first();
+    }
+
+    /**
+     * Refund, reversal, atau capture yang ditolak.
+     *
+     * @param  array<string, mixed>  $sumber
+     * @return array{diabaikan: bool, alasan: string}
+     */
+    private function tanganiPembatalanDana(string $jenis, array $sumber): array
+    {
+        $pembayaran = $this->cariPembayaranPaypal($sumber);
+
+        if ($pembayaran === null) {
+            CatatanAktivitas::catat('paypal.pembatalan-tanpa-pembayaran', [
+                'jenis' => $jenis,
+                'id' => $sumber['id'] ?? null,
+            ]);
+
+            return ['diabaikan' => true, 'alasan' => 'Tidak ada pembayaran tercatat yang cocok; perlu ditinjau manual.'];
+        }
+
+        $pesanan = $pembayaran->order()->first();
+
+        // Refund sebagian tidak mengubah pesanan menjadi "refunded": uang yang
+        // masih dipegang toko tetap ada, dan menandai lunas menjadi refunded
+        // akan membuat laporan pendapatan salah.
+        $nominal = round((float) (data_get($sumber, 'amount.value') ?? 0), 2);
+        $sebagian = $jenis !== 'PAYMENT.CAPTURE.DENIED'
+            && $nominal > 0
+            && $nominal < round((float) $pembayaran->amount, 2) - 0.01;
+
+        $statusBaru = match (true) {
+            $jenis === 'PAYMENT.CAPTURE.DENIED' => 'ditolak',
+            $sebagian => 'refund-sebagian',
+            default => 'refunded',
+        };
+
+        if ($pembayaran->provider_status === $statusBaru) {
+            return ['diabaikan' => true, 'alasan' => 'Peristiwa '.$jenis.' sudah tercatat.'];
+        }
+
+        $pembayaran->update([
+            'provider_status' => $statusBaru,
+            'payload_json' => array_merge((array) $pembayaran->payload_json, [
+                'pembatalan' => [
+                    'jenis' => $jenis,
+                    'resource' => $sumber,
+                    'diterima_pada' => now()->toIso8601String(),
+                ],
+            ]),
+        ]);
+
+        if ($pesanan !== null && ! $sebagian) {
+            $pesanan->forceFill([
+                'payment_status' => $jenis === 'PAYMENT.CAPTURE.DENIED'
+                    ? StatusPembayaran::Failed
+                    : StatusPembayaran::Refunded,
+            ])->save();
+
+            CatatanAktivitas::catat('paypal.pembayaran-dibatalkan', [
+                'jenis' => $jenis,
+                'order_number' => $pesanan->order_number,
+                'transaksi' => $pembayaran->provider_transaction_id,
+                'nominal' => $nominal,
+            ], null, $pesanan);
+        }
+
+        Log::warning('PayPal: dana dikembalikan atau ditolak', [
+            'jenis' => $jenis,
+            'payment_id' => $pembayaran->id,
+            'status' => $statusBaru,
+        ]);
+
+        return ['diabaikan' => false, 'alasan' => 'Status pembayaran diperbarui menjadi '.$statusBaru.'.'];
+    }
+
+    /**
+     * Sengketa dari pembeli. Status pesanan TIDAK diubah: hanya admin yang
+     * boleh memutuskan refund atau pengiriman ulang.
+     *
+     * @param  array<string, mixed>  $sumber
+     * @return array{diabaikan: bool, alasan: string}
+     */
+    private function tanganiSengketa(string $jenis, array $sumber): array
+    {
+        $pembayaran = $this->cariPembayaranPaypal($sumber);
+
+        if ($pembayaran === null) {
+            CatatanAktivitas::catat('paypal.sengketa-tanpa-pembayaran', [
+                'jenis' => $jenis,
+                'dispute_id' => $sumber['dispute_id'] ?? null,
+            ]);
+
+            return ['diabaikan' => true, 'alasan' => 'Tidak ada pembayaran tercatat yang cocok; perlu ditinjau manual.'];
+        }
+
+        $pembayaran->update([
+            'provider_status' => 'dispute',
+            'payload_json' => array_merge((array) $pembayaran->payload_json, [
+                'sengketa' => [
+                    'jenis' => $jenis,
+                    'resource' => $sumber,
+                    'diterima_pada' => now()->toIso8601String(),
+                ],
+            ]),
+        ]);
+
+        Log::warning('PayPal: sengketa pembeli', [
+            'jenis' => $jenis,
+            'payment_id' => $pembayaran->id,
+        ]);
+
+        return ['diabaikan' => false, 'alasan' => 'Sengketa dicatat; pesanan menunggu keputusan admin.'];
+    }
+
+    /**
+     * Rincian pesanan PayPal, termasuk `reference_id` dan nominal yang diminta.
+     *
+     * @return array<string, mixed>
+     */
+    private function rincianPesananPaypal(string $paypalOrderId): array
+    {
+        $respons = Http::withToken($this->aksesToken())
+            ->timeout(self::TIMEOUT)
+            ->acceptJson()
+            ->get($this->klien()->dasar().'/v2/checkout/orders/'.$paypalOrderId);
+
+        if (! $respons->successful()) {
+            throw new RuntimeException('PayPal tidak dapat memeriksa pesanan (HTTP '.$respons->status().').');
+        }
+
+        return (array) $respons->json();
+    }
+
+    /**
+     * Memastikan pesanan PayPal memang milik pesanan toko ini.
+     *
+     * `reference_id` adalah nomor pesanan toko yang kita kirim sendiri saat
+     * membuat pesanan PayPal. Bila nilainya berbeda, id PayPal ini berasal dari
+     * transaksi lain — biasanya transaksi yang nominalnya lebih kecil.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function pastikanPesananPaypalCocok(Order $pesanan, array $data, string $sumber): void
+    {
+        $referensi = (string) (data_get($data, 'purchase_units.0.reference_id') ?? '');
+
+        if ($referensi !== (string) $pesanan->order_number) {
+            throw new RuntimeException(sprintf(
+                '%s tidak cocok dengan pesanan %s (reference_id "%s").',
+                $sumber,
+                $pesanan->order_number,
+                $referensi,
+            ));
+        }
+
+        $this->pastikanNominal(
+            $pesanan,
+            data_get($data, 'purchase_units.0.amount.value'),
+            data_get($data, 'purchase_units.0.amount.currency_code'),
+            $sumber,
+        );
+    }
+
+    /**
+     * Nominal dan mata uang harus sama persis dengan yang tercatat di pesanan.
+     * Toleransi satu sen hanya untuk pembulatan desimal PayPal.
+     */
+    private function pastikanNominal(Order $pesanan, mixed $nilai, mixed $mataUang, string $sumber): void
+    {
+        $diharapkan = round((float) $pesanan->grand_total, 2);
+        $diterima = is_numeric($nilai) ? round((float) $nilai, 2) : null;
+
+        if ($diterima === null || abs($diterima - $diharapkan) > 0.009) {
+            throw new RuntimeException(sprintf(
+                '%s membayar %s, sedangkan pesanan %s menagih %.2f.',
+                $sumber,
+                $diterima === null ? 'tanpa nominal' : number_format($diterima, 2, '.', ''),
+                $pesanan->order_number,
+                $diharapkan,
+            ));
+        }
+
+        $diharapkanMata = strtoupper((string) ($pesanan->currency ?: HargaDolar::MATA));
+        $diterimaMata = strtoupper((string) ($mataUang ?? ''));
+
+        if ($diterimaMata !== $diharapkanMata) {
+            throw new RuntimeException(sprintf(
+                '%s memakai mata uang %s, sedangkan pesanan %s memakai %s.',
+                $sumber,
+                $diterimaMata === '' ? '(kosong)' : $diterimaMata,
+                $pesanan->order_number,
+                $diharapkanMata,
+            ));
+        }
     }
 
     /**
@@ -350,6 +691,12 @@ class PaypalGateway
             // pembayaran. Pembayaran pertama yang menang; yang kedua memakai
             // baris yang sama.
             $terkunci = Order::query()->whereKey($pesanan->getKey())->lockForUpdate()->first() ?? $pesanan;
+
+            // Diperiksa lagi di dalam transaksi: pembatalan otomatis dapat
+            // berjalan di antara pemeriksaan di atas dan penulisan di sini.
+            if ($terkunci->status === StatusPesanan::Cancelled) {
+                throw new RuntimeException('Pesanan sudah dibatalkan; pembayaran tidak dicatat.');
+            }
 
             $ada = Payment::query()
                 ->where('order_id', $terkunci->id)

@@ -3,6 +3,7 @@
 namespace App\Services\Gambar;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use RuntimeException;
 
 /**
@@ -39,8 +40,8 @@ class PemeriksaGambar
         // Unggahan yang benar-benar gagal tidak meninggalkan berkas apa pun.
         // Yang diperiksa di sini adalah keberadaan berkasnya, bukan hasil
         // isValid(), supaya berkas dari disk tetap dapat melewati pintu ini.
-        if (! is_string($jalur) || $jalur === '' || ! is_file($jalur)) {
-            return $this->tolak('Unggahan gagal diterima server: berkas sementara tidak ada.', null, null);
+        if ($jalur === '' || ! is_file($jalur)) {
+            return $this->tolak('The upload did not reach the server: the temporary file is missing.', null, null);
         }
 
         return $this->periksaJalur($jalur, $berkas->getSize() ?: null, $jumlahBerkasProduk, $totalByteProduk);
@@ -63,20 +64,20 @@ class PemeriksaGambar
         $konfig = config('iksan.uploads');
 
         if (! is_file($jalur) || ! is_readable($jalur)) {
-            return $this->tolak('Berkas tidak ditemukan atau tidak dapat dibaca.', null, null);
+            return $this->tolak('The file was not found or cannot be read.', null, null);
         }
 
         $ukuranByte ??= (int) filesize($jalur);
 
         if ($ukuranByte <= 0) {
-            return $this->tolak('Berkas kosong.', null, null);
+            return $this->tolak('The file is empty.', null, null);
         }
 
         $ukuranKb = (int) ceil($ukuranByte / 1024);
 
         if ($ukuranKb > $konfig['image_max_kb']) {
             return $this->tolak(
-                sprintf('Ukuran %d KB melebihi batas %d KB.', $ukuranKb, $konfig['image_max_kb']),
+                sprintf('Size %d KB exceeds the %d KB limit.', $ukuranKb, $konfig['image_max_kb']),
                 null,
                 null,
             );
@@ -104,7 +105,7 @@ class PemeriksaGambar
         }
 
         if ($isi === '') {
-            return $this->tolak('Isi berkas tidak dapat dibaca untuk diperiksa.', null, null);
+            return $this->tolak('The file contents cannot be read for inspection.', null, null);
         }
 
         // Tipe dideteksi dari ISI berkas, bukan dari ekstensi maupun header yang
@@ -126,12 +127,12 @@ class PemeriksaGambar
         }
 
         if ($mime === '') {
-            return $this->tolak('Tipe berkas tidak dapat dikenali.', null, null);
+            return $this->tolak('The file type cannot be recognised.', null, null);
         }
 
         if (! in_array($mime, $konfig['allowed_mimes'], true)) {
             return $this->tolak(
-                sprintf('Tipe berkas terdeteksi "%s" dan tidak diizinkan.', $mime),
+                sprintf('Detected file type "%s" is not allowed.', $mime),
                 $mime,
                 null,
             );
@@ -142,14 +143,14 @@ class PemeriksaGambar
         $info = @getimagesizefromstring($isi);
 
         if ($info === false) {
-            return $this->tolak('Isi berkas bukan gambar yang sah meskipun tipe MIME-nya diizinkan.', $mime, null);
+            return $this->tolak('The file contents are not a valid image, even though the MIME type is allowed.', $mime, null);
         }
 
         [$lebar, $tinggi] = $info;
 
         if (max($lebar, $tinggi) > $konfig['max_dimension']) {
             return $this->tolak(
-                sprintf('Dimensi %dx%d melebihi batas %d px.', $lebar, $tinggi, $konfig['max_dimension']),
+                sprintf('Dimensions %dx%d exceed the %d px limit.', $lebar, $tinggi, $konfig['max_dimension']),
                 $mime,
                 null,
             );
@@ -157,7 +158,7 @@ class PemeriksaGambar
 
         if (min($lebar, $tinggi) < $konfig['min_dimension']) {
             return $this->tolak(
-                sprintf('Dimensi %dx%d di bawah minimum %d px.', $lebar, $tinggi, $konfig['min_dimension']),
+                sprintf('Dimensions %dx%d are below the %d px minimum.', $lebar, $tinggi, $konfig['min_dimension']),
                 $mime,
                 null,
             );
@@ -167,7 +168,7 @@ class PemeriksaGambar
 
         if ($rasio > $konfig['max_aspect_ratio']) {
             return $this->tolak(
-                sprintf('Rasio sisi %.1f:1 terlalu ekstrem (batas %d:1).', $rasio, $konfig['max_aspect_ratio']),
+                sprintf('Aspect ratio %.1f:1 is too extreme (limit %d:1).', $rasio, $konfig['max_aspect_ratio']),
                 $mime,
                 null,
             );
@@ -175,7 +176,7 @@ class PemeriksaGambar
 
         if ($jumlahBerkasProduk >= $konfig['max_files_per_product']) {
             return $this->tolak(
-                sprintf('Produk ini sudah memiliki %d berkas (batas %d).', $jumlahBerkasProduk, $konfig['max_files_per_product']),
+                sprintf('This product already has %d files (limit %d).', $jumlahBerkasProduk, $konfig['max_files_per_product']),
                 $mime,
                 null,
             );
@@ -185,13 +186,13 @@ class PemeriksaGambar
 
         if ($totalMb > $konfig['max_total_mb_per_product']) {
             return $this->tolak(
-                sprintf('Total media produk akan mencapai %.1f MB (batas %d MB).', $totalMb, $konfig['max_total_mb_per_product']),
+                sprintf('Product media would reach %.1f MB (limit %d MB).', $totalMb, $konfig['max_total_mb_per_product']),
                 $mime,
                 null,
             );
         }
 
-        $hash = hash('sha256', $isi) ?: null;
+        $hash = hash('sha256', $isi);
 
         return ['alasan' => '', 'mime' => $mime, 'hash' => $hash];
     }
@@ -200,15 +201,15 @@ class PemeriksaGambar
      * Berkas identik yang sudah ada untuk produk yang sama tidak disimpan
      * dua kali. Isi yang sama tidak menambah nilai, hanya menghabiskan ruang.
      */
-    public function duplikat(?string $hash, \Illuminate\Support\Collection $hashTersimpan): bool
+    public function duplikat(?string $hash, Collection $hashTersimpan): bool
     {
         return $hash !== null && $hashTersimpan->contains($hash);
     }
 
-    public function pastikanBukanDuplikat(?string $hash, \Illuminate\Support\Collection $hashTersimpan): void
+    public function pastikanBukanDuplikat(?string $hash, Collection $hashTersimpan): void
     {
         if ($this->duplikat($hash, $hashTersimpan)) {
-            throw new RuntimeException('Berkas ini sudah pernah diunggah untuk produk yang sama.');
+            throw new RuntimeException('This file has already been uploaded for the same product.');
         }
     }
 

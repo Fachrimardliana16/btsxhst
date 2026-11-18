@@ -6,12 +6,11 @@ use App\Enums\TipeKejadianKeamanan;
 use App\Models\BlockedIp;
 use App\Models\LoginAttempt;
 use App\Models\SecurityLog;
+use App\Models\User;
 use App\Support\CatatanAktivitas;
 use App\Support\Keamanan;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\WithPagination;
@@ -88,7 +87,7 @@ class KeamananPanel extends KomponenAdmin
         // Membuka blokir adalah kebalikan dari perlindungan brute force.
         // Menyalahgunakannya berarti mematikan perlindungan itu, jadi
         // tindakannya dibatasi pada super admin.
-        $this->authorize('bukaBlokir', \App\Models\User::class);
+        $this->authorize('bukaBlokir', User::class);
 
         if (! preg_match('/^[a-f0-9]{64}$/i', $hash)) {
             $this->galatUmum = __('site.msg.keamanan.sidik_salah');
@@ -124,6 +123,8 @@ class KeamananPanel extends KomponenAdmin
      */
     public function blokirManual(string $hash, int $jam = 24): void
     {
+        $this->authorize('bukaBlokir', User::class);
+
         if (! preg_match('/^[a-f0-9]{64}$/i', $hash)) {
             $this->galatUmum = __('site.msg.keamanan.sidik_salah');
 
@@ -154,6 +155,8 @@ class KeamananPanel extends KomponenAdmin
 
     public function bersihkanPercobaanGagal(): void
     {
+        $this->authorize('bukaBlokir', User::class);
+
         // Hanya percobaan yang sudah tidak terkunci. Menghapus yang masih
         // terkunci berarti membuka kesempatan menebak kata sandi lagi.
         $jumlah = LoginAttempt::query()

@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Enums\MetodePembayaran;
 use App\Enums\StatusPembayaran;
 use App\Enums\StatusPesanan;
+use App\Enums\TipeKupon;
 use App\Jobs\KirimNotifikasiAdmin;
 use App\Jobs\KirimNotifikasiPesanan;
 use App\Mail\PesananAdmin;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Support\BlindIndex;
 use App\Support\HargaDolar;
 use App\Support\Internasional;
 use App\Support\Pengaturan;
@@ -46,7 +48,7 @@ class PesananService
         $items = $keranjang->items();
 
         if ($items->isEmpty()) {
-            throw new RuntimeException('Keranjang kosong.');
+            throw new RuntimeException('Your cart is empty.');
         }
 
         $pesanan = DB::transaction(function () use ($keranjang, $items, $data, $metode, $user): Order {
@@ -64,9 +66,11 @@ class PesananService
                     ->lockForUpdate()
                     ->first();
 
-                if ($varian === null || ! $varian->is_active) {
+                if ($varian === null
+                    || ! $varian->is_active
+                    || ! ($varian->product->is_published ?? false)) {
                     throw new RuntimeException(
-                        'Produk "'.($item->product?->judul() ?? 'tidak dikenal').'" sudah tidak dijual.'
+                        '"'.$item->product->judul().'" is no longer for sale.'
                     );
                 }
 
@@ -74,7 +78,7 @@ class PesananService
 
                 if ($tersedia < $item->quantity) {
                     throw new RuntimeException(sprintf(
-                        'Stok %s tersisa %d, sedangkan keranjang meminta %d. Perbarui keranjang Anda.',
+                        '%s has only %d left, but your cart asks for %d. Please update your cart.',
                         $varian->product->judul(),
                         $tersedia,
                         $item->quantity,
@@ -110,7 +114,26 @@ class PesananService
                 // dua kali, dan membuat stok dapat dijual lebih kecil dari yang
                 // seharusnya. Stok fisik baru berkurang saat barang benar-benar
                 // keluar, yaitu saat pesanan selesai (lihat PesananService::selesaikan).
-                $varian->increment('reserved_quantity', $item->quantity);
+                //
+                // Penambahan tahanan dilakukan sebagai UPDATE bersyarat, bukan
+                // lewat increment(). Di SQLite `lockForUpdate()` tidak menghasilkan
+                // apa pun (grammar-nya mengembalikan string kosong), sehingga dua
+                // checkout bersamaan dapat sama-sama lolos pemeriksaan stok di
+                // atas. Syarat stok di dalam UPDATE membuat basis data sendiri
+                // yang memutuskan — hanya satu yang berhasil.
+                $direservasi = DB::table('product_variants')
+                    ->where('id', $varian->id)
+                    ->where('is_active', true)
+                    ->whereRaw('(stock_quantity - reserved_quantity) >= ?', [$item->quantity])
+                    ->update(['reserved_quantity' => DB::raw('reserved_quantity + '.(int) $item->quantity)]);
+
+                if ($direservasi !== 1) {
+                    throw new RuntimeException(sprintf(
+                        '%s no longer has enough stock (%d requested). Please update your cart.',
+                        $varian->product->judul(),
+                        $item->quantity,
+                    ));
+                }
             }
 
             $toko = Pengaturan::instance();
@@ -124,8 +147,8 @@ class PesananService
             // $subtotal di sini sudah dolar.
             $kupon = $keranjang->kupon();
             $diskonBelanja = $kupon === null ? 0.0 : HargaDolar::kuponPotongan($kupon, $subtotal, $ongkir);
-            $diskonOngkir = $kupon !== null && $kupon->type === \App\Enums\TipeKupon::GratisOngkir
-                ? $ongkir
+            $diskonOngkir = $kupon !== null && $kupon->type === TipeKupon::GratisOngkir
+                ? (($maks = HargaDolar::kuponMaks($kupon)) === null ? $ongkir : min($ongkir, $maks))
                 : ($kupon?->potonganOngkir($subtotal, $ongkir) ?? 0.0);
             $dasarPajak = max(0.0, $subtotal - $diskonBelanja);
             $pajak = round($dasarPajak * ($persenPajak / 100), 2);
@@ -187,19 +210,41 @@ class PesananService
             ]);
 
             if ($kupon !== null) {
-                // Kuota kupon diambil di basis data, bukan dari model. Dua
-                // checkout bersamaan bisa sama-sama lolos pemeriksaan kuota
-                // di atas; UPDATE bersyarat di bawah membuat hanya satu yang
-                // berhasil menambah, dan pesanan satunya dibatalkan.
-                $kena = DB::table('coupons')
+                /* Kuota global dan batas per pelanggan diambil dalam satu
+                 * UPDATE bersyarat. Dua checkout bersamaan bisa sama-sama
+                 * lolos pemeriksaan di atas; hanya satu yang berhasil
+                 * menambah used_count, dan pesanan satunya dibatalkan. */
+                $kueri = DB::table('coupons')
                     ->where('id', $kupon->getKey())
                     ->where(function ($q): void {
                         $q->whereNull('quota')->orWhereColumn('used_count', '<', 'quota');
-                    })
-                    ->update(['used_count' => DB::raw('used_count + 1')]);
+                    });
+
+                $batas = $kupon->limit_per_customer;
+
+                if ($batas !== null) {
+                    // Identitas pembeli: akun bila sudah masuk, alamat surel
+                    // (lewat indeks buta) bila tamu. Pesanan batal tidak
+                    // dihitung karena kuotanya sudah dikembalikan.
+                    $kolom = $user !== null ? 'orders.user_id' : 'orders.guest_email_bidx';
+                    $nilai = $user !== null
+                        ? $user->getKey()
+                        : BlindIndex::buat($data['email'], 'guest_email_bidx');
+
+                    $kueri->whereRaw(
+                        '(select count(*) from orders where orders.coupon_id = coupons.id'
+                        ." and orders.id <> ? and orders.status <> 'cancelled'"
+                        ." and {$kolom} = ?) < ?",
+                        [$order->getKey(), $nilai, (int) $batas],
+                    );
+                }
+
+                $kena = $kueri->update(['used_count' => DB::raw('used_count + 1')]);
 
                 if ($kena === 0) {
-                    throw new RuntimeException('Kuota kupon sudah habis.');
+                    throw new RuntimeException(
+                        'This coupon is no longer available for this customer.'
+                    );
                 }
             }
 

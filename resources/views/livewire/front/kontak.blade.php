@@ -12,7 +12,7 @@
                     <div class="plate border-l-2 border-l-ok p-6">
                         <p class="font-semibold text-ok">{{ __('site.contact.sent') }}</p>
                         <button type="button" class="btn btn-ghost mt-4" wire:click="$set('terkirim', false)">
-                            Kirim pesan lain
+                            {{ __('site.contact.send_another') }}
                         </button>
                     </div>
                 @else
@@ -115,7 +115,7 @@
                                 <a href="https://www.google.com/maps/search/?api=1&query={{ $lat }},{{ $toko->teks('maps_lng') }}"
                                    target="_blank" rel="noopener noreferrer" class="btn btn-outline mt-4 w-full">
                                     <x-ikon name="map" :size="16" />
-                                    Buka di Maps
+                                    {{ __('site.contact.open_maps') }}
                                 </a>
                             @endif
                         </div>

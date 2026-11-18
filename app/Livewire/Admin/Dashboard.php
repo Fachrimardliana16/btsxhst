@@ -7,6 +7,7 @@ use App\Models\ContactMessage;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Support\KomponenPengaturan;
 use App\Support\Pengaturan;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,7 @@ class Dashboard extends KomponenAdmin
 
         $pendapatanHariIni = (float) Order::query()
             ->where('created_at', '>=', $hariIni)
-            ->whereNotIn('status', [StatusPesanan::Cancelled->value])
+            ->whereIn('status', StatusPesanan::valuesPendapatan())
             ->sum('grand_total');
 
         $menungguProses = Order::query()
@@ -43,7 +44,7 @@ class Dashboard extends KomponenAdmin
         $grafik = Order::query()
             ->selectRaw('date(created_at) as hari, count(*) as jumlah, sum(grand_total) as nilai')
             ->where('created_at', '>=', now()->subDays(29)->startOfDay())
-            ->whereNotIn('status', [StatusPesanan::Cancelled->value])
+            ->whereIn('status', StatusPesanan::valuesPendapatan())
             ->groupBy('hari')
             ->orderBy('hari')
             ->get()
@@ -72,7 +73,7 @@ class Dashboard extends KomponenAdmin
         $terlaris = DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.created_at', '>=', $bulanIni)
-            ->whereNotIn('orders.status', [StatusPesanan::Cancelled->value])
+            ->whereIn('orders.status', StatusPesanan::valuesPendapatan())
             ->selectRaw('order_items.product_name as nama, sum(order_items.quantity) as terjual, sum(order_items.subtotal) as nilai')
             ->groupBy('order_items.product_name')
             ->orderByDesc('terjual')
@@ -138,7 +139,7 @@ class Dashboard extends KomponenAdmin
         // Nama toko punya cadangan dari terjemahan, jadi accessor tidak pernah
         // kosong. Yang diperiksa nilai tersimpannya, karena nama cadangan itu
         // bukan pilihan admin.
-        if (\App\Support\KomponenPengaturan::mentah('site_name') === null) {
+        if (KomponenPengaturan::mentah('site_name') === null) {
             $peringatan[] = [
                 'nada' => 'danger',
                 'teks' => __('site.msg.dashboard.site_name_belum'),
@@ -179,8 +180,8 @@ class Dashboard extends KomponenAdmin
             // pernah memuat baris terenkripsi ke cache publiknya. Membacanya
             // lewat teks() karena itu SELALU mengembalikan string kosong —
             // peringatan ini menyala walau Client ID dan Secret sudah diisi.
-            $idPaypal = strtoupper(trim((string) \App\Support\KomponenPengaturan::mentah('paypal_client_id')));
-            $rahasiaPaypal = strtoupper(trim((string) \App\Support\KomponenPengaturan::mentah('paypal_client_secret')));
+            $idPaypal = strtoupper(trim((string) KomponenPengaturan::mentah('paypal_client_id')));
+            $rahasiaPaypal = strtoupper(trim((string) KomponenPengaturan::mentah('paypal_client_secret')));
 
             // Placeholder bawaan seeder juga dianggap belum diisi: secara
             // teknis ada isinya, tetapi PayPal akan menolaknya.

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class CategorySeeder extends Seeder
 {
@@ -20,7 +21,7 @@ class CategorySeeder extends Seeder
 
         foreach ($kategori as $i => [$id, $en, $deskId, $deskEn]) {
             Category::query()->updateOrCreate(
-                ['slug' => \Illuminate\Support\Str::slug($id)],
+                ['slug' => Str::slug($id)],
                 [
                     'name_id' => $id,
                     'name_en' => $en,

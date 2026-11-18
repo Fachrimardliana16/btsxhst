@@ -88,9 +88,20 @@ class CacheKatalog
     public static function tandaiBerubah(?string $sebab = null): void
     {
         try {
-            $baru = self::versi() + 1;
+            // Baca-lalu-tulis di bawah kunci. Tanpa kunci, dua worker yang
+            // menyimpan perubahan pada saat yang sama membaca angka yang sama
+            // dan menulis angka yang sama pula — salah satu kenaikan hilang,
+            // dan sebagian pengunjung tetap memakai kunci cache lama.
+            //
+            // Versi dibaca ulang di dalam kunci, bukan dari memo: nilai memo
+            // bisa sudah basi oleh worker lain.
+            $baru = Cache::lock(self::KUNCI_VERSI.':kunci', 5)->block(3, function (): int {
+                $baru = (int) Cache::get(self::KUNCI_VERSI, 1) + 1;
 
-            Cache::forever(self::KUNCI_VERSI, $baru);
+                Cache::forever(self::KUNCI_VERSI, $baru);
+
+                return $baru;
+            });
 
             // Memo di memori ikut diperbarui, bukan hanya nilai di cache.
             self::lupakanVersi();
