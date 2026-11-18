@@ -277,6 +277,15 @@ body:has(.beranda-home > :only-child) footer {
     margin-top: 0;
 }
 
+/* Di layar kecil `main` juga membawa `pb-20` — ruang 80 px supaya isi terakhir
+ * tidak tertutup bottom-nav yang tetap di bawah. Pada beranda tanpa data isi
+ * terakhir itu hero setinggi layar, jadi ruang tersebut hanya menjadi pita
+ * terang yang sama seperti margin footer di atas. Bottom-nav tetap tampil
+ * menimpa tepi bawah hero, tempat yang memang tidak berisi teks. */
+body:has(.beranda-home > :only-child) main.konten-utama {
+    padding-bottom: 0;
+}
+
 /* ═══ CENTANG LEBAR DI LAYAR TENGAH ════════════════════════════════════
  *
  * Antara 1024px dan ±1150px, logo + 5 menu + 3 tombol utilitas lebih lebar
