@@ -27,11 +27,13 @@ Penyebab yang ditemukan, semuanya dari pengukuran:
    `/storage/*`, manifes, ikon PWA → `max-age=2592000, must-revalidate` + ETag;
    jawaban **304** saat `If-None-Match` cocok (0 bita, bukan 6 KB);
    **gzip** untuk respons tekstual bila SAPI tidak melakukannya.
-2. **`App\Http\Middleware\CacheHalaman`** — cache halaman publik untuk tamu
-   (GET, 200, bukan admin/livewire/keranjang/checkout/pesanan/lacak), kunci memuat
-   `katalog.versi` sehingga satu perubahan dari panel membatalkan seluruh cache;
-   nonce CSP disimpan bersama isinya agar skrip tidak diblokir di kunjungan kedua;
-   dapat dimatikan lewat pengaturan `cache_halaman`.
+2. **`App\Http\Middleware\CacheHalaman`** — **dihapus 2026-11-17.** Cache
+   halaman utuh tidak pernah bisa hit: navbar dan bottom-nav memuat komponen
+   Livewire, jadi setiap halaman membawa `wire:snapshot` dan penjaga token
+   selalu menolak menyimpannya. Middleware yang tidak pernah hit hanya
+   menambah satu pembacaan cache per permintaan, jadi pendaftarannya dicabut
+   dan berkasnya dibuang. Beban render ditangani jalur lain (preload hero,
+   eager loading, indeks DB, cache katalog).
 3. **Preload hero** — `Beranda` mengirim `$heroPertama` ke layout; `<link rel="preload"
    as="image" fetchpriority="high">` dipasang di `<head>`.
 4. **Slide hero malas** — slide ke-2 dan seterusnya tidak memasang `background-image`
@@ -59,9 +61,8 @@ Bita yang dikirim:
 | HTML beranda | 90.386 B | **12.494 B** (gzip) |
 | Gambar produk (ulangan) | 6.730 B penuh | **304, 0 B** |
 
-Uji `CacheHalamanTest` (8 test) mengunci batasnya: keranjang/checkout/lacak/panel
-tidak pernah disimpan, pengunjung yang sudah masuk tidak mendapat halaman cache,
-dan nonce di header CSP sama dengan nonce di HTML yang disajikan.
+Batas cache halaman (`CacheHalamanTest`) tidak lagi relevan: middleware-nya
+sudah dihapus karena tidak pernah hit.
 
 ## Catatan jujur
 
