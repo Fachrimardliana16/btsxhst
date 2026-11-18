@@ -165,7 +165,7 @@ Rujukan: `PRD.md` (kebutuhan), `DBSCHEMA.md` (skema), `WORKFLOW.md` (cara kerja)
 
 | Status | ID | Tugas | Bukti |
 | :--- | :--- | :--- | :--- |
-| [x] | F6-01 | Daftar produk: filter kategori dan rentang harga, pencarian, urut, paginasi | Chromium headless `tools/ukur-f6.py` (DOM nyata): 12 kartu, 16 tautan kategori, input harga min/maks + pencarian ada; `?min=9000000` memangkas hasil 12 → 0 kartu; tombol paginasi ada; gulir mendatar 0 pada 1440 px |
+| [x] | F6-01 | Daftar produk: filter kategori dan rentang harga, pencarian, urut, paginasi | Chromium headless (DOM nyata): 12 kartu, 16 tautan kategori, input harga min/maks + pencarian ada; `?min=9000000` memangkas hasil 12 → 0 kartu; tombol paginasi ada; gulir mendatar 0 pada 1440 px |
 | [x] | F6-02 | Keadaan hasil kosong dan keadaan memuat (skeleton, bukan pemintal di tengah) | `?q=zzzz-tidak-ada` → 0 kartu dengan pesan "Tidak ada produk yang cocok dengan filter ini." + tombol reset; keadaan memuat memakai 30 blok kerangka `animate-pulse`, pemintal 0 |
 | [x] | F6-03 | Detail produk: galeri, judul, harga, pemilih varian memperbarui harga dan stok tanpa muat ulang | Klik varian kedua di DOM: harga **Rp 4.250.000 → Rp 3.500.000** tanpa memuat ulang halaman (Livewire `/livewire/update`), 3 tombol varian |
 | [x] | F6-04 | Spesifikasi teknis dan deskripsi dua bahasa | Blok Spesifikasi terender di halaman detail; kolom `spesifikasi_json` + `description_id`/`description_en` terisi dari seeder |
@@ -180,7 +180,7 @@ Rujukan: `PRD.md` (kebutuhan), `DBSCHEMA.md` (skema), `WORKFLOW.md` (cara kerja)
 
 | Status | ID | Tugas | Bukti |
 | :--- | :--- | :--- | :--- |
-| [x] | F7-01 | Keranjang tamu berbasis sesi, pengguna login tersimpan di `carts` | Harness HTTP `tools/uji-f7.php`: tambah lewat `/livewire/update` (snapshot `front.tambah-keranjang-cepat`) → `cart_items` 1→2, HTTP 200; keranjang tamu = 1 baris `carts` dengan `session_id` terisi, `user_id` kosong. 35/35 butir F7 lulus |
+| [x] | F7-01 | Keranjang tamu berbasis sesi, pengguna login tersimpan di `carts` | Harness HTTP: tambah lewat `/livewire/update` (snapshot `front.tambah-keranjang-cepat`) → `cart_items` 1→2, HTTP 200; keranjang tamu = 1 baris `carts` dengan `session_id` terisi, `user_id` kosong. 35/35 butir F7 lulus |
 | [x] | F7-02 | Gabungkan keranjang tamu ke akun saat login, tanpa duplikat varian | Test hijau (`KeranjangCheckoutTest`): 2+3 varian sama → 1 baris qty 5; batas stok 4+5 → 6, bukan 9. Catatan: `gabungkanKe()` belum dipanggil dari rute mana pun — front belum punya login pelanggan, jadi penggabungan baru terbukti di tingkat layanan |
 | [x] | F7-03 | Halaman keranjang: ubah jumlah, hapus, ringkasan biaya, catatan | Harness HTTP: `catatan` "Titip di pos keamanan" tersimpan ke `carts.note` lewat `/livewire/update`, ikut menjadi `orders.customer_note` saat checkout. Kolom catatan terender di `/keranjang` (HTTP 200) |
 | [x] | F7-04 | Validasi stok ulang setiap keranjang dibuka; tampilkan pesan jelas bila berkurang | Test hijau: stok berkurang → jumlah disesuaikan + pesan menyebut nama produk; stok habis → baris dihapus + nama disebut; ubah jumlah melebihi stok dipotong di server; stok tertahan pesanan lain ikut dihitung |
@@ -193,7 +193,7 @@ Rujukan: `PRD.md` (kebutuhan), `DBSCHEMA.md` (skema), `WORKFLOW.md` (cara kerja)
 | [x] | F7-11 | Batas rate limit: tambah keranjang 60/menit, checkout 5 per 10 menit | Harness HTTP: 10 dari 40 pencarian `/produk?q=` dijawab 429 (batas 30/menit); 5 dari 5 katalog tanpa kata kunci tetap 200. Batas di `config/iksan.php`: `cart_add` 60/1, `checkout` 5/10, `search` 30/1 |
 | [x] | F7-12 | Penjadwal: batalkan pesanan `pending` > 24 jam, kembalikan stok dan `reserved_quantity` | Harness HTTP: `--uji` melaporkan 3 pesanan kedaluwarsa tanpa mengubah apa pun; pembatalan sungguhan → `status = cancelled`, `cancelled_at` terisi, `reserved_quantity` varian = 0, riwayat mencatat "Dibatalkan otomatis: belum dibayar sampai batas waktu."; terdaftar di `schedule:list` |
 
-**Gerbang G4 sebagian:** alur pesanan ujung ke ujung lulus tanpa pembayaran nyata — 35/35 butir F7 lulus lewat `tools/uji-f7.php` terhadap server nyata (`127.0.0.1:8100`) dan 15 test fitur hijau (56 asersi).
+**Gerbang G4 sebagian:** alur pesanan ujung ke ujung lulus tanpa pembayaran nyata — 35/35 butir F7 lulus lewat harness HTTP terhadap server nyata (`127.0.0.1:8100`) dan 15 test fitur hijau (56 asersi).
 
 ---
 
@@ -201,7 +201,7 @@ Rujukan: `PRD.md` (kebutuhan), `DBSCHEMA.md` (skema), `WORKFLOW.md` (cara kerja)
 
 | Status | ID | Tugas | Bukti |
 | :--- | :--- | :--- | :--- |
-| [x] | F8-01 | Daftar pesanan: filter status dan tanggal, cari nomor atau nama penerima, ekspor CSV, paginasi 25 | Harness HTTP `tools/uji-f8.php`: halaman pertama memuat 25 pesanan; `status=pending` menampilkan 1 baris, sama dengan basis data; cari "Pemb" (nama penerima, hanya ada di snapshot alamat terenkripsi) menampilkan namanya di daftar; ekspor CSV 33 baris. Catatan: filter rentang tanggal belum ada — yang ada status, pembayaran, cari, dan urut |
+| [x] | F8-01 | Daftar pesanan: filter status dan tanggal, cari nomor atau nama penerima, ekspor CSV, paginasi 25 | Harness HTTP: halaman pertama memuat 25 pesanan; `status=pending` menampilkan 1 baris, sama dengan basis data; cari "Pemb" (nama penerima, hanya ada di snapshot alamat terenkripsi) menampilkan namanya di daftar; ekspor CSV 33 baris. Catatan: filter rentang tanggal belum ada — yang ada status, pembayaran, cari, dan urut |
 | [x] | F8-02 | Detail pesanan: item snapshot, alamat, ringkasan biaya, status pembayaran, riwayat status | Harness HTTP: `/admin/pesanan/{ulid}` HTTP 200, nomor pesanan tampil, bagian ringkasan biaya dan riwayat ada di halaman |
 | [x] | F8-03 | Transisi status sah saja; transisi tidak sah ditolak di server | Harness HTTP: `completed → pending` ditolak — status tetap `completed` setelah `/livewire/update` (HTTP 200 tanpa perubahan baris) |
 | [x] | F8-04 | Setiap perubahan status menulis `order_status_history` dengan pelaku dan catatan | Harness HTTP: `paid → processing` menulis riwayat `paid -> processing`, `changed_by` = #1, catatan "Uji otomatis F8-04" |
