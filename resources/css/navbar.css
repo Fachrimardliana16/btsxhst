@@ -262,6 +262,21 @@ main.konten-utama:has(> .beranda-home) {
     scroll-margin-top: var(--h-topbar);
 }
 
+/* Beranda tanpa data: hero adalah satu-satunya isi halaman.
+ *
+ * Setiap section di bawah hero hanya dirender bila datanya ada — katalog
+ * kosong, galeri kosong, statistik kosong. Footer sendiri membawa `mt-16`
+ * (`mt-28` di layar lebar) untuk memberi jeda dari section terakhir. Saat
+ * tidak ada section sama sekali, jeda itu berubah menjadi pita 112 px
+ * berlatar `bg` terang di antara hero yang gelap dan footer yang gelap —
+ * terbaca sebagai ruang kosong yang belum selesai.
+ *
+ * Aturan ini hanya berlaku ketika hero benar-benar anak tunggal, jadi jarak
+ * footer di halaman normal tidak berubah. */
+body:has(.beranda-home > :only-child) footer {
+    margin-top: 0;
+}
+
 /* ═══ CENTANG LEBAR DI LAYAR TENGAH ════════════════════════════════════
  *
  * Antara 1024px dan ±1150px, logo + 5 menu + 3 tombol utilitas lebih lebar

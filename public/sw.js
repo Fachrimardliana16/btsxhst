@@ -33,7 +33,7 @@
  * Cara menaikkan: ubah angka di sini setiap deploy (v2, v3, ...). Skrip
  * resources/js/naikkan-versi-sw.js dapat melakukannya otomatis.
  */
-const VERSI = 'iksan-v37';
+const VERSI = 'iksan-v38';
 
 const SHELL_LURING = '/offline.html';
 
